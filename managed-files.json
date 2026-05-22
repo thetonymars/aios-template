@@ -1,0 +1,61 @@
+{
+  "aios_version": "4.4.0",
+  "comment": "Kernel files that `update` may refresh. Everything NOT listed here = user data and is NEVER touched. The update logic ALSO enforces a HARDCODED denylist (user/**, business/*/business.md + subfolders, projects/**, kb/** except kb/CONTEXT.md, _inbox/**) that this file cannot override. Update is overwrite-only (never deletes), backs up every overwritten file, and refuses absolute/.. /symlink/case-collision paths. sha256 = the as-shipped hash; the installer records it as the baseline so a later update can detect a user-edited kernel file (conflict -> backup + confirm, never silent wipe).",
+  "denylist": [
+    "user/**",
+    "business/*/**",
+    "projects/**",
+    "kb/** (except kb/CONTEXT.md)",
+    "_inbox/**"
+  ],
+  "managed": [
+    {
+      "path": "AGENTS.md",
+      "sha256": "87f8e7b1a12519d7aaf72b0eab97e82e776cae534c5b4ea07e4c802e47941504"
+    },
+    {
+      "path": "CLAUDE.md",
+      "sha256": "336cc4fbf19beaada7ccf9986414fa91851a8d7a07dfb3ccbe800a69eed0ab49"
+    },
+    {
+      "path": "GEMINI.md",
+      "sha256": "336cc4fbf19beaada7ccf9986414fa91851a8d7a07dfb3ccbe800a69eed0ab49"
+    },
+    {
+      "path": "system/CONTEXT.md",
+      "sha256": "5128aa5bc5e2f739d9565322fbe5bbfe736c1d5ba81f61a71cb1d48f1e961716"
+    },
+    {
+      "path": "system/skills/skills.md",
+      "sha256": "20f6dcf822c069a28f6dabb0f5fd7fee0b3f9cca216130ca767143cbfa225499"
+    },
+    {
+      "path": "system/skills/setup/SKILL.md",
+      "sha256": "3ca45e21f169c034961b6ad3a1a349c308470df8d2886ca9bb4acce34bced93e"
+    },
+    {
+      "path": "system/skills/setup/CONTEXT.md",
+      "sha256": "243ef1796b0d4e7551d21f8942d3b675eb75abef631097abbfe6c0fe05f5aef1"
+    },
+    {
+      "path": "system/skills/setup/01_identity/CONTEXT.md",
+      "sha256": "37055575a90c732c0aac95717631ed35d0cfd89d306cb23ecdc5da4883cae170"
+    },
+    {
+      "path": "system/skills/setup/02_business/CONTEXT.md",
+      "sha256": "f98ae21abe2d65fce8f82a79c3e2e410c49d4c54d8d9f2570b49c6f9b61b74ba"
+    },
+    {
+      "path": "system/skills/setup/03_review/CONTEXT.md",
+      "sha256": "ed74d83018eb1e393bc79f107022e527588f52e119add54eb07068c9e0a94ece"
+    },
+    {
+      "path": "kb/CONTEXT.md",
+      "sha256": "bf7f78e9234a26f542205c95005920c73b11478f5d0b3d459b36e5ca83edd537"
+    },
+    {
+      "path": "projects/CONTEXT.md",
+      "sha256": "edaf9d84a4ba9b971fbe367cac6aace11ffaee24ac5f56c00fc75c07d7a5d4b5"
+    }
+  ]
+}
