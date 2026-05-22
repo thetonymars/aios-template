@@ -1,6 +1,6 @@
 {
-  "aios_version": "4.4.0",
-  "comment": "Kernel files that `update` may refresh. Everything NOT listed here = user data and is NEVER touched. The update logic ALSO enforces a HARDCODED denylist (user/**, business/*/business.md + subfolders, projects/**, kb/** except kb/CONTEXT.md, _inbox/**) that this file cannot override. Update is overwrite-only (never deletes), backs up every overwritten file, and refuses absolute/.. /symlink/case-collision paths. sha256 = the as-shipped hash; the installer records it as the baseline so a later update can detect a user-edited kernel file (conflict -> backup + confirm, never silent wipe).",
+  "aios_version": "4.4.1",
+  "comment": "Lives in system/ (plumbing, not a note). Kernel files that `update` may refresh. Everything NOT listed = user data, NEVER touched. The update logic ALSO enforces a HARDCODED denylist (user/**, business/*/**, projects/**, kb/** except kb/CONTEXT.md, _inbox/**) this file cannot override. Update is overwrite-only (never deletes), backs up every overwritten file, refuses absolute/.. /symlink/case-collision paths. sha256 = as-shipped hash; installer records it as baseline so update can detect a user-edited kernel file (conflict -> backup + confirm, never silent wipe). Paths are relative to the platform root.",
   "denylist": [
     "user/**",
     "business/*/**",
@@ -11,7 +11,7 @@
   "managed": [
     {
       "path": "AGENTS.md",
-      "sha256": "87f8e7b1a12519d7aaf72b0eab97e82e776cae534c5b4ea07e4c802e47941504"
+      "sha256": "11f7cf7d053e3b88d4d84b13dd93c0639777c3af863e256495b7738859b6e626"
     },
     {
       "path": "CLAUDE.md",
