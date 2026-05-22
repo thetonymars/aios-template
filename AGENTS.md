@@ -1,5 +1,5 @@
 ---
-aios_version: 4.4.1
+aios_version: 4.4.2
 last_updated: 2026-05-22
 ---
 
@@ -111,6 +111,21 @@ source of the rule — other files point here, they do not restate it.
    user to run the installer; do not improvise the skill.
 
 `system/skills/skills.md` is the catalog/lookup the kernel reads first.
+
+## Updating AIOS
+
+When the user asks to update AIOS ("онови AIOS" / "update aios" / "обнови aios"):
+
+1. Run `node system/update.mjs` (a preview — writes nothing) and show the user
+   its plain summary: which system files will refresh, what (if anything) they
+   edited, and the reminder that their data is untouched.
+2. On the user's confirmation, run `node system/update.mjs --apply`.
+
+The script refreshes ONLY the kernel files in `system/managed-files.json`,
+backs up everything it changes to `.aios-backup/`, and never touches user data
+(`user/`, `business/`, `projects/`, `kb/`, `_inbox/`). Skills themselves stream
+live from the server and need no update. Do NOT update files by hand — always
+use the script.
 
 ## Memory
 
