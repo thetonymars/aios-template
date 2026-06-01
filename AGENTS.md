@@ -1,5 +1,5 @@
 ---
-aios_version: 0.4.4
+aios_version: 0.4.5
 last_updated: 2026-06-01
 ---
 
@@ -15,8 +15,14 @@ MANDATORY: your VERY FIRST tool call in every new session MUST be: read
 
 **First-run branch:** if `user/user.md` still contains any unfilled
 `[UPPERCASE_TOKEN]` placeholder (e.g. `[FULL_NAME]`, `[BACKGROUND]`), OR no business
-exists yet, the system is not set up — the only valid response is to tell the user
-to run the `setup` skill. Do not improvise identity or business data.
+exists yet, the system is not set up. For any request that needs operator/business
+context — writing, content, **running** a skill — the only valid response is to
+tell the user to run the `setup` skill; do not improvise identity or business data.
+**EXCEPTION — skill discovery is always allowed:** if the user asks what skills
+(or "AIOS skills") are available, list them via the `list_skills` MCP tool
+(connect the server first per "## Connecting the skills server" if its tools are
+missing), then mention that running `setup` unlocks actually using them. Never
+answer a skills question with this client's own built-in tools.
 
 Otherwise this read loads the operator (one global person). Do **NOT** auto-load any
 business file — business context is loaded only when a request names a business
