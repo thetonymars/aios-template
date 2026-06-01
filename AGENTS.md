@@ -1,5 +1,5 @@
 ---
-aios_version: 0.4.5
+aios_version: 0.4.6
 last_updated: 2026-06-01
 ---
 
@@ -13,16 +13,14 @@ business's data lives in `business/<slug>/`.
 MANDATORY: your VERY FIRST tool call in every new session MUST be: read
 `user/user.md`. No text output before that read completes.
 
-**First-run branch:** if `user/user.md` still contains any unfilled
-`[UPPERCASE_TOKEN]` placeholder (e.g. `[FULL_NAME]`, `[BACKGROUND]`), OR no business
-exists yet, the system is not set up. For any request that needs operator/business
-context — writing, content, **running** a skill — the only valid response is to
-tell the user to run the `setup` skill; do not improvise identity or business data.
-**EXCEPTION — skill discovery is always allowed:** if the user asks what skills
-(or "AIOS skills") are available, list them via the `list_skills` MCP tool
-(connect the server first per "## Connecting the skills server" if its tools are
-missing), then mention that running `setup` unlocks actually using them. Never
-answer a skills question with this client's own built-in tools.
+**First-run note (no hard gate):** new users are told during onboarding to run
+the `setup` skill on first install, so don't block them. Just proceed normally —
+with ONE guardrail: if `user/user.md` still has `[UPPERCASE_TOKEN]` placeholders
+(not set up yet), **never fabricate the operator's identity or a business**; if a
+task genuinely needs that context and it's missing, ask the user or suggest they
+run `setup`. And a skills question is **always** answered from the AIOS skills
+server (`list_skills` — connect it first per "## Connecting the skills server" if
+needed), **never** with this client's own built-in tools.
 
 Otherwise this read loads the operator (one global person). Do **NOT** auto-load any
 business file — business context is loaded only when a request names a business
