@@ -1,5 +1,5 @@
 {
-  "aios_version": "4.4.3",
+  "aios_version": "0.4.4",
   "comment": "Lives in system/ (plumbing). Kernel files that `system/update.mjs` may refresh. Everything NOT listed = user data, NEVER touched. update.mjs ALSO enforces a HARDCODED deny-prefix list (user/, business/, _inbox/) this file cannot override, overwrite-only (never deletes), backs up every changed file to .aios-backup/, refuses absolute/.. /symlink paths, and a downgrade guard. sha256 = as-shipped baseline so update can detect a user-edited kernel file (conflict -> backup + overwrite-on-confirm, never silent). Paths relative to platform root. Regenerate with scripts/gen-managed.mjs after editing any kernel file.",
   "deny_prefixes": [
     "user/",
@@ -9,7 +9,7 @@
   "managed": [
     {
       "path": "AGENTS.md",
-      "sha256": "c70b376590283d7cf45ee6399c27b8d6509d48baa1595b4c9ee52c614db226bd"
+      "sha256": "169dc5af349d62968d4db8efc8b1b94a5eb896da547bf21f51979a7560282ff3"
     },
     {
       "path": "CLAUDE.md",
@@ -26,6 +26,10 @@
     {
       "path": "system/update.mjs",
       "sha256": "adfa9b47bda9d995de2f5425ad933aa4f4f21747e336f1a9e06a9289f35bf57c"
+    },
+    {
+      "path": "system/connect.mjs",
+      "sha256": "48d26ee406fd9d19ff21d49a6873d25927191026a55f99253a088bf157270646"
     },
     {
       "path": "system/skills/skills.md",
