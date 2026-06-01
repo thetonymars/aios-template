@@ -1,6 +1,6 @@
 ---
-aios_version: 4.4.2
-last_updated: 2026-05-22
+aios_version: 4.4.3
+last_updated: 2026-06-01
 ---
 
 # This is your master file — you MUST follow every instruction in this file
@@ -107,10 +107,55 @@ source of the rule — other files point here, they do not restate it.
    - discover with the `list_skills` MCP tool,
    - enter with `start_skill` (argument `slug`) — returns SKILL.md + CONTEXT.md,
    - lazy-load further files with `read_skill_file(skill, path)`.
-   If those MCP tools are absent, the skills server is not connected — tell the
-   user to run the installer; do not improvise the skill.
+   If those MCP tools are absent, the server is not connected — follow
+   **## Connecting the skills server** below to connect it. Do not improvise a
+   skill, and never present this client's own tools/plugins as AIOS skills.
 
 `system/skills/skills.md` is the catalog/lookup the kernel reads first.
+
+## Connecting the skills server
+
+All non-`setup` skills stream from the AIOS skills server over MCP. If the
+`list_skills` / `start_skill` / `read_skill_file` tools are NOT in your session,
+the server is not connected yet — connect it (don't tell the user "no skills",
+don't substitute anything else):
+
+1. **Already configured?** First check whether an MCP server named `aios` already
+   exists in this client's config. If it does, do NOT add a second one — the
+   issue is approval or restart, not registration: ask the user to approve the
+   `aios` server if prompted, and to restart the client once. If after one
+   restart `list_skills` is STILL absent and `aios` is already configured, STOP
+   and tell the user the skills server isn't responding (try again later /
+   contact support). Do not loop or re-register.
+
+2. **Get the token.** Read it from `.aios-license` at the AIOS root (the folder
+   containing this `AGENTS.md`) — a single line. If that file is missing, the
+   install is incomplete: tell the user to re-run the installer / `setup`. Do not
+   invent a token.
+
+3. **Register the server** with these values — name `aios`, transport HTTP
+   (streamable), url `https://aios-skills.vercel.app/mcp`, header
+   `x-tony-license: <token>`. Method, in order of preference:
+   - **Portable:** if this client reads a project-scoped `.mcp.json`, write it at
+     the AIOS root:
+     `{"mcpServers":{"aios":{"type":"http","url":"https://aios-skills.vercel.app/mcp","headers":{"x-tony-license":"<token>"}}}}`
+   - else use this client's own MCP-add CLI or settings (use what you know about
+     your client);
+   - else hand the user the steps (see "Telling the user").
+
+4. **Restart.** Ask the user to restart the client — most load MCP servers only
+   at start. After restart, `list_skills` should be present.
+
+**Telling the user:** keep spoken updates simple, but **never hide a
+security-relevant action** — if asked (or before doing it) it's fine to say
+plainly "I'm adding the AIOS skills server to your client and saving your license
+in the aios folder." Non-technical ≠ concealed. If you must hand off the manual
+steps, you MAY show the url and the `x-tony-license` value (the user needs them) —
+show only those.
+
+Until connected, the ONLY available skill is local `setup`. **Never** present
+this client's own tools/plugins/skills as AIOS skills, and **never** search the
+filesystem for skill content — non-setup skills live only on the server.
 
 ## Updating AIOS
 

@@ -2,3 +2,5 @@
 .obsidian/
 *.icloud
 Thumbs.db
+.aios-license
+.mcp.json
