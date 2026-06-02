@@ -8,11 +8,13 @@
 //   node system/connect.mjs                       # reads .aios-license at the AIOS root
 //   node system/connect.mjs --license AIOS-XXXX   # explicit token
 //
-// Writes/merges an `aios` MCP server for whichever clients are present:
-//   - ./.mcp.json                              Claude Code / Cursor      (cwd)
-//   - ./opencode.json                          OpenCode (local mcp-remote bridge)  (cwd)
+// Writes the `aios` MCP server into each client's GLOBAL config (so the license
+// token stays OUT of the portable AIOS folder), for whichever clients are present:
+//   - ~/.claude/settings.json                  Claude Code  (only if ~/.claude exists)
+//   - ~/.config/opencode/opencode.jsonc        OpenCode     (only if its dir exists)
 //   - ~/.codex/config.toml                     Codex        (only if ~/.codex exists)
 //   - ~/.gemini/antigravity/mcp_config.json    Antigravity  (only if that dir exists)
+// Auth travels as a standard `Authorization: Bearer <token>` header.
 // Then tells the user to RESTART. Apps (Claude Desktop, Manus, Perplexity) are
 // GUI/cloud — not scriptable; connect those once in the app's own Settings.
 
@@ -44,6 +46,7 @@ if (!token) {
   console.error("No license token. Run from the AIOS root (needs .aios-license) or pass --license <token>.");
   process.exit(1);
 }
+const AUTH = `Bearer ${token}`; // standard Authorization header value
 
 const done = [], skipped = [];
 
@@ -78,43 +81,59 @@ function mergeJSON(p, label, mutate) {
   writeJSON(p, cfg); // mutate REPLACES the whole `aios` entry, so no stale keys linger
   done.push(label);
 }
+// Remove a TOML table ([name] header + its lines, up to the next table or EOF).
+function stripTomlTable(text, name) {
+  const esc = name.replace(/[.]/g, "\\.");
+  const re = new RegExp(`^[ \\t]*\\[${esc}\\][ \\t]*\\r?\\n(?:(?![ \\t]*\\[)[^\\n]*\\r?\\n?)*`, "gm");
+  return text.replace(re, "");
+}
 
-// 1. ./.mcp.json — Claude Code / Cursor
-mergeJSON(join(process.cwd(), ".mcp.json"), ".mcp.json (Claude Code / Cursor)", (cfg) => {
-  cfg.mcpServers = cfg.mcpServers || {};
-  cfg.mcpServers[NAME] = { type: "http", url: URL_MCP, headers: { "x-tony-license": token } };
-});
+// 1. ~/.claude/settings.json — Claude Code (global user config)
+{
+  const dir = join(homedir(), ".claude");
+  if (!existsSync(dir)) { skipped.push("Claude Code not detected (~/.claude absent)"); }
+  else mergeJSON(join(dir, "settings.json"), "~/.claude/settings.json (Claude Code)", (cfg) => {
+    cfg.mcpServers = cfg.mcpServers || {};
+    cfg.mcpServers[NAME] = { type: "http", url: URL_MCP, headers: { Authorization: AUTH } };
+  });
+}
 
-// 2. ./opencode.json — OpenCode. Use the local mcp-remote bridge: reliable across
-// versions and sidesteps the upstream "remote connects but injects no tools" bug.
-mergeJSON(join(process.cwd(), "opencode.json"), "opencode.json (OpenCode)", (cfg) => {
-  cfg["$schema"] = cfg["$schema"] || "https://opencode.ai/config.json";
-  cfg.mcp = cfg.mcp || {};
-  cfg.mcp[NAME] = {
-    type: "local",
-    command: ["npx", "-y", "mcp-remote", URL_MCP, "--header", `x-tony-license:${token}`],
-    enabled: true,
-  };
-});
+// 2. ~/.config/opencode/opencode.jsonc — OpenCode (global). Local mcp-remote bridge:
+// reliable across versions and sidesteps the upstream "remote connects but injects
+// no tools" bug. Merge into the existing .jsonc/.json (or create .json).
+{
+  const dir = join(homedir(), ".config", "opencode");
+  if (!existsSync(dir)) { skipped.push("OpenCode not detected (~/.config/opencode absent)"); }
+  else {
+    const jsonc = join(dir, "opencode.jsonc"), jsonp = join(dir, "opencode.json");
+    const target = existsSync(jsonc) ? jsonc : jsonp;
+    mergeJSON(target, `${target.replace(homedir(), "~")} (OpenCode)`, (cfg) => {
+      cfg["$schema"] = cfg["$schema"] || "https://opencode.ai/config.json";
+      cfg.mcp = cfg.mcp || {};
+      cfg.mcp[NAME] = {
+        type: "local",
+        command: ["npx", "-y", "mcp-remote", URL_MCP, "--header", `Authorization:${AUTH}`],
+        enabled: true,
+      };
+    });
+  }
+}
 
-// 3. ~/.codex/config.toml — Codex (only if installed). String-level TOML handling,
-// so we guard hard against false matches and duplicate tables.
+// 3. ~/.codex/config.toml — Codex (only if installed). String-level TOML handling.
+// REPLACE any existing aios tables so a re-install/re-license refreshes the token.
 try {
   const dir = join(homedir(), ".codex");
   if (!existsSync(dir)) { skipped.push("Codex not detected (~/.codex absent)"); }
   else {
     const p = join(dir, "config.toml");
     const cur = existsSync(p) ? readFileSync(p, "utf8") : "";
-    const noComments = cur.replace(/^\s*#.*$/gm, "");
-    const hasParent = /^\s*\[mcp_servers\.aios\]\s*$/m.test(noComments);
-    const childOnly = !hasParent && /^\s*\[mcp_servers\.aios\.http_headers\]\s*$/m.test(noComments);
-    if (hasParent) { skipped.push("Codex — aios already present (left as-is)"); }
-    else if (childOnly) { skipped.push("Codex — partial aios entry found; left untouched (fix ~/.codex/config.toml by hand)"); }
-    else if (!backup(p)) { skipped.push("Codex — couldn't back up config.toml; left untouched"); }
+    if (existsSync(p) && !backup(p)) { skipped.push("Codex — couldn't back up config.toml; left untouched"); }
     else {
-      const sep = cur.length && !cur.endsWith("\n") ? "\n" : "";
-      const block = `\n[mcp_servers.aios]\nurl = "${URL_MCP}"\nstartup_timeout_sec = 30\n\n[mcp_servers.aios.http_headers]\nx-tony-license = "${token}"\n`;
-      writeAtomic(p, cur + sep + block);
+      let base = stripTomlTable(stripTomlTable(cur, "mcp_servers.aios.http_headers"), "mcp_servers.aios");
+      base = base.replace(/\s+$/, "");
+      const sep = base.length ? "\n\n" : "";
+      const block = `[mcp_servers.aios]\nurl = "${URL_MCP}"\nstartup_timeout_sec = 30\n\n[mcp_servers.aios.http_headers]\nAuthorization = "${AUTH}"\n`;
+      writeAtomic(p, base + sep + block);
       done.push("~/.codex/config.toml (Codex)");
     }
   }
@@ -126,7 +145,7 @@ try {
   if (!existsSync(dir)) { skipped.push("Antigravity not detected"); }
   else mergeJSON(join(dir, "mcp_config.json"), "Antigravity mcp_config.json", (cfg) => {
     cfg.mcpServers = cfg.mcpServers || {};
-    cfg.mcpServers[NAME] = { serverUrl: URL_MCP, headers: { "x-tony-license": token } }; // serverUrl, not url
+    cfg.mcpServers[NAME] = { serverUrl: URL_MCP, headers: { Authorization: AUTH } }; // serverUrl, not url
   });
 }
 
@@ -134,4 +153,5 @@ console.log("AIOS skills server connected to:");
 done.length ? done.forEach((d) => console.log("  ✓ " + d)) : console.log("  (nothing written)");
 if (skipped.length) { console.log("Notes:"); skipped.forEach((s) => console.log("  - " + s)); }
 console.log("\nNEXT: restart your AI client so it loads the server, then ask: \"list my AIOS skills\".");
-console.log("Apps (Claude Desktop / Manus / Perplexity) can't be scripted — add the server in the app's Settings.");
+console.log("Apps (Claude Desktop / Manus / Perplexity) can't be scripted — in the app's Settings add");
+console.log("server `aios` at " + URL_MCP + " with header  Authorization: " + AUTH);

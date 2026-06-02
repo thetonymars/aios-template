@@ -1,6 +1,6 @@
 ---
-aios_version: 0.4.6
-last_updated: 2026-06-01
+aios_version: 0.4.7
+last_updated: 2026-06-02
 ---
 
 # This is your master file — you MUST follow every instruction in this file
@@ -138,8 +138,8 @@ don't substitute anything else):
      re-run the installer / `setup`; don't invent a token.
    - If you have NO shell access (a GUI-only app like Claude Desktop), you can't
      run the script: tell the user to add the server in the app's Settings — name
-     `aios`, url `https://aios-skills.vercel.app/mcp`, header `x-tony-license` =
-     the value in `.aios-license`.
+     `aios`, url `https://aios-skills.vercel.app/mcp`, header `Authorization` =
+     `Bearer ` followed by the value in `.aios-license`.
 
 Keep what you tell the user simple, but never hide what you're doing — it's fine
 to say "I'm connecting the AIOS skills server." Until connected, the ONLY
