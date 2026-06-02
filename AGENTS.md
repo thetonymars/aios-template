@@ -1,5 +1,5 @@
 ---
-aios_version: 0.5.1
+aios_version: 0.5.2
 last_updated: 2026-06-02
 ---
 
@@ -125,17 +125,19 @@ NEVER the client's own skill directory (`~/.claude/skills/` etc.), or it would w
 in only one client. Format + how to index it = `system/skills/skills.md`.
 
 **"What skills do I have?"** (plain language — you run the discovery, never make the
-user type a command): merge all sources, group by source then category
+user type a command). Present skills **grouped by WHAT THEY'RE FOR** — the job they do
 (`marketing · sales · content · research · assistant` — classification rule in
-`system/skills/skills.md`):
-- 💎 AIOS Premium / 🟢 AIOS Free — remote catalog (tier from `list_skills`)
-- 👤 Your skills — local in `system/skills/`
-- 🔌 From your AI app — this client's own skills (e.g. superpowers), shown but
-  labeled "not AIOS"
+`system/skills/skills.md`), because that is how the user thinks ("what would I use it
+for?"). **Do NOT group by where a skill lives** (local vs remote — the user does not
+care). Within each category, one line per skill: **name — (short access tag) — what it
+does.** The tag in parens is the access/source, secondary info:
+- **(premium)** / **(free)** — the AIOS catalog (tier from `list_skills`)
+- **(yours)** — a skill the user made
+- **(your AI app)** — the client's own skill (e.g. superpowers), shown but never
+  presented AS an AIOS skill
 
-Never present a client-native skill AS an AIOS skill (honest provenance, not hiding).
-On a slug clash, show the local 👤 skill separately under its own name — never let it
-silently shadow a catalog skill.
+On a slug clash, show both, told apart by the tag — never let one silently shadow the
+other. Keep it simple — no file paths, no "local/remote" plumbing talk.
 
 ## Connecting the skills server
 

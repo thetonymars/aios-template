@@ -71,3 +71,9 @@ never by format noun (script, email, sequence, page span categories):
 Bare "convert" with no explicit buy-CTA → **fail closed to `marketing`**. Give
 closing/conversion email sequences an explicit `sales` tag rather than relying on
 inference.
+
+**Presenting the list:** group by these categories (what the skill is FOR — how the
+user thinks), NOT by where it lives. Source/access is a per-skill tag in parens, never
+a group: `(premium)` / `(free)` = catalog · `(yours)` = user-made · `(your AI app)` =
+client-native. The taxonomy grows from real use (e.g. add `copywriting` if it earns a
+group).

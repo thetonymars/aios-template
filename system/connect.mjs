@@ -10,7 +10,7 @@
 //
 // Writes the `aios` MCP server into each client's GLOBAL config (so the license
 // token stays OUT of the portable AIOS folder), for whichever clients are present:
-//   - ~/.claude/settings.json                  Claude Code  (only if ~/.claude exists)
+//   - ~/.claude.json                            Claude Code  (user-scope mcpServers)
 //   - ~/.config/opencode/opencode.jsonc        OpenCode     (only if its dir exists)
 //   - ~/.codex/config.toml                     Codex        (only if ~/.codex exists)
 //   - ~/.gemini/antigravity/mcp_config.json    Antigravity  (only if that dir exists)
@@ -108,14 +108,29 @@ function stripTomlTable(text, name) {
   return text.replace(re, "");
 }
 
-// 1. ~/.claude/settings.json — Claude Code (global user config)
+// 1. ~/.claude.json — Claude Code reads USER-scoped MCP servers from HERE (top-level
+//    `mcpServers`), NOT from ~/.claude/settings.json (that key is ignored by the CLI —
+//    same place `claude mcp add --scope user` writes).
 {
   const dir = join(homedir(), ".claude");
-  if (!existsSync(dir)) { skipped.push("Claude Code not detected (~/.claude absent)"); }
-  else mergeJSON(join(dir, "settings.json"), "~/.claude/settings.json (Claude Code)", (cfg) => {
-    cfg.mcpServers = cfg.mcpServers || {};
-    cfg.mcpServers[NAME] = { type: "http", url: URL_MCP, headers: { Authorization: AUTH } };
-  });
+  const claudeJson = join(homedir(), ".claude.json");
+  if (!existsSync(dir) && !existsSync(claudeJson)) {
+    skipped.push("Claude Code not detected (~/.claude and ~/.claude.json absent)");
+  } else {
+    mergeJSON(claudeJson, "~/.claude.json (Claude Code)", (cfg) => {
+      cfg.mcpServers = cfg.mcpServers || {};
+      cfg.mcpServers[NAME] = { type: "http", url: URL_MCP, headers: { Authorization: AUTH } };
+    });
+    // Clean up the inert `aios` entry older connect.mjs versions wrote to
+    // settings.json (Claude Code never read it); leave everything else untouched.
+    const settings = join(dir, "settings.json");
+    const cur = readJSONSafe(settings);
+    if (existsSync(settings) && cur !== SENTINEL && cur && cur.mcpServers && cur.mcpServers[NAME] && backup(settings)) {
+      delete cur.mcpServers[NAME];
+      if (Object.keys(cur.mcpServers).length === 0) delete cur.mcpServers;
+      writeJSON(settings, cur);
+    }
+  }
 }
 
 // 2. ~/.config/opencode/opencode.jsonc — OpenCode (global). Local mcp-remote bridge:
