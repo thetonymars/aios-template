@@ -1,5 +1,5 @@
 ---
-aios_version: 0.5.2
+aios_version: 0.5.3
 last_updated: 2026-06-02
 ---
 
@@ -18,11 +18,8 @@ the `setup` skill on first install, so don't block them. Just proceed normally �
 with ONE guardrail: if `user/user.md` still has `[UPPERCASE_TOKEN]` placeholders
 (not set up yet), **never fabricate the operator's identity or a business**; if a
 task genuinely needs that context and it's missing, ask the user or suggest they
-run `setup`. And a skills question is answered from AIOS sources — the remote
-catalog (`list_skills` — connect it first per "## Connecting the skills server" if
-needed) **plus** your local vault skills in `system/skills/` (see "## Skills").
-This client's own built-in skills may be shown too, but only when clearly labeled
-as not AIOS.
+run `setup`. (Answer skills questions per "## Skills" — never pass this client's own
+tools off as AIOS skills.)
 
 Otherwise this read loads the operator (one global person). Do **NOT** auto-load any
 business file — business context is loaded only when a request names a business
@@ -156,20 +153,18 @@ don't substitute anything else):
    `AGENTS.md`): `node system/connect.mjs`. It reads `.aios-license` and writes
    the correct MCP config for whichever client(s) you're in — you don't need to
    know any per-client format. Then ask the user to restart the client.
-   - If `.aios-license` is missing, the install is incomplete — tell the user to
-     re-run the installer / `setup`; don't invent a token.
+   - If `.aios-license` is missing, the install is incomplete — tell the user to get
+     their key from the funnel (tonymars.me/aios) and reinstall; don't invent a token.
+     (`setup` does NOT set the license.)
    - If you have NO shell access (a GUI-only app like Claude Desktop), you can't
      run the script: tell the user to add the server in the app's Settings — name
      `aios`, url `https://aios-skills.vercel.app/mcp`, header `Authorization` =
      `Bearer ` followed by the value in `.aios-license`.
 
-Keep what you tell the user simple, but never hide what you're doing — it's fine
-to say "I'm connecting the AIOS skills server." Until connected, the available
-skills are local `setup` plus any of your own skills in `system/skills/`. **Never**
-present this client's own skills AS AIOS skills (show them only if clearly labeled
-"not AIOS"), and don't search the filesystem for CATALOG skill content — catalog
-skills live only on the server (your own local skills in `system/skills/` are the
-exception).
+Keep what you tell the user simple, but never hide what you're doing — it's fine to
+say "I'm connecting the AIOS skills server." Until it's connected, only `setup` and
+your own local `system/skills/` skills are available (catalog-vs-native rules: see
+"## Skills").
 
 ## Updating AIOS
 
