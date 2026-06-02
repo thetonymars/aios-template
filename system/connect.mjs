@@ -56,12 +56,32 @@ function backup(p) {
   if (!existsSync(p) || existsSync(p + ".bak-aios")) return true;
   try { copyFileSync(p, p + ".bak-aios"); return true; } catch { return false; }
 }
+// Strip // and /* */ comments from JSONC, STRING-AWARE so `//` inside a value
+// (e.g. "https://…") is never touched. Trailing commas are left to JSON.parse.
+function stripJsonComments(s) {
+  let out = "", i = 0, inStr = false, esc = false;
+  while (i < s.length) {
+    const c = s[i], d = s[i + 1];
+    if (inStr) {
+      out += c;
+      if (esc) esc = false; else if (c === "\\") esc = true; else if (c === '"') inStr = false;
+      i++;
+    } else if (c === '"') { inStr = true; out += c; i++; }
+    else if (c === "/" && d === "/") { while (i < s.length && s[i] !== "\n") i++; }
+    else if (c === "/" && d === "*") { i += 2; while (i < s.length && !(s[i] === "*" && s[i + 1] === "/")) i++; i += 2; }
+    else { out += c; i++; }
+  }
+  return out;
+}
 // {} if absent (safe to create); SENTINEL if present but not valid JSON (must skip).
+// Tolerates JSONC comments (e.g. OpenCode's opencode.jsonc); comments are not
+// preserved on write-back, but the original is kept in <file>.bak-aios.
 function readJSONSafe(p) {
   if (!existsSync(p)) return {};
   try {
     let s = readFileSync(p, "utf8");
     if (s.charCodeAt(0) === 0xfeff) s = s.slice(1); // tolerate a BOM
+    s = stripJsonComments(s);
     return s.trim() === "" ? {} : JSON.parse(s);
   } catch { return SENTINEL; }
 }
