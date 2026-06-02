@@ -1,5 +1,5 @@
 ---
-aios_version: 0.4.8
+aios_version: 0.5.0
 last_updated: 2026-06-02
 ---
 
@@ -18,9 +18,11 @@ the `setup` skill on first install, so don't block them. Just proceed normally �
 with ONE guardrail: if `user/user.md` still has `[UPPERCASE_TOKEN]` placeholders
 (not set up yet), **never fabricate the operator's identity or a business**; if a
 task genuinely needs that context and it's missing, ask the user or suggest they
-run `setup`. And a skills question is **always** answered from the AIOS skills
-server (`list_skills` — connect it first per "## Connecting the skills server" if
-needed), **never** with this client's own built-in tools.
+run `setup`. And a skills question is answered from AIOS sources — the remote
+catalog (`list_skills` — connect it first per "## Connecting the skills server" if
+needed) **plus** your local vault skills in `system/skills/` (see "## Skills").
+This client's own built-in skills may be shown too, but only when clearly labeled
+as not AIOS.
 
 Otherwise this read loads the operator (one global person). Do **NOT** auto-load any
 business file — business context is loaded only when a request names a business
@@ -99,23 +101,37 @@ source of the rule — other files point here, they do not restate it.
 > keywords. Explicit = "run/use skill X", "use a skill for this", «запусти
 > скілл», «використай скілл», «использовать скилл».
 
-**Dual-routing rule (this is the single statement — obey exactly):**
+**Skills come from THREE sources — know where each lives:**
 
-1. **`setup` is LOCAL.** It lives at `system/skills/setup/`. On a setup
-   request, read `system/skills/setup/SKILL.md` then its `CONTEXT.md`. It is
-   the only skill shipped in this folder (it bootstraps the system before the
-   skills server is trusted).
-2. **Every other skill is REMOTE**, served by the connected AIOS skills server
-   over MCP. There is NO `system/skills/<other>/` folder — never look for one.
-   To use a non-setup skill:
-   - discover with the `list_skills` MCP tool,
-   - enter with `start_skill` (argument `slug`) — returns SKILL.md + CONTEXT.md,
-   - lazy-load further files with `read_skill_file(skill, path)`.
-   If those MCP tools are absent, the server is not connected — follow
-   **## Connecting the skills server** below to connect it. Do not improvise a
-   skill, and never present this client's own tools/plugins as AIOS skills.
+1. **`setup` — LOCAL bootstrap** at `system/skills/setup/`. On a setup request read
+   `system/skills/setup/SKILL.md` then its `CONTEXT.md`. It ships in the folder
+   because it runs before the skills server is trusted.
+2. **Your own skills — LOCAL** at `system/skills/<slug>/`. Skills the user created;
+   they travel with the vault, so they work in every AI client. Index =
+   `system/skills/skills.md` (read on demand; if its rows and the
+   `system/skills/*/` folders disagree, re-scan each `SKILL.md` and refresh it).
+3. **AIOS catalog — REMOTE** over MCP (the curated/paid catalog): discover with
+   `list_skills`, enter with `start_skill(slug)` (returns SKILL.md + CONTEXT.md),
+   lazy-load with `read_skill_file(skill, path)`. Tools absent → server not
+   connected, see **## Connecting the skills server**. Catalog skill CONTENT lives
+   only on the server — never look for a `system/skills/<catalog-slug>/` folder.
 
-`system/skills/skills.md` is the catalog/lookup the kernel reads first.
+**Creating a skill:** author it under `system/skills/<slug>/` in THIS vault —
+NEVER the client's own skill directory (`~/.claude/skills/` etc.), or it would work
+in only one client. Format + how to index it = `system/skills/skills.md`.
+
+**"What skills do I have?"** (plain language — you run the discovery, never make the
+user type a command): merge all sources, group by source then category
+(`marketing · sales · content · research · assistant` — classification rule in
+`system/skills/skills.md`):
+- 💎 AIOS Premium / 🟢 AIOS Free — remote catalog (tier from `list_skills`)
+- 👤 Your skills — local in `system/skills/`
+- 🔌 From your AI app — this client's own skills (e.g. superpowers), shown but
+  labeled "not AIOS"
+
+Never present a client-native skill AS an AIOS skill (honest provenance, not hiding).
+On a slug clash, show the local 👤 skill separately under its own name — never let it
+silently shadow a catalog skill.
 
 ## Connecting the skills server
 
@@ -142,10 +158,12 @@ don't substitute anything else):
      `Bearer ` followed by the value in `.aios-license`.
 
 Keep what you tell the user simple, but never hide what you're doing — it's fine
-to say "I'm connecting the AIOS skills server." Until connected, the ONLY
-available skill is local `setup`. **Never** present this client's own
-tools/plugins/skills as AIOS skills, and **never** search the filesystem for
-skill content — non-setup skills live only on the server.
+to say "I'm connecting the AIOS skills server." Until connected, the available
+skills are local `setup` plus any of your own skills in `system/skills/`. **Never**
+present this client's own skills AS AIOS skills (show them only if clearly labeled
+"not AIOS"), and don't search the filesystem for CATALOG skill content — catalog
+skills live only on the server (your own local skills in `system/skills/` are the
+exception).
 
 ## Updating AIOS
 

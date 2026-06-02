@@ -1,29 +1,70 @@
-# Skills catalog
+# Skills catalog & authoring
 
-Routing (see AGENTS.md "## Skills" — dual-routing rule):
+Routing lives in AGENTS.md "## Skills" (three sources). This file is the **on-demand
+detail** — the local-skill index, the authoring format, and the category rules. It is
+NOT pre-loaded every session; read it when you create, list, or look up a skill.
 
-## Local (shipped in this folder)
+## setup — local bootstrap
 
-- **setup** — conversational AIOS onboarding. Two auto-detected modes:
-  first-run (operator → `user/user.md` + first business →
-  `business/<slug>/business.md`) and add-business. One focused question per turn —
-  no mega-asks. Captures only the 20% of info that drives 80% of personalization
-  quality. Triggers: 'setup', 'set up aios', 'onboarding', 'add business',
-  'налаштувати aios', 'додай бізнес', 'добавить бизнес'. **Entry:** read
-  `system/skills/setup/SKILL.md`, then `system/skills/setup/CONTEXT.md` for mode
-  detection.
+- **setup** — conversational AIOS onboarding. Two auto-detected modes: first-run
+  (operator → `user/user.md` + first business → `business/<slug>/business.md`) and
+  add-business. One focused question per turn — no mega-asks. Captures only the 20%
+  of info that drives 80% of personalization quality. Triggers: 'setup', 'set up
+  aios', 'onboarding', 'add business', 'налаштувати aios', 'додай бізнес', 'добавить
+  бизнес'. **Entry:** read `system/skills/setup/SKILL.md`, then
+  `system/skills/setup/CONTEXT.md` for mode detection.
 
-`setup` is the ONLY local skill — it bootstraps the system before the skills
-server is trusted.
+`setup` bootstraps the system before the skills server is trusted.
 
-## Remote (served by the AIOS skills server over MCP)
+## Your own skills — local index
 
-Every other skill is delivered remotely. There are no other folders under
-`system/skills/`. To use any non-setup skill:
+Skills the user created live at `system/skills/<slug>/`. They travel with the vault,
+so they work in every AI client. This table is their index — **keep it current:**
+when you create or edit a local skill, add/update its row; if the rows and the
+`system/skills/*/` folders disagree, re-scan each `SKILL.md` frontmatter and rewrite
+the table.
 
-1. Call the `list_skills` MCP tool to see what is available.
-2. Call `start_skill` with argument `slug` to enter it (returns its SKILL.md + CONTEXT.md).
-3. Call `read_skill_file(skill, path)` to lazy-load further files on demand.
+| slug | category | description |
+|------|----------|-------------|
+| _(none yet — created by the user)_ | | |
 
-If `list_skills` / `start_skill` tools are not present, the skills server is not
-connected — tell the user to run the AIOS installer. Do not improvise.
+## AIOS catalog — remote (over MCP)
+
+The curated/paid catalog streams from the AIOS skills server. Discover with
+`list_skills`; enter with `start_skill(slug)`; lazy-load with
+`read_skill_file(skill, path)`. Catalog content lives only on the server — never look
+for a local folder for it. Tools missing → see AGENTS.md
+"## Connecting the skills server".
+
+## Authoring a local skill
+
+`system/skills/<slug>/SKILL.md` — a valid Agent Skill (works in native clients too):
+
+```yaml
+---
+name: my-skill            # lowercase-hyphens, == folder name, ≤64, no "claude"/"anthropic"
+description: <3rd person — what it does + when to use + keywords; user's language ok>
+metadata:
+  category: marketing     # optional; one of the taxonomy below; omit → inferred
+---
+```
+
+- `description` is the ONLY routing signal — no `triggers` array; put keywords in it.
+- Body < 500 lines; push detail into `references/` (loaded on demand).
+- After creating/editing, update the index table above.
+
+## Categories (starter taxonomy — small, grows from use)
+
+`marketing · sales · content · research · assistant`. Classify by **PRIMARY JOB**,
+never by format noun (script, email, sequence, page span categories):
+
+- convert **to a purchase** (has a buy / CTA-to-purchase) → `sales`
+- attract or capture a lead (opt-ins, lead magnets, webinar registration, traffic,
+  ads, positioning) → `marketing`
+- inform / entertain / nurture with NO purchase ask → `content`
+- market / competitor / audience analysis → `research`
+- ops / admin / personal-productivity utilities → `assistant`
+
+Bare "convert" with no explicit buy-CTA → **fail closed to `marketing`**. Give
+closing/conversion email sequences an explicit `sales` tag rather than relying on
+inference.
