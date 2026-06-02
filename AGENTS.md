@@ -1,5 +1,5 @@
 ---
-aios_version: 0.5.0
+aios_version: 0.5.1
 last_updated: 2026-06-02
 ---
 
@@ -106,10 +106,14 @@ source of the rule — other files point here, they do not restate it.
 1. **`setup` — LOCAL bootstrap** at `system/skills/setup/`. On a setup request read
    `system/skills/setup/SKILL.md` then its `CONTEXT.md`. It ships in the folder
    because it runs before the skills server is trusted.
-2. **Your own skills — LOCAL** at `system/skills/<slug>/`. Skills the user created;
-   they travel with the vault, so they work in every AI client. Index =
-   `system/skills/skills.md` (read on demand; if its rows and the
-   `system/skills/*/` folders disagree, re-scan each `SKILL.md` and refresh it).
+2. **Your own skills — LOCAL** at `system/skills/<slug>/` — user-created, travel with
+   the vault (work in every AI client). **Discover by LISTING the `system/skills/`
+   directory** (the source of truth for what exists); `system/skills/skills.md` is
+   only a descriptions cache. Take each folder's description from the index; if a
+   folder is missing from the index (or the index names one that's gone), read its
+   `SKILL.md` frontmatter and refresh the index. **Never report "no local skills"
+   from the index alone — always check the folder first** (the index can be stale,
+   e.g. a skill created in another session).
 3. **AIOS catalog — REMOTE** over MCP (the curated/paid catalog): discover with
    `list_skills`, enter with `start_skill(slug)` (returns SKILL.md + CONTEXT.md),
    lazy-load with `read_skill_file(skill, path)`. Tools absent → server not

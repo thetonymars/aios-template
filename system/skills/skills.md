@@ -19,10 +19,13 @@ NOT pre-loaded every session; read it when you create, list, or look up a skill.
 ## Your own skills — local index
 
 Skills the user created live at `system/skills/<slug>/`. They travel with the vault,
-so they work in every AI client. This table is their index — **keep it current:**
-when you create or edit a local skill, add/update its row; if the rows and the
-`system/skills/*/` folders disagree, re-scan each `SKILL.md` frontmatter and rewrite
-the table.
+so they work in every AI client. **The folders are the source of truth; this table is
+only a descriptions cache.** To answer "what skills do I have", **ALWAYS list the
+`system/skills/` directory first**, then use this table for the descriptions — never
+report "none" from an empty or stale table without checking the folders. Keep the
+table current: when you create or edit a local skill, add/update its row; if a folder
+is missing here (or a row points to a folder that's gone), read the `SKILL.md`
+frontmatter and rewrite the table.
 
 | slug | category | description |
 |------|----------|-------------|
