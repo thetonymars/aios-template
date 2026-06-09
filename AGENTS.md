@@ -1,5 +1,5 @@
 ---
-aios_version: 0.5.3
+aios_version: 0.5.4
 last_updated: 2026-06-02
 ---
 
@@ -12,6 +12,12 @@ business's data lives in `business/<slug>/`.
 
 MANDATORY: your VERY FIRST tool call in every new session MUST be: read
 `user/user.md`. No text output before that read completes.
+
+**Update check (best-effort, right after that read):** run `node system/update.mjs --check`.
+If it reports an update is available, tell the user ONCE, in plain language (e.g. "Доступне
+оновлення AIOS — скажи «онови aios», щоб оновити"). If it says up to date, say nothing. If it
+errors, there's no shell, or no network — skip silently. Never block the session, never
+auto-apply (applying always waits for the user — see "## Updating AIOS").
 
 **First-run note (no hard gate):** new users are told during onboarding to run
 the `setup` skill on first install, so don't block them. Just proceed normally —

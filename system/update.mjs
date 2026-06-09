@@ -15,6 +15,7 @@ import { join, resolve, dirname, sep } from "node:path";
 const ROOT = process.cwd();
 const MANIFEST_URL = "https://aios-skills.vercel.app/template";
 const APPLY = process.argv.includes("--apply");
+const CHECK = process.argv.includes("--check"); // version compare only; for the session-start nudge
 const FORCE_DOWNGRADE = process.argv.includes("--force-downgrade");
 
 // Hardcoded tripwire — directories that hold ONLY user data. No kernel file
@@ -48,10 +49,18 @@ try {
   if (!res.ok) throw new Error(String(res.status));
   manifest = await res.json();
 } catch {
+  if (CHECK) process.exit(0); // best-effort: stay silent when offline so the session never blocks
   console.error("Could not reach the AIOS server. Check your connection and try again.");
   process.exit(1);
 }
 const newVer = manifest.version;
+
+// --check: just compare versions and report one line (the session-start nudge). Never writes.
+if (CHECK) {
+  if (cmpVer(newVer, localVer) > 0) console.log(`AIOS update available: v${localVer} -> v${newVer}. Say "update aios" to apply.`);
+  else console.log(`AIOS is up to date (v${localVer}).`);
+  process.exit(0);
+}
 const fileMap = new Map(manifest.files.map((f) => [f.path, f.content]));
 
 // 3. version / downgrade guard
