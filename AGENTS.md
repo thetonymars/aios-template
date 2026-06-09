@@ -1,5 +1,5 @@
 ---
-aios_version: 0.6.0
+aios_version: 0.6.1
 last_updated: 2026-06-09
 ---
 
@@ -151,6 +151,27 @@ does.** The tag in parens is the access/source, secondary info:
 
 On a slug clash, show both, told apart by the tag — never let one silently shadow the
 other. Keep it simple — no file paths, no "local/remote" plumbing talk.
+
+## Agents
+
+> Agents run **only on explicit invocation** — same rule as skills.
+
+An **agent** is a specialist persona that owns a set of skills — e.g. a marketer, a
+researcher. The persona lives **locally** at `system/agents/<role>/AGENT.md`; the
+skills it uses stream from the AIOS skills server (catalog skills, gated by license).
+So an agent = a local role file + a routing table of skill slugs.
+
+- **Discover:** list the `system/agents/` directory — each subfolder with an
+  `AGENT.md` is an agent. (The folder is the source of truth.)
+- **Activate** (e.g. "use the marketer" / "активуй маркетолога"): read that
+  `system/agents/<role>/AGENT.md` and adopt the persona for the task. Follow its own
+  "## Skills" table — when a sub-task matches, `start_skill(<slug>)` and follow the
+  skill's process. Stay in the persona until the user drops it.
+- **Gated skills:** an agent's skills are normal catalog skills — if `start_skill`
+  returns a lock/upsell, that skill isn't in the user's plan; relay the upsell, don't
+  fake the skill from memory. Tools absent → server not connected (see below).
+- The persona file is the agent; its skills are remote. Don't look for a local
+  `skills/` folder under an agent — there isn't one.
 
 ## Connecting the skills server
 
