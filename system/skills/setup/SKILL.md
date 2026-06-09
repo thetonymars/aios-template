@@ -2,9 +2,9 @@
 name: setup
 description: |
   Conversational AIOS onboarding. Two modes, auto-detected. FIRST-RUN: captures the
-  global operator (one person) → user/user.md, then the first business →
-  business/<slug>/business.md. ADD-BUSINESS: onboards another business into a new
-  business/<slug>/ (operator already done). ~5-7 min, conversational, one focused
+  global operator (one person) → areas/user/user.md, then the first business →
+  areas/business/<slug>/business.md. ADD-BUSINESS: onboards another business into a new
+  areas/business/<slug>/ (operator already done). ~5-7 min, conversational, one focused
   question at a time. Captures only the essentials needed for AI personalization:
   for the operator — name, role, how-to-respond rules; for the business — name,
   niche, and the Jay-Abraham what/how/who triple. Voice, customer profiles, brand
@@ -28,8 +28,8 @@ requires: []
 # Setup
 
 Conversational onboarding that creates the file structure + the minimum context AI
-needs for personalization. AIOS is multi-business: ONE global operator (`user/`) runs
-N businesses (`business/<slug>/`). Setup is the only supported way to onboard either.
+needs for personalization. AIOS is multi-business: ONE global operator (`areas/user/`) runs
+N businesses (`areas/business/<slug>/`). Setup is the only supported way to onboard either.
 
 **Design principles (do NOT violate):**
 - **One focused, crystal-clear question per turn.** Never multi-asks-in-one. The
@@ -50,27 +50,27 @@ N businesses (`business/<slug>/`). Setup is the only supported way to onboard ei
 
 ## Modes (auto-detected — see CONTEXT.md)
 
-- **first-run** — `user/user.md` still has unfilled `[UPPERCASE_TOKEN]` placeholders.
+- **first-run** — `areas/user/user.md` still has unfilled `[UPPERCASE_TOKEN]` placeholders.
   Run Stage 01 (operator) → Stage 02 (first business) → Stage 03 (review).
 - **add-business** — operator already filled (or user explicitly says "add business").
-  Skip Stage 01; Stage 02 creates a NEW `business/<slug>/`; Stage 03 reviews only it.
+  Skip Stage 01; Stage 02 creates a NEW `areas/business/<slug>/`; Stage 03 reviews only it.
 
-Never silently overwrite a filled operator or an existing `business/<slug>/business.md`.
+Never silently overwrite a filled operator or an existing `areas/business/<slug>/business.md`.
 
 ## Stages
 
-1. **01_identity** (first-run only, ~3 min) → `user/user.md` — 4 turns (name, role, how-to-respond, catch-all). Preceded by a one-shot language pick if not yet set.
-2. **02_business** (both modes, ~4 min) → `business/<slug>/business.md` — 6 turns (name, folder, niche, what+how+who, cloud storage [optional], catch-all).
+1. **01_identity** (first-run only, ~3 min) → `areas/user/user.md` — 4 turns (name, role, how-to-respond, catch-all). Preceded by a one-shot language pick if not yet set.
+2. **02_business** (both modes, ~4 min) → `areas/business/<slug>/business.md` — 6 turns (name, folder, niche, what+how+who, cloud storage [optional], catch-all).
 3. **03_review** (~1 min) → friendly recap, corrections, closing.
 
 ## What setup does NOT do
 
 - **Voice work** (voice sample, brand voice, voice strategy) — `brand-architect` owns
-  `user/voice.md` and `business/<slug>/brand/voice.md`.
+  `areas/user/voice.md` and `areas/business/<slug>/brand/voice.md`.
 - **Customer profiles / avatars / ICP deep-dive** — `avatar-passport` owns
-  `business/<slug>/avatars/`.
+  `areas/business/<slug>/avatars/`.
 - **Brand work** (positioning, story, voice strategy) — `brand-architect` owns
-  `business/<slug>/brand/`.
+  `areas/business/<slug>/brand/`.
 - **Deeper operator/business profile** (MBTI, CliftonStrengths, pricing tiers, team
   breakdown, market sizing, methodologies, competitor analysis) — a future
   `deep-profiler` skill (or domain skills) will own these. Setup does not.

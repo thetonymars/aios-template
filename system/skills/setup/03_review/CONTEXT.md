@@ -3,7 +3,7 @@
 Show the user what was captured, accept corrections, finalize. **Mode-aware.**
 
 **Rules (do NOT violate):**
-- **Zero file paths** shown to the user. Never `user/user.md`, `business/<slug>/business.md`, or any path.
+- **Zero file paths** shown to the user. Never `areas/user/user.md`, `areas/business/<slug>/business.md`, or any path.
 - **Zero technical labels.** Don't say "slug", "frontmatter", "placeholder", "field".
 - **Match the user's language.**
 - Reads as a friend summarizing back what they heard — NOT a tool printing fields.

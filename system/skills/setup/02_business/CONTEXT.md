@@ -1,6 +1,6 @@
 # Stage 02 — Business (both modes)
 
-Capture one business → `business/<slug>/business.md`. ~4 min, warm + direct, one
+Capture one business → `areas/business/<slug>/business.md`. ~4 min, warm + direct, one
 question at a time. **Match the user's language.** Never show file paths or
 placeholder tokens to the user. Never use the word "slug" with the user — say "папка".
 
@@ -43,13 +43,13 @@ Maps to: `[SLUG]`.
 Validate the chosen value against `^[a-z][a-z0-9-]*$`:
 - Doesn't match → silently propose another normalized candidate and ask "тоді буде `<candidate>` — підходить?"
 - Equals `user` → reject ("`user` зарезервоване — кинь інший варіант"), ask again.
-- A real business already exists at `business/<slug>/` with a filled `business.md` →
+- A real business already exists at `areas/business/<slug>/` with a filled `business.md` →
   default to asking for a different name. Overwrite ONLY on explicit confirm, and
   tell them plainly: "Це перепише тільки опис цього бізнесу. Все інше у цій папці лишиться як було. Точно?"
-- A stray `business/<slug>/` with missing or bracket-full `business.md` = an incomplete
+- A stray `areas/business/<slug>/` with missing or bracket-full `business.md` = an incomplete
   prior run → complete it in place.
 
-**Reserve the name only. Do NOT create `business/<slug>/` here** — that happens at the
+**Reserve the name only. Do NOT create `areas/business/<slug>/` here** — that happens at the
 write step below, so an abandoned interview leaves no folder.
 
 ---
@@ -115,11 +115,11 @@ Never block.
 
 ## Write step — create the folder NOW, then write
 
-Only here does `business/<slug>/` come into existence. Create `business/<slug>/`, then
+Only here does `areas/business/<slug>/` come into existence. Create `areas/business/<slug>/`, then
 write `business.md`. Before this point nothing on disk was touched — an abandoned
 interview leaves no folder.
 
-### `business/<slug>/business.md` from this template (fill every `[UPPERCASE_TOKEN]`)
+### `areas/business/<slug>/business.md` from this template (fill every `[UPPERCASE_TOKEN]`)
 
 ```
 ---
@@ -163,8 +163,8 @@ demand by other skills: `brand-architect` for `brand/`, `avatar-passport` for `a
 
 ## Done criteria
 
-- `business/<slug>/business.md` exists.
-- `grep '\[' business/<slug>/business.md` returns 0.
+- `areas/business/<slug>/business.md` exists.
+- `grep '\[' areas/business/<slug>/business.md` returns 0.
 - `[DATE]` → today (YYYY-MM-DD).
 - `[WHAT]` / `[HOW]` / `[WHO]` each ≥ one substantive sentence (not single word).
 - Move on: "Записав про '{display name}'. Останнє — короткий перегляд."

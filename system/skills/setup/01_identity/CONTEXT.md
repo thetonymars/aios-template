@@ -2,7 +2,7 @@
 
 Capture the **global operator as a person** — the minimum context AI needs for
 personalization. ~3 min, warm + direct, one question at a time. Target:
-`user/user.md` (fill its `[UPPERCASE_TOKEN]` placeholders in place).
+`areas/user/user.md` (fill its `[UPPERCASE_TOKEN]` placeholders in place).
 
 **Match the user's language from Step 0 onwards.** All example phrases in this
 interview MUST be in that language — never mix English examples into a Ukrainian
@@ -13,7 +13,7 @@ reference; translate it for Russian or English flows.
 
 ### Step 0 — Language (check first, ask only if not set by install)
 
-**First, check `user/user.md`.** If its `[LANGUAGE]` field is already filled
+**First, check `areas/user/user.md`.** If its `[LANGUAGE]` field is already filled
 (i.e., it does NOT contain the literal token `[LANGUAGE]`) — the installer set
 it during Step 0 of install. Use that value, switch all dialogue to that
 language, and proceed directly to Q1. Do NOT show the language picker again.
@@ -96,12 +96,12 @@ Never block on this. The whole point is to give the user a chance to add what we
 
 ## Write step
 
-Replace every `[UPPERCASE_TOKEN]` in `user/user.md` with the captured value. `[DATE]` = today (YYYY-MM-DD).
+Replace every `[UPPERCASE_TOKEN]` in `areas/user/user.md` with the captured value. `[DATE]` = today (YYYY-MM-DD).
 
 ## Done criteria
 
-- Every `[BRACKET]` in `user/user.md` replaced (including `[EXTRA_USER]` — may hold the "пусто" string, but not `[EXTRA_USER]` literally).
-- `grep '\[' user/user.md` returns 0.
+- Every `[BRACKET]` in `areas/user/user.md` replaced (including `[EXTRA_USER]` — may hold the "пусто" string, but not `[EXTRA_USER]` literally).
+- `grep '\[' areas/user/user.md` returns 0.
 - `[ROLE_SENTENCE]` ≥ 6 words (not "я в маркетингу").
 - `[BUGS_LIST]` ≥ 1 concrete item OR explicit "нічого не бісить" (which is fine).
 - Move on naturally: "Записав. Тепер кілька питань про твій бізнес."

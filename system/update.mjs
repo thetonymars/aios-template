@@ -22,7 +22,7 @@ const FORCE_DOWNGRADE = process.argv.includes("--force-downgrade");
 // lives here, so a managed entry under these = a bug or a tampered manifest →
 // refuse it, no matter what managed-files.json claims. (Lives in code, not in
 // the fetched file, so a compromised manifest can't widen its own authority.)
-const DENY_PREFIXES = ["user/", "business/", "_inbox/"];
+const DENY_PREFIXES = ["areas/", "_inbox/"];
 
 const sha = (buf) => createHash("sha256").update(buf).digest("hex");
 function safeRel(p) {
@@ -98,7 +98,7 @@ else console.log("No system files need refreshing.");
 if (conflicts.length) { console.log(`\n${conflicts.length} file(s) YOU changed — will be backed up, then overwritten on --apply:`); conflicts.forEach((c) => console.log(`  ! ${c.p}`)); }
 if (removed.length) { console.log(`\n${removed.length} file(s) are no longer part of AIOS (NOT deleted — remove manually if you want):`); removed.forEach((p) => console.log(`  - ${p}`)); }
 if (blocked.length) { console.log(`\nBlocked for safety (never written):`); blocked.forEach((b) => console.log(`  x ${b}`)); }
-console.log(`\nYour data — user/, business/, projects/, kb/, _inbox/ — is NOT touched.`);
+console.log(`\nYour data — areas/, projects/, calendar/, knowledge/, network/, _inbox/ — is NOT touched.`);
 
 if (!APPLY) { console.log(`\n(Preview only — nothing was written. Re-run with --apply to update.)\n`); process.exit(0); }
 
