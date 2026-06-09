@@ -13,7 +13,8 @@ import { createHash } from "node:crypto";
 import { join, resolve, dirname, sep } from "node:path";
 
 const ROOT = process.cwd();
-const MANIFEST_URL = "https://aios-skills.vercel.app/template";
+// Prod default; overridable for isolated tests (never set in normal use).
+const MANIFEST_URL = process.env.AIOS_MANIFEST_URL || "https://aios-skills.vercel.app/template";
 const APPLY = process.argv.includes("--apply");
 const CHECK = process.argv.includes("--check"); // version compare only; for the session-start nudge
 const FORCE_DOWNGRADE = process.argv.includes("--force-downgrade");
@@ -73,22 +74,44 @@ if (cmpVer(newVer, localVer) === 0) {
   process.exit(0);
 }
 
-// 4. plan — only exact whitelisted paths, each safety-checked
+// 4. plan — consider every path managed by EITHER the local manifest (the current
+// baseline) OR the incoming one. Iterating the INCOMING list is what lets a
+// newly-added kernel file (e.g. a new agent) actually be delivered — the old code
+// iterated only the local list, so a brand-new managed file was never planned and
+// silently never arrived. Conflict detection still uses the LOCAL baseline sha
+// (what THIS install was shipped), so a file that legitimately changed upstream
+// between versions is refreshed, not mistaken for a user edit. Each path is still
+// individually safety-checked (deny-prefix, traversal, symlink) below.
+const incomingMf = (() => {
+  try { return JSON.parse(fileMap.get("system/managed-files.json") || "{}"); } catch { return {}; }
+})();
+const localBaseline = new Map((mf.managed || []).map((e) => [e.path, e.sha256]));
+const managedPaths = [...new Set([
+  ...(mf.managed || []).map((e) => e.path),
+  ...(incomingMf.managed || []).map((e) => e.path),
+])];
+
 const refresh = [], conflicts = [], blocked = [], removed = [];
-for (const entry of mf.managed) {
-  const p = entry.path;
+for (const p of managedPaths) {
   if (DENY_PREFIXES.some((d) => p.startsWith(d))) { blocked.push(`${p} (user-data area)`); continue; }
   if (!safeRel(p)) { blocked.push(`${p} (unsafe path)`); continue; }
   const abs = join(ROOT, p);
   if (existsSync(abs) && lstatSync(abs).isSymbolicLink()) { blocked.push(`${p} (symlink)`); continue; }
   const next = fileMap.get(p);
-  if (next === undefined) { removed.push(p); continue; } // gone from new template — never auto-delete
+  if (next === undefined) {
+    // No content shipped for this managed path. If WE had it locally, it was
+    // dropped from the template → report it (never auto-delete). If it appears
+    // ONLY in the incoming list with no shipped file, that's a malformed/tampered
+    // manifest entry — ignore it (nothing to write, it was never ours to remove).
+    if (localBaseline.has(p)) removed.push(p);
+    continue;
+  }
   if (!existsSync(abs)) { refresh.push({ p, abs, next, reason: "new" }); continue; }
-  const local = readFileSync(abs);
-  const localSha = sha(local);
+  const localSha = sha(readFileSync(abs));
   if (sha(Buffer.from(next)) === localSha) continue; // identical — nothing to do
-  if (entry.sha256 && localSha !== entry.sha256) { conflicts.push({ p, abs, next }); continue; } // user-edited
-  refresh.push({ p, abs, next, reason: "update" });
+  const baseline = localBaseline.get(p);
+  if (baseline && localSha === baseline) { refresh.push({ p, abs, next, reason: "update" }); continue; } // unedited → refresh
+  conflicts.push({ p, abs, next }); // user-edited, or a pre-existing file at a newly-managed path → back up, overwrite on confirm
 }
 
 // 5. report (plain language)
