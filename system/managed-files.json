@@ -1,5 +1,5 @@
 {
-  "aios_version": "0.6.6",
+  "aios_version": "0.6.7",
   "comment": "Lives in system/ (plumbing). Kernel files that `system/update.mjs` may refresh. Everything NOT listed = user data, NEVER touched. update.mjs ALSO enforces a HARDCODED deny-prefix list (areas/, _inbox/) this file cannot override, overwrite-only (never deletes), backs up every changed file to .aios-backup/, refuses absolute/.. /symlink paths, and a downgrade guard. sha256 = as-shipped baseline so update can detect a user-edited kernel file (conflict -> backup + overwrite-on-confirm, never silent). Paths relative to platform root. Regenerate with scripts/gen-managed.mjs after editing any kernel file.",
   "deny_prefixes": [
     "areas/",
@@ -8,7 +8,7 @@
   "managed": [
     {
       "path": "AGENTS.md",
-      "sha256": "ead6c61746221a06e525a979d9ea21cd04dad10fc75d98dc83d5182bc32d61eb"
+      "sha256": "4af7d972004981563c3d566353948a6149e9d7185a55e9645e68f1642acd57a6"
     },
     {
       "path": "CLAUDE.md",
@@ -32,67 +32,67 @@
     },
     {
       "path": "system/skills/skills.md",
-      "sha256": "4ff8c467170e6daff860e42fb6ef2dcc551fd6319a43f6a0f3288f0b2d2aa14a"
+      "sha256": "cd969a03f607896e9c326c0077301aa9aad7a5341d7e5494c9305e33ff83774c"
     },
     {
       "path": "system/skills/setup/SKILL.md",
-      "sha256": "5cb29fff6bb4e729515b139078915c976e0df0db8f0167f7a7030b05091ef9a5"
+      "sha256": "df500a8326d95ad8ac31aa252772d9750a79c8c2d4920088846a0f81d34d3597"
     },
     {
       "path": "system/skills/setup/CONTEXT.md",
-      "sha256": "0f2e8d44a5a1d67b5eba9ecf50953b21e305e89733bc895149e0e264196fcd6a"
+      "sha256": "7c6236d5b4d499d9d8381c4c5c32d40b0699dfdeb72e6f2e4b987e1b9cdf0e14"
     },
     {
       "path": "system/skills/setup/01_identity/CONTEXT.md",
-      "sha256": "3cb244579048814cc4b46248af574e86faa256906a66657e4838f49d974628d8"
+      "sha256": "9fe0b9f1439039adc45781bd239a6bd827802518f8602b4f6fa0ffc8ac40caa1"
     },
     {
       "path": "system/skills/setup/02_business/CONTEXT.md",
-      "sha256": "c33287fb522d8398c1248eda2ce4fbe46c062536cd71ab516fbde645420eea0e"
+      "sha256": "4bb39b4ece640f9478da5df162e2c7d36ce339ee73372d016490df87d4a983ad"
     },
     {
       "path": "system/skills/setup/03_review/CONTEXT.md",
-      "sha256": "b88329c8a1b3df2d3f405b9d7929ffc148d3919ad29cbb24497ca948afaac31a"
+      "sha256": "e7848357245f0d782f2c3042f5d4da313e2d8625538db5f90394528ced435c95"
     },
     {
       "path": "system/agents/assistant/AGENT.md",
-      "sha256": "340469641ab170078512c798ea7e040decd408af46d653394297ab314fceda46"
+      "sha256": "a6fcaad9e39d054e8f88ce2cda58755f7a6542547df43b9d9867d5d5b937ba2a"
     },
     {
       "path": "system/agents/ceo/AGENT.md",
-      "sha256": "a14699c45039639e94b06e1d90fd65a2eee766f3c0114da1f114845ff01557a2"
+      "sha256": "5bc3682431c4963cc82b061542f270111493da1598d7fd219d6528839ab5cc77"
     },
     {
       "path": "system/agents/finance/AGENT.md",
-      "sha256": "38f1497a09cef9b61508cc851a68af92d732ceedf7a9a6d32fbc14dcc99c2727"
+      "sha256": "dbf27e6ceef07e7cb37b3a689855d7f8acba8eabeb3bfbbe6dfcd7acfcdb6191"
     },
     {
       "path": "system/agents/it/AGENT.md",
-      "sha256": "65eeda15687b9f2c39750d08c3fca34972ca3e9020406d3a09acc70bae5f0d87"
+      "sha256": "4de2a5863cdd5e82db7724dbfcdbe1f087f8b6b7b8e088e39c116e96cd5f85c2"
     },
     {
       "path": "system/agents/legal/AGENT.md",
-      "sha256": "e1596d8745c511a549d2775d82df3c08450a199a9cdda06b720ff0a9cdbc5294"
+      "sha256": "589e92fa361acae83c0b4c995d34201e81026afb7669cbf56b67548a295da52b"
     },
     {
       "path": "system/agents/marketer/AGENT.md",
-      "sha256": "bb8df2ed1454f740a1c3946a21f3d5be077e4a9cfcc446a00b7fe4ca84cb179c"
+      "sha256": "2f31c86664a9b4479a37cccf65aa8b518ab54c6797917c5c8272a94d463cc654"
     },
     {
       "path": "system/agents/pm/AGENT.md",
-      "sha256": "36acfa6d6df563bd27da830d380cdfff9c1f9aa9b0aab30cc8dd199e3b5517d1"
+      "sha256": "406e923e03705a8e75eb725d0991c5dd260c96eb635245cf8cbcff6795831ee4"
     },
     {
       "path": "system/agents/product/AGENT.md",
-      "sha256": "ec89d9ae393893c28cdf2e9c00896558bef44e8a3733f8271970b692b7d4a66f"
+      "sha256": "9e62a243b52093151f0c9bd518739494f4ea51507a9897adac5ae88270e8a9f3"
     },
     {
       "path": "system/agents/researcher/AGENT.md",
-      "sha256": "90a56d3cd75aff06d06c4eed079884c4abb5d60d1e863ec65731086f54209bea"
+      "sha256": "bce13f4d02e1d7d8c92cd62aebd66aafd39474c860a0647bde092c8327409203"
     },
     {
       "path": "system/agents/sales/AGENT.md",
-      "sha256": "0d44edcc2c9f2b738f71170dd1c86196c75239712934968d5bc8a88565727210"
+      "sha256": "23d92311d2e591b75e4be7c04b5af0d4ce9ff5748b1e6d2cdc8f6f5fa4c4e12f"
     },
     {
       "path": "knowledge/CONTEXT.md",

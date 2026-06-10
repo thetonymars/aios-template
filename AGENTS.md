@@ -1,5 +1,5 @@
 ---
-aios_version: 0.6.6
+aios_version: 0.6.7
 last_updated: 2026-06-10
 ---
 
@@ -14,8 +14,9 @@ MANDATORY: your VERY FIRST tool call in every new session MUST be: read
 `areas/user/user.md`. No text output before that read completes.
 
 **Update check (best-effort, right after that read):** run `node system/update.mjs --check`.
-If it reports an update is available, tell the user ONCE, in plain language (e.g. "Доступне
-оновлення AIOS — скажи «онови aios», щоб оновити"). If it says up to date, say nothing. If it
+If it reports an update is available, tell the user ONCE, in plain language, in the user's
+language (e.g. "An AIOS update is available — say 'update aios' to apply it"). If it says up
+to date, say nothing. If it
 errors, there's no shell, or no network — skip silently. Never block the session, never
 auto-apply (applying always waits for the user — see "## Updating AIOS").
 
@@ -111,8 +112,8 @@ source of the rule — other files point here, they do not restate it.
 ## Skills
 
 > Skills run **only on explicit invocation**. Never auto-activate on task
-> keywords. Explicit = "run/use skill X", "use a skill for this", «запусти
-> скілл», «використай скілл», «использовать скилл».
+> keywords. Explicit = "run/use skill X", "use a skill for this" — or the
+> equivalent in any language the user speaks.
 
 **Skills come from THREE sources — know where each lives:**
 
@@ -171,7 +172,7 @@ skills come from TWO places:
 
 - **Discover:** list the `system/agents/` directory — each subfolder with an
   `AGENT.md` is an agent. (The folder is the source of truth.)
-- **Activate** (e.g. "use the marketer" / "активуй маркетолога"): read that
+- **Activate** (e.g. "use the marketer" — in any language): read that
   `system/agents/<role>/AGENT.md` and adopt the persona for the task. The persona's
   skills are its marked `list_skills` rows + its marked local skills — when a
   sub-task matches one, start it (catalog → `start_skill(<slug>)`; local → read its
@@ -223,7 +224,7 @@ your own local `system/skills/` skills are available (catalog-vs-native rules: s
 
 ## Updating AIOS
 
-When the user asks to update AIOS ("онови AIOS" / "update aios" / "обнови aios"):
+When the user asks to update AIOS ("update aios" — or the equivalent in any language):
 
 1. Run `node system/update.mjs` (a preview — writes nothing) and show the user
    its plain summary: which system files will refresh, what (if anything) they

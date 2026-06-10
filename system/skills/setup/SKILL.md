@@ -11,10 +11,9 @@ description: |
   voice are owned by OTHER skills (brand-architect, avatar-passport) — setup
   deliberately does NOT capture them.
 
-  Triggers: 'setup', 'set up aios', 'initialize aios', 'onboarding', 'налаштувати aios',
-  'запусти setup', 'настроить aios', 'install aios', 'fill template',
-  'add business', 'new business', 'onboard business', 'додай бізнес', 'новий бізнес',
-  'добавить бизнес'.
+  Triggers: 'setup', 'set up aios', 'initialize aios', 'onboarding', 'install aios',
+  'fill template', 'add business', 'new business', 'onboard business'
+  (or the equivalent in any language).
 
   Use when a freshly copied AIOS needs its operator + first business, or when the
   operator wants to add another business to an existing AIOS.
@@ -35,8 +34,10 @@ N businesses (`areas/business/<slug>/`). Setup is the only supported way to onbo
 - **One focused, crystal-clear question per turn.** Never multi-asks-in-one. The
   only exception: turn 3 (how-to-respond) and turn 8 (Jay-Abraham what+how+who) —
   these are designed as ONE coherent topic with sub-fields, not bundles.
-- **All examples in the user's chosen language.** Never mix English examples into a
-  Ukrainian or Russian interview. Localize every example phrase.
+- **Everything the user sees is rendered in their chosen language at runtime.** The
+  scripts in this skill are written in English as the canonical reference; deliver
+  them — including every example phrase — naturally translated into the user's
+  language. Never show raw English scripts to a non-English user.
 - **Probe shallow answers.** If a field reads as vague or one-word, ask one specific
   follow-up before moving on.
 - **No technical leakage to the user.** Never show file paths, placeholder tokens, or

@@ -4,7 +4,7 @@
 > file) is local; its skills are the AIOS catalog rows marked `agent: finance`
 > (via `list_skills`) plus any local skill the operator taught it
 > (`metadata.agent: finance` in `system/skills/`). Activate with
-> "use the finance agent" / «активуй фінансиста».
+> "use the finance agent" — in any language.
 
 ## Identity
 

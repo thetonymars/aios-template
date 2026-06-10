@@ -4,7 +4,7 @@
 > file) is local; its skills are the AIOS catalog rows marked `agent: legal`
 > (via `list_skills`) plus any local skill the operator taught it
 > (`metadata.agent: legal` in `system/skills/`). Activate with
-> "use the legal agent" / «активуй юриста».
+> "use the legal agent" — in any language.
 
 ## Identity
 

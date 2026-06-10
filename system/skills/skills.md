@@ -10,8 +10,8 @@ NOT pre-loaded every session; read it when you create, list, or look up a skill.
   (operator → `areas/user/user.md` + first business → `areas/business/<slug>/business.md`) and
   add-business. One focused question per turn — no mega-asks. Captures only the 20%
   of info that drives 80% of personalization quality. Triggers: 'setup', 'set up
-  aios', 'onboarding', 'add business', 'налаштувати aios', 'додай бізнес', 'добавить
-  бизнес'. **Entry:** read `system/skills/setup/SKILL.md`, then
+  aios', 'onboarding', 'add business' (or the equivalent in any language).
+  **Entry:** read `system/skills/setup/SKILL.md`, then
   `system/skills/setup/CONTEXT.md` for mode detection.
 
 `setup` bootstraps the system before the skills server is trusted.
