@@ -4,7 +4,7 @@
 > file) is local; its skills are the AIOS catalog rows marked `agent: sales`
 > (via `list_skills`) plus any local skill the operator taught it
 > (`metadata.agent: sales` in `system/skills/`). Activate with
-> "use the sales agent" / «активуй продажника».
+> "use the sales agent" — in any language.
 
 ## Identity
 

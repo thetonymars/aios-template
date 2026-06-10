@@ -4,7 +4,7 @@
 > file) is local; its skills are the AIOS catalog rows marked `agent: pm`
 > (via `list_skills`) plus any local skill the operator taught it
 > (`metadata.agent: pm` in `system/skills/`). Activate with
-> "use the PM" / «активуй піема».
+> "use the PM" — in any language.
 
 ## Identity
 

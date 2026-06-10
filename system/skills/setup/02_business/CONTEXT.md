@@ -2,18 +2,20 @@
 
 Capture one business → `areas/business/<slug>/business.md`. ~4 min, warm + direct, one
 question at a time. **Match the user's language.** Never show file paths or
-placeholder tokens to the user. Never use the word "slug" with the user — say "папка".
+placeholder tokens to the user. Never use the word "slug" with the user — say
+"folder" (in the user's language).
 
-The interview text below is in Ukrainian as the canonical reference; translate it
-for Russian or English flows. All example phrases must be in the user's language.
+The interview script below is written in English as the canonical reference —
+render every script block, including all example phrases, in the user's chosen
+language at runtime.
 
 ---
 
 ### Q5 — Business name (just the name)
 
-> Як називається твій бізнес — повна назва, як її бачить клієнт?
+> What's your business called — the full name, the way a customer sees it?
 
-Maps to: `[BUSINESS_NAME]`.
+Maps to: `[BUSINESS_NAME]`. Deliver in the user's language.
 
 ---
 
@@ -29,23 +31,23 @@ Derive a candidate slug from `[BUSINESS_NAME]`:
 
 Then:
 
-> Як назвати папку твого бізнесу в системі? Одне-два слова англійською або транслітом, без пробілів.
+> What should we call your business's folder in the system? One or two words in English (or transliterated), no spaces.
 >
-> Приклади:
+> Examples:
 > • `nail-salon`
 > • `journaling-app`
 > • `coaching`
 >
-> З назви автоматично пропоную: `<derived-slug>` — підходить, чи інакше?
+> From the name, I'd suggest: `<derived-slug>` — does that work, or something else?
 
-Maps to: `[SLUG]`.
+Maps to: `[SLUG]`. Deliver in the user's language.
 
 Validate the chosen value against `^[a-z][a-z0-9-]*$`:
-- Doesn't match → silently propose another normalized candidate and ask "тоді буде `<candidate>` — підходить?"
-- Equals `user` → reject ("`user` зарезервоване — кинь інший варіант"), ask again.
+- Doesn't match → silently propose another normalized candidate and ask "then it'll be `<candidate>` — does that work?"
+- Equals `user` → reject ("`user` is reserved — give me another one"), ask again.
 - A real business already exists at `areas/business/<slug>/` with a filled `business.md` →
   default to asking for a different name. Overwrite ONLY on explicit confirm, and
-  tell them plainly: "Це перепише тільки опис цього бізнесу. Все інше у цій папці лишиться як було. Точно?"
+  tell them plainly: "This will overwrite only this business's description. Everything else in that folder stays as it was. Sure?"
 - A stray `areas/business/<slug>/` with missing or bracket-full `business.md` = an incomplete
   prior run → complete it in place.
 
@@ -56,58 +58,58 @@ write step below, so an abandoned interview leaves no folder.
 
 ### Q7 — Niche
 
-> В якій ніші цей бізнес працює? Одне-два слова.
+> What niche does this business work in? One or two words.
 >
-> Приклади:
-> • копірайтинг для онлайн-шкіл
-> • приватний журналінг
-> • коучинг жінок 45+
+> Examples:
+> • copywriting for online schools
+> • private journaling
+> • coaching for women 45+
 
-Maps to: `[NICHE]`.
+Maps to: `[NICHE]`. Deliver in the user's language.
 
-**Probe rule:** if the answer is ≤2 words AND extremely generic ("бізнес", "маркетинг", "tech") — ask "А конкретніше — для якої аудиторії чи в якому сегменті?" Then accept.
+**Probe rule:** if the answer is ≤2 words AND extremely generic (e.g. "business", "marketing", "tech" — in any language) — ask "More specifically — for what audience, or in which segment?" Then accept.
 
 ---
 
 ### Q8 — What + How + Who (Jay Abraham Q15, adapted) — ONE coherent ask
 
-> Тепер коротко про сам бізнес — щоб AI розумів суть. Три речі однією відповіддю:
+> Now briefly about the business itself — so the AI gets the essence. Three things in one answer:
 >
-> 1. **Що** ти продаєш — конкретний продукт / пакет / робота (не «послуги» взагалі)
-> 2. **Як** ти продаєш — *як клієнт до тебе доходить і яким способом ти продаєш*. Приклади:
->    • контент в Instagram → DM → діагностичний дзвінок → пакет
->    • реклама на Facebook → лендінг → вебінар → курс
->    • холодна розсилка → відповідь → дзвінок
->    • сарафанне радіо + презентації
-> 3. **Кому** ти продаєш — конкретний сегмент в межах ніші. Не «всі», не «бізнеси». Хто саме платить — 1-2 речення про реального клієнта.
+> 1. **What** you sell — a specific product / package / piece of work (not just "services")
+> 2. **How** you sell — *how a customer reaches you and the way the sale happens*. Examples:
+>    • Instagram content → DM → discovery call → package
+>    • Facebook ads → landing page → webinar → course
+>    • cold outreach → reply → call
+>    • word of mouth + presentations
+> 3. **Who** you sell to — a specific segment within the niche. Not "everyone", not "businesses". Who actually pays — 1-2 sentences about a real customer.
 
-Maps to: `[WHAT]`, `[HOW]`, `[WHO]`.
+Maps to: `[WHAT]`, `[HOW]`, `[WHO]`. Deliver in the user's language.
 
 **Probe rules:**
-- If `[WHO]` is "всі" / "малий бізнес" / "люди" / similar non-segment — ask: "А конкретніше — хто саме у цій ніші платить тобі? Опиши реального клієнта."
-- If `[HOW]` is just a delivery model ("підписка", "курс") and doesn't describe how the customer ACTUALLY gets to the purchase — ask: "А як саме клієнт доходить до покупки — звідки вони беруться, що з ними відбувається до продажу?"
-- If `[WHAT]` is "послуги" / "консультації" without specifics — ask: "Що саме у цьому пакеті — конкретніше?"
+- If `[WHO]` is "everyone" / "small business" / "people" / a similar non-segment (in any language) — ask: "More specifically — who in this niche actually pays you? Describe a real customer."
+- If `[HOW]` is just a delivery model ("subscription", "a course") and doesn't describe how the customer ACTUALLY gets to the purchase — ask: "How exactly does a customer get to the purchase — where do they come from, and what happens to them before the sale?"
+- If `[WHAT]` is "services" / "consulting" without specifics (in any language) — ask: "What exactly is inside that package — be specific?"
 
 ---
 
 ### Q9 — Cloud storage (optional, one quick ask)
 
-> Тримаєш файли цього бізнесу в хмарі (Google Drive, Dropbox, тощо)? Якщо так — кинь шлях/назву теки. Якщо ні — пропусти.
+> Do you keep this business's files in the cloud (Google Drive, Dropbox, etc.)? If yes — drop me the path / folder name. If not — skip.
 
-Maps to: `[CLOUD_STORAGE]`. Yes → record what they say. No / skip → set to `—`. Setup moves nothing — it only records the path. Each business has its OWN storage, so this lives in THIS business's file.
+Maps to: `[CLOUD_STORAGE]`. Deliver in the user's language. Yes → record what they say. No / skip → set to `—`. Setup moves nothing — it only records the path. Each business has its OWN storage, so this lives in THIS business's file.
 
 ---
 
 ### Q10 — Catch-all (anything else important about this business)
 
-> Що ще ти хочеш, щоб я завжди пам'ятав про цей бізнес?
+> What else do you want me to always remember about this business?
 >
-> Що завгодно про нього, чого я не запитав, але важливо для роботи. Або «нічого».
+> Anything about it I didn't ask, but that matters for the work. Or "nothing".
 
-Maps to: `[EXTRA_BUSINESS]`.
+Maps to: `[EXTRA_BUSINESS]`. Deliver in the user's language.
 
 - If they share something: store raw text (trim to ~5 lines max — keep most important if longer).
-- If they skip: store as `"(пусто — додаси через setup, якщо захочеш)"`.
+- If they skip: store as `"(empty — add via setup later if you want)"` *rendered in the user's language*.
 
 Never block.
 
@@ -167,4 +169,4 @@ demand by other skills: `brand-architect` for `brand/`, `avatar-passport` for `a
 - `grep '\[' areas/business/<slug>/business.md` returns 0.
 - `[DATE]` → today (YYYY-MM-DD).
 - `[WHAT]` / `[HOW]` / `[WHO]` each ≥ one substantive sentence (not single word).
-- Move on: "Записав про '{display name}'. Останнє — короткий перегляд."
+- Move on, in the user's language: "Got it — '{display name}' is noted. Last thing — a quick review."

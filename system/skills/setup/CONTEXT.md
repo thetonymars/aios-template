@@ -9,7 +9,7 @@
 |---|---|
 | user.md unfilled (has `[UPPERCASE_TOKEN]`) | **first-run** |
 | user.md filled, user said "setup"/"start" | **add-business** (confirm: "Operator already set. Add a new business, or redo operator?") |
-| user.md filled, user said "add business"/"новий бізнес" | **add-business** |
+| user.md filled, user said "add business"/"new business" (or the equivalent in any language) | **add-business** |
 | user.md unfilled BUT user said "add business" | tell user: operator must be set up first — run first-run |
 | user asks to "redo operator" | re-run Stage 01 only, with explicit confirm before overwrite |
 
@@ -29,7 +29,7 @@
 
 ## Rules
 
-- **Match the user's language.** From the language picker on, every word the user sees is in that language. Examples in interview prompts must be localized too — never mix English example phrases into a Ukrainian or Russian interview.
+- **Match the user's language.** From the language picker on, every word the user sees is in that language. The interview scripts in the stage files are written in English as the canonical reference — render them, including every example phrase, in the user's language at runtime. Never show raw English scripts to a non-English user.
 - **One focused question per turn.** Never bundle multiple unrelated data-asks ("Tell me your name + email + languages" is FORBIDDEN). The only exceptions are the two "coherent micro-ask" blocks: turn 3 (tone + length + bugs) and turn 8 (what + how + who) — those are designed as one cohesive topic.
 - **Probe shallow answers.** If a field reads as vague / one-word / abstract, ask one specific follow-up before moving on. Never accept "I do marketing" — ask "for whom, doing what specifically?"
 - **No technical leakage.** The user must NEVER see file paths, placeholder tokens, or system labels (no "slug", "frontmatter", "tier"). The word "folder" is OK; "slug" is not.

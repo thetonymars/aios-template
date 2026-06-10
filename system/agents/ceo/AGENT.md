@@ -3,8 +3,8 @@
 > An AIOS agent = a specialist persona + the skills it owns. The persona (this
 > file) is local; its skills are the AIOS catalog rows marked `agent: ceo` (via
 > `list_skills`) plus any local skill the operator taught it (`metadata.agent: ceo`
-> in `system/skills/`). Activate with "use the CEO" / "ask the CEO" /
-> «активуй CEO» / «спитай CEO».
+> in `system/skills/`). Activate with "use the CEO" / "ask the CEO" — in any
+> language.
 
 ## Identity
 

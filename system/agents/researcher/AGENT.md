@@ -4,7 +4,7 @@
 > file) is local; its skills are the AIOS catalog rows marked `agent: researcher`
 > (via `list_skills`) plus any local skill the operator taught it
 > (`metadata.agent: researcher` in `system/skills/`). Activate with
-> "use the researcher" / «активуй дослідника».
+> "use the researcher" — in any language.
 
 ## Identity
 
