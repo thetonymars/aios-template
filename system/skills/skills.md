@@ -27,9 +27,9 @@ table current: when you create or edit a local skill, add/update its row; if a f
 is missing here (or a row points to a folder that's gone), read the `SKILL.md`
 frontmatter and rewrite the table.
 
-| slug | category | description |
-|------|----------|-------------|
-| _(none yet — created by the user)_ | | |
+| slug | category | agent | description |
+|------|----------|-------|-------------|
+| _(none yet — created by the user)_ | | | |
 
 ## AIOS catalog — remote (over MCP)
 
@@ -49,10 +49,15 @@ name: my-skill            # lowercase-hyphens, == folder name, ≤64, no "claude
 description: <3rd person — what it does + when to use + keywords; user's language ok>
 metadata:
   category: marketing     # optional; one of the taxonomy below; omit → inferred
+  agent: marketer         # optional; "teaches" this skill to that agent (role =
+                          # a folder name under system/agents/ — see AGENTS.md "## Agents")
 ---
 ```
 
 - `description` is the ONLY routing signal — no `triggers` array; put keywords in it.
+- `agent` makes the skill part of that agent's toolkit — the persona claims every
+  local skill whose `metadata.agent` names its role. No agent file is ever edited.
+- Don't use the `aios-` slug prefix — it's reserved for official catalog skills.
 - Body < 500 lines; push detail into `references/` (loaded on demand).
 - After creating/editing, update the index table above.
 

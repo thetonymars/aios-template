@@ -1,5 +1,5 @@
 ---
-aios_version: 0.6.5
+aios_version: 0.6.6
 last_updated: 2026-06-10
 ---
 
@@ -135,7 +135,10 @@ source of the rule — other files point here, they do not restate it.
 
 **Creating a skill:** author it under `system/skills/<slug>/` in THIS vault —
 NEVER the client's own skill directory (`~/.claude/skills/` etc.), or it would work
-in only one client. Format + how to index it = `system/skills/skills.md`.
+in only one client. Format + how to index it = `system/skills/skills.md`. To give
+the skill to an agent ("teach" it), set `agent: <role>` in the skill's frontmatter
+`metadata` — see "## Agents". The free `aios-skill-creator` catalog skill guides
+the whole flow.
 
 **"What skills do I have?"** (plain language — you run the discovery, never make the
 user type a command). Present skills **grouped by WHAT THEY'RE FOR** — the job they do
@@ -157,27 +160,36 @@ other. Keep it simple — no file paths, no "local/remote" plumbing talk.
 > Agents run **only on explicit invocation** — same rule as skills.
 
 An **agent** is a specialist persona that owns a set of skills — e.g. a marketer, a
-researcher. The persona lives **locally** at `system/agents/<role>/AGENT.md`; the
-skills it uses stream from the AIOS skills server (catalog skills, gated by license).
-**Which skills belong to which agent is decided on the server:** each `list_skills`
-row carries its owner (`agent: <role>`, role = the agent's folder name), so an
-agent's skill set can grow without any local file changing.
+researcher. The persona lives **locally** at `system/agents/<role>/AGENT.md`; its
+skills come from TWO places:
+
+1. **AIOS catalog (remote, gated by license):** each `list_skills` row carries its
+   owner (`agent: <role>`, role = the agent's folder name) — decided on the server,
+   so an agent's catalog set can grow without any local file changing.
+2. **Skills the operator taught it (local):** any skill under `system/skills/<slug>/`
+   whose SKILL.md frontmatter `metadata` has `agent: <role>` belongs to that agent.
 
 - **Discover:** list the `system/agents/` directory — each subfolder with an
   `AGENT.md` is an agent. (The folder is the source of truth.)
 - **Activate** (e.g. "use the marketer" / "активуй маркетолога"): read that
   `system/agents/<role>/AGENT.md` and adopt the persona for the task. The persona's
-  skills are the `list_skills` rows marked with its role — when a sub-task matches
-  one, `start_skill(<slug>)` and follow the skill's process. Stay in the persona
-  until the user drops it.
-- **Not sure which agent?** Activate the `ceo` (if present) — it's the team's
-  router: it takes strategy/priority questions itself and hands everything else
-  to the right specialist.
-- **Gated skills:** an agent's skills are normal catalog skills — if `start_skill`
-  returns a lock/upsell, that skill isn't in the user's plan; relay the upsell, don't
+  skills are its marked `list_skills` rows + its marked local skills — when a
+  sub-task matches one, start it (catalog → `start_skill(<slug>)`; local → read its
+  SKILL.md) and follow the skill's process. Stay in the persona until the user
+  drops it.
+- **An agent with NO skills yet still works** — it answers with its expertise and
+  judgment, and the user can **teach it**: create a local skill and set
+  `agent: <role>` in its frontmatter `metadata` (the free `aios-skill-creator`
+  catalog skill walks through this). Never fake a CATALOG skill from memory.
+- **Not sure which agent?** Activate the `ceo` — it's the team's router: it takes
+  strategy/priority questions itself and hands everything else to the right
+  specialist.
+- **Gated skills:** catalog skills are license-gated — if `start_skill` returns a
+  lock/upsell, that skill isn't in the user's plan; relay the upsell, don't
   fake the skill from memory. Tools absent → server not connected (see below).
-- The persona file is the agent; its skills are remote. Don't look for a local
-  `skills/` folder under an agent — there isn't one.
+- The persona file is the agent; don't look for a `skills/` folder under an agent —
+  there isn't one (catalog skills are remote; taught skills live in
+  `system/skills/`).
 
 ## Connecting the skills server
 

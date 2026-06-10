@@ -1,5 +1,5 @@
 {
-  "aios_version": "0.6.5",
+  "aios_version": "0.6.6",
   "comment": "Lives in system/ (plumbing). Kernel files that `system/update.mjs` may refresh. Everything NOT listed = user data, NEVER touched. update.mjs ALSO enforces a HARDCODED deny-prefix list (areas/, _inbox/) this file cannot override, overwrite-only (never deletes), backs up every changed file to .aios-backup/, refuses absolute/.. /symlink paths, and a downgrade guard. sha256 = as-shipped baseline so update can detect a user-edited kernel file (conflict -> backup + overwrite-on-confirm, never silent). Paths relative to platform root. Regenerate with scripts/gen-managed.mjs after editing any kernel file.",
   "deny_prefixes": [
     "areas/",
@@ -8,7 +8,7 @@
   "managed": [
     {
       "path": "AGENTS.md",
-      "sha256": "1c709368f815f06d300326cbd32ec7cac949b176dafc5512d0f284ff5da3e8c1"
+      "sha256": "ead6c61746221a06e525a979d9ea21cd04dad10fc75d98dc83d5182bc32d61eb"
     },
     {
       "path": "CLAUDE.md",
@@ -32,7 +32,7 @@
     },
     {
       "path": "system/skills/skills.md",
-      "sha256": "f534fcd4f9ed350421b805f7ac909f0e18d63d2c3a735c840467992c09bf47af"
+      "sha256": "4ff8c467170e6daff860e42fb6ef2dcc551fd6319a43f6a0f3288f0b2d2aa14a"
     },
     {
       "path": "system/skills/setup/SKILL.md",
@@ -55,16 +55,44 @@
       "sha256": "b88329c8a1b3df2d3f405b9d7929ffc148d3919ad29cbb24497ca948afaac31a"
     },
     {
+      "path": "system/agents/assistant/AGENT.md",
+      "sha256": "340469641ab170078512c798ea7e040decd408af46d653394297ab314fceda46"
+    },
+    {
       "path": "system/agents/ceo/AGENT.md",
-      "sha256": "5fd64cdba6ad78cb0c8b4f00cdcf94142af9eeac32ff7d553b85dda7b494367f"
+      "sha256": "a14699c45039639e94b06e1d90fd65a2eee766f3c0114da1f114845ff01557a2"
+    },
+    {
+      "path": "system/agents/finance/AGENT.md",
+      "sha256": "38f1497a09cef9b61508cc851a68af92d732ceedf7a9a6d32fbc14dcc99c2727"
+    },
+    {
+      "path": "system/agents/it/AGENT.md",
+      "sha256": "65eeda15687b9f2c39750d08c3fca34972ca3e9020406d3a09acc70bae5f0d87"
+    },
+    {
+      "path": "system/agents/legal/AGENT.md",
+      "sha256": "e1596d8745c511a549d2775d82df3c08450a199a9cdda06b720ff0a9cdbc5294"
     },
     {
       "path": "system/agents/marketer/AGENT.md",
-      "sha256": "92a40b69bf52631f1920a126cda3df91a550009030e9cd4de5a816c7896c3c1e"
+      "sha256": "bb8df2ed1454f740a1c3946a21f3d5be077e4a9cfcc446a00b7fe4ca84cb179c"
+    },
+    {
+      "path": "system/agents/pm/AGENT.md",
+      "sha256": "36acfa6d6df563bd27da830d380cdfff9c1f9aa9b0aab30cc8dd199e3b5517d1"
+    },
+    {
+      "path": "system/agents/product/AGENT.md",
+      "sha256": "ec89d9ae393893c28cdf2e9c00896558bef44e8a3733f8271970b692b7d4a66f"
     },
     {
       "path": "system/agents/researcher/AGENT.md",
-      "sha256": "bd1e8b894f1b05346308170c373c21433a9b43216e1bda000b1aeb50a518bf14"
+      "sha256": "90a56d3cd75aff06d06c4eed079884c4abb5d60d1e863ec65731086f54209bea"
+    },
+    {
+      "path": "system/agents/sales/AGENT.md",
+      "sha256": "0d44edcc2c9f2b738f71170dd1c86196c75239712934968d5bc8a88565727210"
     },
     {
       "path": "knowledge/CONTEXT.md",
