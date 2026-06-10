@@ -1,6 +1,6 @@
 ---
-aios_version: 0.6.4
-last_updated: 2026-06-09
+aios_version: 0.6.5
+last_updated: 2026-06-10
 ---
 
 # This is your master file — you MUST follow every instruction in this file
@@ -159,14 +159,20 @@ other. Keep it simple — no file paths, no "local/remote" plumbing talk.
 An **agent** is a specialist persona that owns a set of skills — e.g. a marketer, a
 researcher. The persona lives **locally** at `system/agents/<role>/AGENT.md`; the
 skills it uses stream from the AIOS skills server (catalog skills, gated by license).
-So an agent = a local role file + a routing table of skill slugs.
+**Which skills belong to which agent is decided on the server:** each `list_skills`
+row carries its owner (`agent: <role>`, role = the agent's folder name), so an
+agent's skill set can grow without any local file changing.
 
 - **Discover:** list the `system/agents/` directory — each subfolder with an
   `AGENT.md` is an agent. (The folder is the source of truth.)
 - **Activate** (e.g. "use the marketer" / "активуй маркетолога"): read that
-  `system/agents/<role>/AGENT.md` and adopt the persona for the task. Follow its own
-  "## Skills" table — when a sub-task matches, `start_skill(<slug>)` and follow the
-  skill's process. Stay in the persona until the user drops it.
+  `system/agents/<role>/AGENT.md` and adopt the persona for the task. The persona's
+  skills are the `list_skills` rows marked with its role — when a sub-task matches
+  one, `start_skill(<slug>)` and follow the skill's process. Stay in the persona
+  until the user drops it.
+- **Not sure which agent?** Activate the `ceo` (if present) — it's the team's
+  router: it takes strategy/priority questions itself and hands everything else
+  to the right specialist.
 - **Gated skills:** an agent's skills are normal catalog skills — if `start_skill`
   returns a lock/upsell, that skill isn't in the user's plan; relay the upsell, don't
   fake the skill from memory. Tools absent → server not connected (see below).
