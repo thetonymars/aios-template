@@ -1,6 +1,6 @@
 ---
-aios_version: 0.6.7
-last_updated: 2026-06-10
+aios_version: 0.6.8
+last_updated: 2026-08-04
 ---
 
 # This is your master file — you MUST follow every instruction in this file
@@ -210,7 +210,7 @@ don't substitute anything else):
    the correct MCP config for whichever client(s) you're in — you don't need to
    know any per-client format. Then ask the user to restart the client.
    - If `.aios-license` is missing, the install is incomplete — tell the user to get
-     their key from the funnel (tonymars.me/aios) and reinstall; don't invent a token.
+     their key from the funnel (yellows.one/aios) and reinstall; don't invent a token.
      (`setup` does NOT set the license.)
    - If you have NO shell access (a GUI-only app like Claude Desktop), you can't
      run the script: tell the user to add the server in the app's Settings — name
