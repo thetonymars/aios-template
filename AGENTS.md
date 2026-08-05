@@ -1,5 +1,5 @@
 ---
-aios_version: 0.7.0
+aios_version: 0.7.1
 last_updated: 2026-08-05
 ---
 
@@ -228,6 +228,10 @@ When the user asks to update AIOS ("update aios" — or the equivalent in any la
    its plain summary: which system files will refresh, what (if anything) they
    edited, and the reminder that their data is untouched.
 2. On the user's confirmation, run `node system/update.mjs --apply`.
+3. If the summary mentions folders that will be MOVED, run the same command **once
+   more** afterwards and show the result — an update that replaces `update.mjs`
+   itself cannot run the new version's move in the same pass, so it lands on the
+   next run. The script says plainly when a move is still pending.
 
 The script refreshes ONLY the kernel files in `system/managed-files.json`,
 backs up everything it changes to `.aios-backup/`, and never touches user data
