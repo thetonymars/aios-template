@@ -2,7 +2,7 @@
 
 Capture the **global operator as a person** — the minimum context AI needs for
 personalization. ~3 min, warm + direct, one question at a time. Target:
-`areas/user/user.md` (fill its `[UPPERCASE_TOKEN]` placeholders in place).
+`user/user.md` (fill its `[UPPERCASE_TOKEN]` placeholders in place).
 
 **Match the user's language from Step 0 onwards.** The interview script below is
 written in English as the canonical reference — render every script block,
@@ -13,7 +13,7 @@ show raw English scripts to a non-English user.
 
 ### Step 0 — Language (check first, ask only if not set by install)
 
-**First, check `areas/user/user.md`.** If its `[LANGUAGE]` field is already filled
+**First, check `user/user.md`.** If its `[LANGUAGE]` field is already filled
 (i.e., it does NOT contain the literal token `[LANGUAGE]`) — the installer set
 it during Step 0 of install. Use that value, switch all dialogue to that
 language, and proceed directly to Q1. Do NOT show the language picker again.
@@ -98,12 +98,12 @@ Never block on this. The whole point is to give the user a chance to add what we
 
 ## Write step
 
-Replace every `[UPPERCASE_TOKEN]` in `areas/user/user.md` with the captured value. `[DATE]` = today (YYYY-MM-DD).
+Replace every `[UPPERCASE_TOKEN]` in `user/user.md` with the captured value. `[DATE]` = today (YYYY-MM-DD).
 
 ## Done criteria
 
-- Every `[BRACKET]` in `areas/user/user.md` replaced (including `[EXTRA_USER]` — may hold the "(empty — …)" string, but not `[EXTRA_USER]` literally).
-- `grep '\[' areas/user/user.md` returns 0.
+- Every `[BRACKET]` in `user/user.md` replaced (including `[EXTRA_USER]` — may hold the "(empty — …)" string, but not `[EXTRA_USER]` literally).
+- `grep '\[' user/user.md` returns 0.
 - `[ROLE_SENTENCE]` ≥ 6 words (not "I'm in marketing").
 - `[BUGS_LIST]` ≥ 1 concrete item OR an explicit "nothing annoys me" (which is fine).
 - Move on naturally, in the user's language: "Got it. Now a few questions about your business."

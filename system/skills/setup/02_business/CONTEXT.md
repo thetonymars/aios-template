@@ -1,6 +1,6 @@
 # Stage 02 — Business (both modes)
 
-Capture one business → `areas/business/<slug>/business.md`. ~4 min, warm + direct, one
+Capture one business → `business/<slug>/business.md`. ~4 min, warm + direct, one
 question at a time. **Match the user's language.** Never show file paths or
 placeholder tokens to the user. Never use the word "slug" with the user — say
 "folder" (in the user's language).
@@ -45,13 +45,13 @@ Maps to: `[SLUG]`. Deliver in the user's language.
 Validate the chosen value against `^[a-z][a-z0-9-]*$`:
 - Doesn't match → silently propose another normalized candidate and ask "then it'll be `<candidate>` — does that work?"
 - Equals `user` → reject ("`user` is reserved — give me another one"), ask again.
-- A real business already exists at `areas/business/<slug>/` with a filled `business.md` →
+- A real business already exists at `business/<slug>/` with a filled `business.md` →
   default to asking for a different name. Overwrite ONLY on explicit confirm, and
   tell them plainly: "This will overwrite only this business's description. Everything else in that folder stays as it was. Sure?"
-- A stray `areas/business/<slug>/` with missing or bracket-full `business.md` = an incomplete
+- A stray `business/<slug>/` with missing or bracket-full `business.md` = an incomplete
   prior run → complete it in place.
 
-**Reserve the name only. Do NOT create `areas/business/<slug>/` here** — that happens at the
+**Reserve the name only. Do NOT create `business/<slug>/` here** — that happens at the
 write step below, so an abandoned interview leaves no folder.
 
 ---
@@ -117,11 +117,11 @@ Never block.
 
 ## Write step — create the folder NOW, then write
 
-Only here does `areas/business/<slug>/` come into existence. Create `areas/business/<slug>/`, then
+Only here does `business/<slug>/` come into existence. Create `business/<slug>/`, then
 write `business.md`. Before this point nothing on disk was touched — an abandoned
 interview leaves no folder.
 
-### `areas/business/<slug>/business.md` from this template (fill every `[UPPERCASE_TOKEN]`)
+### `business/<slug>/business.md` from this template (fill every `[UPPERCASE_TOKEN]`)
 
 ```
 ---
@@ -165,8 +165,8 @@ demand by other skills: `brand-architect` for `brand/`, `avatar-passport` for `a
 
 ## Done criteria
 
-- `areas/business/<slug>/business.md` exists.
-- `grep '\[' areas/business/<slug>/business.md` returns 0.
+- `business/<slug>/business.md` exists.
+- `grep '\[' business/<slug>/business.md` returns 0.
 - `[DATE]` → today (YYYY-MM-DD).
 - `[WHAT]` / `[HOW]` / `[WHO]` each ≥ one substantive sentence (not single word).
 - Move on, in the user's language: "Got it — '{display name}' is noted. Last thing — a quick review."
