@@ -49,6 +49,22 @@ if (!existsSync(mfPath)) {
 const mf = JSON.parse(readFileSync(mfPath, "utf8"));
 const localVer = mf.aios_version;
 
+const blockedMoves = [];
+
+// 1a. LAYOUT MIGRATION (0.7): the operator and the businesses moved out of areas/
+// to the root. The kernel we are about to write routes to user/ and business/, so the
+// data has to move with it or every path in the new AGENTS.md points at nothing.
+// This is the ONE case where the updater touches user data — it MOVES, never deletes,
+// and copies to the backup first. Skipped entirely once there is no areas/ left.
+const migrations = [];
+for (const [from, to] of [["areas/user", "user"], ["areas/business", "business"]]) {
+  const src = join(ROOT, from), dest = join(ROOT, to);
+  if (!existsSync(src)) continue;
+  if (lstatSync(src).isSymbolicLink()) { blockedMoves.push(`${from} (symlink)`); continue; }
+  if (existsSync(dest) && readdirSync(dest).length) { blockedMoves.push(`${from} → ${to} (${to}/ already exists and is not empty — merge it by hand)`); continue; }
+  migrations.push({ from, to, src, dest });
+}
+
 // 2. fetch the latest template
 let manifest;
 try {
@@ -65,6 +81,7 @@ const newVer = manifest.version;
 // --check: just compare versions and report one line (the session-start nudge). Never writes.
 if (CHECK) {
   if (cmpVer(newVer, localVer) > 0) console.log(`AIOS update available: v${localVer} -> v${newVer}. Say "update aios" to apply.`);
+  else if (migrations.length) console.log(`AIOS has a pending folder move (${migrations.map((m) => m.from).join(", ")}). Say "update aios" to finish it.`);
   else console.log(`AIOS is up to date (v${localVer}).`);
   process.exit(0);
 }
@@ -75,10 +92,13 @@ if (cmpVer(newVer, localVer) < 0 && !FORCE_DOWNGRADE) {
   console.error(`Server version (${newVer}) is older than yours (${localVer}). Refusing downgrade.`);
   process.exit(1);
 }
-if (cmpVer(newVer, localVer) === 0) {
+if (cmpVer(newVer, localVer) === 0 && !migrations.length) {
   console.log(`AIOS is already up to date (v${localVer}).`);
   process.exit(0);
 }
+// Same version + a pending move = this script was delivered by the PREVIOUS run
+// (the old updater could not run code it was still installing). Finish the job.
+if (cmpVer(newVer, localVer) === 0) console.log(`\nAIOS v${localVer} — finishing the folder move started by the last update.`);
 
 // 4. plan — consider every path managed by EITHER the local manifest (the current
 // baseline) OR the incoming one. Iterating the INCOMING list is what lets a
@@ -96,22 +116,6 @@ const managedPaths = [...new Set([
   ...(mf.managed || []).map((e) => e.path),
   ...(incomingMf.managed || []).map((e) => e.path),
 ])];
-
-const blockedMoves = [];
-
-// 4a. LAYOUT MIGRATION (0.7): the operator and the businesses moved out of areas/
-// to the root. The kernel we are about to write routes to user/ and business/, so the
-// data has to move with it or every path in the new AGENTS.md points at nothing.
-// This is the ONE case where the updater touches user data — it MOVES, never deletes,
-// and copies to the backup first. Skipped entirely once there is no areas/ left.
-const migrations = [];
-for (const [from, to] of [["areas/user", "user"], ["areas/business", "business"]]) {
-  const src = join(ROOT, from), dest = join(ROOT, to);
-  if (!existsSync(src)) continue;
-  if (lstatSync(src).isSymbolicLink()) { blockedMoves.push(`${from} (symlink)`); continue; }
-  if (existsSync(dest) && readdirSync(dest).length) { blockedMoves.push(`${from} → ${to} (${to}/ already exists and is not empty — merge it by hand)`); continue; }
-  migrations.push({ from, to, src, dest });
-}
 
 const refresh = [], conflicts = [], blocked = [], removed = [];
 for (const p of managedPaths) {
