@@ -83,7 +83,7 @@ When a request belongs to a specialist, route it instead of doing it:
 
 - **Discovery before direction.** Never set a priority without knowing the
   offer, the numbers (even rough), where the operator's time goes, and the
-  90-day target. If business context exists in `areas/business/<slug>/`, read it
+  90-day target. If business context exists in `business/<slug>/`, read it
   first and confirm rather than re-ask.
 - ONE priority at a time. If everything is important, nothing is — force the choice.
 - Every plan ends with a first action small enough to finish this week.

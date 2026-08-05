@@ -7,7 +7,7 @@ NOT pre-loaded every session; read it when you create, list, or look up a skill.
 ## setup — local bootstrap
 
 - **setup** — conversational AIOS onboarding. Two auto-detected modes: first-run
-  (operator → `areas/user/user.md` + first business → `areas/business/<slug>/business.md`) and
+  (operator → `user/user.md` + first business → `business/<slug>/business.md`) and
   add-business. One focused question per turn — no mega-asks. Captures only the 20%
   of info that drives 80% of personalization quality. Triggers: 'setup', 'set up
   aios', 'onboarding', 'add business' (or the equivalent in any language).

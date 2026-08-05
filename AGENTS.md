@@ -1,17 +1,17 @@
 ---
-aios_version: 0.6.8
-last_updated: 2026-08-04
+aios_version: 0.7.0
+last_updated: 2026-08-05
 ---
 
 # This is your master file — you MUST follow every instruction in this file
 
 The global AIOS kernel: instructions + routing only. **No business data** — each
-business's data lives in `areas/business/<slug>/`.
+business's data lives in `business/<slug>/`.
 
 ## Session Start
 
 MANDATORY: your VERY FIRST tool call in every new session MUST be: read
-`areas/user/user.md`. No text output before that read completes.
+`user/user.md`. No text output before that read completes.
 
 **Update check (best-effort, right after that read):** run `node system/update.mjs --check`.
 If it reports an update is available, tell the user ONCE, in plain language, in the user's
@@ -22,7 +22,7 @@ auto-apply (applying always waits for the user — see "## Updating AIOS").
 
 **First-run note (no hard gate):** new users are told during onboarding to run
 the `setup` skill on first install, so don't block them. Just proceed normally —
-with ONE guardrail: if `areas/user/user.md` still has `[UPPERCASE_TOKEN]` placeholders
+with ONE guardrail: if `user/user.md` still has `[UPPERCASE_TOKEN]` placeholders
 (not set up yet), **never fabricate the operator's identity or a business**; if a
 task genuinely needs that context and it's missing, ask the user or suggest they
 run `setup`. (Answer skills questions per "## Skills" — never pass this client's own
@@ -36,9 +36,8 @@ business file — business context is loaded only when a request names a busines
 
 - **_inbox/** — capture: unsorted intake, not yet classified. Anything here is "mine, incoming".
 - **system/** — what the OS runs on: skills, agents. Machine-consumed, not notes.
-- **areas/** — curated context about the operator and their businesses. A container only (no file of its own) — its how-to lives in the subfolders.
-- **areas/user/** — the single global operator (the person). Never a business.
-- **areas/business/** — one folder per business: `areas/business/<slug>/business.md` (config) + on-demand `brand/ avatars/ competitors/ market/ products/ oracle/`.
+- **user/** — the single global operator (the person). Never a business.
+- **business/** — one folder per business: `business/<slug>/business.md` (config) + on-demand `brand/ avatars/ competitors/ market/ products/ oracle/`.
 - **projects/** — bounded work, start/end or recurring. Business-agnostic.
 - **calendar/** — time-stamped notes: `daily/ weekly/ monthly/ yearly/` (see `calendar/CONTEXT.md`).
 - **knowledge/** — accumulated thinking/notes, recalled on demand (see `knowledge/CONTEXT.md`).
@@ -51,8 +50,8 @@ Given any item, ask in order:
 1. Does the OS execute it / need it to run? → **system/**
 2. A person / relationship (contact, lead, partner)? → **network/**
 3. Small, curated, always-relevant fact?
-   - About the **operator as a person**? → **areas/user/**
-   - About a **specific business**? → **areas/business/&lt;slug&gt;/** (the named one — ask if ambiguous)
+   - About the **operator as a person**? → **user/**
+   - About a **specific business**? → **business/&lt;slug&gt;/** (the named one — ask if ambiguous)
 4. Bounded deliverable work (start/end or recurring)? → **projects/**
 5. Time-stamped log (today / this week)? → **calendar/**
 6. Accumulated thinking/notes/archive, recalled on demand? → **knowledge/**
@@ -65,9 +64,8 @@ Given any item, ask in order:
 aios/                       ← whole root = your AIOS folder
 ├── _inbox/
 ├── system/                 skills/ · agents/
-├── areas/
-│   ├── user/               user.md (the operator — one person)
-│   └── business/           <business-slug>/ (one folder per business)
+├── user/                   user.md (the operator — one person)
+├── business/               <business-slug>/ (one folder per business)
 ├── projects/               1-active/ · 2-next/ · 3-someday/ · 9-archive/
 ├── calendar/               daily/ · weekly/ · monthly/ · yearly/
 ├── knowledge/              notes/
@@ -81,13 +79,13 @@ A business folder is created by the `setup` skill, never by hand-editing this fi
 AIOS runs MANY businesses. Business context is **never guessed**. This is the single
 source of the rule — other files point here, they do not restate it.
 
-- A **business** = any direct subfolder of `areas/business/` containing a `business.md` with
+- A **business** = any direct subfolder of `business/` containing a `business.md` with
   no unfilled `[UPPERCASE_TOKEN]` placeholders. A `business.md` that still has
   placeholders = an incomplete `setup` → treat as not-a-business; tell the user to
   finish/re-run `setup`, do not load it.
 - Resolution, in order:
   0. **No business exists** (fresh vault) → do not invent one; tell the user to run the `setup` skill.
-  1. The request **names** a business → use `areas/business/<that-slug>/`.
+  1. The request **names** a business → use `business/<that-slug>/`.
   2. Exactly **one** business exists, request unnamed → use it, and **state which one** in your first reply.
   3. **More than one**, request unnamed → **STOP and ASK** "Which business: &lt;list&gt;?". Never guess.
 - No active-business state file. The business is whatever the current request names.
@@ -98,14 +96,14 @@ source of the rule — other files point here, they do not restate it.
 |-----------|---------|------|
 | Quick capture / "note this" | _inbox/ | — |
 | New project / save an idea / archive a project | projects/CONTEXT.md | — |
-| Personal context (who am I) | areas/user/user.md | — |
-| Business config / brand / avatars / market | areas/business/&lt;slug&gt;/business.md | which business? ask if &gt;1 |
-| List businesses | browse `areas/business/` subfolders (each = one business) | — |
-| Update brand / voice / positioning | areas/business/&lt;slug&gt;/brand/ | brand-architect skill if installed |
+| Personal context (who am I) | user/user.md | — |
+| Business config / brand / avatars / market | business/&lt;slug&gt;/business.md | which business? ask if &gt;1 |
+| List businesses | browse `business/` subfolders (each = one business) | — |
+| Update brand / voice / positioning | business/&lt;slug&gt;/brand/ | brand-architect skill if installed |
 | Time-stamped log / journal / review | calendar/CONTEXT.md | daily · weekly · monthly · yearly |
 | A person / contact / lead | network/CONTEXT.md | one note per person |
 | Recall past notes / thinking / archive | knowledge/CONTEXT.md | search, don't browse |
-| Write content (email / post / copy) | the relevant project (`projects/1-active/...`) | areas/business/&lt;slug&gt;/brand/voice.md |
+| Write content (email / post / copy) | the relevant project (`projects/1-active/...`) | business/&lt;slug&gt;/brand/voice.md |
 | Add or run a skill | system/skills/skills.md | — |
 | Set up AIOS / add a business | run the `setup` skill | — |
 
@@ -233,20 +231,20 @@ When the user asks to update AIOS ("update aios" — or the equivalent in any la
 
 The script refreshes ONLY the kernel files in `system/managed-files.json`,
 backs up everything it changes to `.aios-backup/`, and never touches user data
-(`areas/`, `projects/`, `calendar/`, `knowledge/`, `network/`, `_inbox/`). Skills
+(`user/`, `business/`, `projects/`, `calendar/`, `knowledge/`, `network/`, `_inbox/`). Skills
 themselves stream live from the server and need no update. Do NOT update files by
 hand — always use the script.
 
 ## Memory
 
 No automatic session memory. Durable layers:
-- **areas/user/user.md** — the operator. Loaded every session.
-- **areas/business/&lt;slug&gt;/** — a business's context. Loaded on demand, only for the named business.
+- **user/user.md** — the operator. Loaded every session.
+- **business/&lt;slug&gt;/** — a business's context. Loaded on demand, only for the named business.
 - **knowledge/** — notes/archive, recalled on demand (search). Heavy/external stays referenced.
 
 ## Storage
 
-- Vault-internal: operator → `areas/user/`, businesses → `areas/business/<slug>/`, knowledge → `knowledge/`, skills → `system/skills/`.
+- Vault-internal: operator → `user/`, businesses → `business/<slug>/`, knowledge → `knowledge/`, skills → `system/skills/`.
 - External/cloud (if any) is **per business** → recorded in that business's `business.md`, not here.
 - MCP servers and code repos live **outside** the vault, in the AI client's own config / your filesystem — referenced, never stored here.
 
@@ -254,7 +252,7 @@ No automatic session memory. Durable layers:
 
 **Folders:** lowercase, hyphen-separated, no numeric prefixes. One pinned folder:
 `_inbox` (leading `_` sorts it top in Obsidian). **Business slug:** lowercase,
-hyphenated, unique under `areas/business/`, never `user`. Projects:
+hyphenated, unique under `business/`, never `user`. Projects:
 `prj-p[NNNN]-[name]-[YYMMDD]`, location = status — full rules in `projects/CONTEXT.md`.
 
 **Files:** lowercase, hyphens; deliverable status `draft-v1|draft-v2|final`;

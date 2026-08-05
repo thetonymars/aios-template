@@ -1,14 +1,16 @@
 {
-  "aios_version": "0.6.8",
-  "comment": "Lives in system/ (plumbing). Kernel files that `system/update.mjs` may refresh. Everything NOT listed = user data, NEVER touched. update.mjs ALSO enforces a HARDCODED deny-prefix list (areas/, _inbox/) this file cannot override, overwrite-only (never deletes), backs up every changed file to .aios-backup/, refuses absolute/.. /symlink paths, and a downgrade guard. sha256 = as-shipped baseline so update can detect a user-edited kernel file (conflict -> backup + overwrite-on-confirm, never silent). Paths relative to platform root. Regenerate with scripts/gen-managed.mjs after editing any kernel file.",
+  "aios_version": "0.7.0",
+  "comment": "Lives in system/ (plumbing). Kernel files that `system/update.mjs` may refresh. Everything NOT listed = user data, NEVER touched. update.mjs ALSO enforces a HARDCODED deny-prefix list (user/, business/, areas/, _inbox/) this file cannot override, overwrite-only (never deletes), backs up every changed file to .aios-backup/, refuses absolute/.. /symlink paths, and a downgrade guard. sha256 = as-shipped baseline so update can detect a user-edited kernel file (conflict -> backup + overwrite-on-confirm, never silent). Paths relative to platform root. Regenerate with scripts/gen-managed.mjs after editing any kernel file.",
   "deny_prefixes": [
+    "user/",
+    "business/",
     "areas/",
     "_inbox/"
   ],
   "managed": [
     {
       "path": "AGENTS.md",
-      "sha256": "1cf3d70d31257cfe701602e7a0470aeeaed12fb74cca23c704bca9696872c5b7"
+      "sha256": "56340b23a6bea3e3591d30642a7ed56578750afa9ba4601f1f8e474707cccbb7"
     },
     {
       "path": "CLAUDE.md",
@@ -24,7 +26,7 @@
     },
     {
       "path": "system/update.mjs",
-      "sha256": "a2839753bf09a6e1b32d4c5dcb5551b15694ceca629801e84a306af42cd512df"
+      "sha256": "d8eab359d89d85deff2eaec07cf15cef286b313fd8d97564d64daac49421ffcf"
     },
     {
       "path": "system/connect.mjs",
@@ -32,35 +34,35 @@
     },
     {
       "path": "system/skills/skills.md",
-      "sha256": "cd969a03f607896e9c326c0077301aa9aad7a5341d7e5494c9305e33ff83774c"
+      "sha256": "2bb3af7aa7863c7c4a2c0606c21819a5b03b7ee786e92b4fca8258cf45bc6135"
     },
     {
       "path": "system/skills/setup/SKILL.md",
-      "sha256": "df500a8326d95ad8ac31aa252772d9750a79c8c2d4920088846a0f81d34d3597"
+      "sha256": "67ad429786c7a8f3289a63dc9016d429b571551b1b209f79c955a6783d33ba97"
     },
     {
       "path": "system/skills/setup/CONTEXT.md",
-      "sha256": "7c6236d5b4d499d9d8381c4c5c32d40b0699dfdeb72e6f2e4b987e1b9cdf0e14"
+      "sha256": "208e12a6f65bc7768e1bed2bdb979253fae8fa3cd27bb69b2a6f12a3b145ba73"
     },
     {
       "path": "system/skills/setup/01_identity/CONTEXT.md",
-      "sha256": "9fe0b9f1439039adc45781bd239a6bd827802518f8602b4f6fa0ffc8ac40caa1"
+      "sha256": "9cf10fd0ad309568d17b836fb16928c93bea3bacd36396561d1163d4bc9a100f"
     },
     {
       "path": "system/skills/setup/02_business/CONTEXT.md",
-      "sha256": "4bb39b4ece640f9478da5df162e2c7d36ce339ee73372d016490df87d4a983ad"
+      "sha256": "2707d15f81bea6e5104ff773d4a822907e5cf6cfa6fa4acc40f588625462fdd8"
     },
     {
       "path": "system/skills/setup/03_review/CONTEXT.md",
-      "sha256": "e7848357245f0d782f2c3042f5d4da313e2d8625538db5f90394528ced435c95"
+      "sha256": "ff0deef04b46eca1f31252f1d5812eb3e76211e116df2659e403b772f0f643ac"
     },
     {
       "path": "system/agents/assistant/AGENT.md",
-      "sha256": "a6fcaad9e39d054e8f88ce2cda58755f7a6542547df43b9d9867d5d5b937ba2a"
+      "sha256": "317b23197cd4502f2976ef76e1bd53e66d547e9d78e1fe238dc7de37923ea0d0"
     },
     {
       "path": "system/agents/ceo/AGENT.md",
-      "sha256": "5bc3682431c4963cc82b061542f270111493da1598d7fd219d6528839ab5cc77"
+      "sha256": "1ca07c1d6c10c552cea87342828cc649a6add5661d78788400534bc8ce88366b"
     },
     {
       "path": "system/agents/finance/AGENT.md",
