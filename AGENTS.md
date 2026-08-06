@@ -1,5 +1,5 @@
 ---
-aios_version: 0.7.1
+aios_version: 0.7.2
 last_updated: 2026-08-05
 ---
 
@@ -12,6 +12,11 @@ business's data lives in `business/<slug>/`.
 
 MANDATORY: your VERY FIRST tool call in every new session MUST be: read
 `user/user.md`. No text output before that read completes.
+
+**If `user/user.md` does not exist but `areas/user/user.md` does**, this install is
+mid-migration: the kernel was updated but the folders have not moved yet. Read the
+`areas/` path for now, and tell the user once, in their language, that finishing the
+update takes one more "update aios". Never treat this as "no operator file".
 
 **Update check (best-effort, right after that read):** run `node system/update.mjs --check`.
 If it reports an update is available, tell the user ONCE, in plain language, in the user's
@@ -228,10 +233,15 @@ When the user asks to update AIOS ("update aios" — or the equivalent in any la
    its plain summary: which system files will refresh, what (if anything) they
    edited, and the reminder that their data is untouched.
 2. On the user's confirmation, run `node system/update.mjs --apply`.
-3. If the summary mentions folders that will be MOVED, run the same command **once
-   more** afterwards and show the result — an update that replaces `update.mjs`
-   itself cannot run the new version's move in the same pass, so it lands on the
-   next run. The script says plainly when a move is still pending.
+3. **Then ALWAYS run `node system/update.mjs --check` and act on what it says.**
+   Never report the update as finished on the strength of the apply output alone:
+   an update that replaces `update.mjs` itself cannot run the new version's work in
+   the same pass, so "Done — updated N files" can be true while a step is still
+   pending. Repeat apply → check until `--check` reports up to date (at most a
+   couple of rounds), then tell the user what actually changed.
+   - When a round announces folders that will be MOVED, say so in plain language
+     before applying: which folders, that the content is not changed, and that a
+     copy goes to `.aios-backup/`.
 
 The script refreshes ONLY the kernel files in `system/managed-files.json`,
 backs up everything it changes to `.aios-backup/`, and never touches user data
