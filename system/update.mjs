@@ -193,4 +193,14 @@ for (const w of toWrite) {
 // so an interrupted run keeps the old version marker and is safely re-runnable.
 const newMf = fileMap.get("system/managed-files.json");
 if (newMf) { const b = join(backupDir, "system/managed-files.json"); mkdirSync(dirname(b), { recursive: true }); cpSync(mfPath, b); writeFileSync(mfPath, newMf); }
-console.log(`\nDone — updated ${toWrite.length} file(s) to v${newVer}. Backups in .aios-backup/${stamp}/\n`);
+console.log(`\nDone — updated ${toWrite.length} file(s) to v${newVer}. Backups in .aios-backup/${stamp}/`);
+
+// If this run replaced the updater itself, the NEW version's work (e.g. a folder
+// move) could not run here — the old code was already in memory. Say so loudly:
+// "Done" on its own has been read as "finished" when it was not.
+if (toWrite.some((w) => w.p === "system/update.mjs")) {
+  console.log(`\nNOT FINISHED YET — this update replaced update.mjs itself, so anything the`);
+  console.log(`new version adds has not run. Run "node system/update.mjs --check" now and`);
+  console.log(`follow what it says before calling this done.`);
+}
+console.log("");
