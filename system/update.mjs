@@ -28,8 +28,10 @@ const FORCE_DOWNGRADE = process.argv.includes("--force-downgrade");
 // refuse it, no matter what managed-files.json claims. (Lives in code, not in
 // the fetched file, so a compromised manifest can't widen its own authority.)
 const DENY_PREFIXES = ["user/", "business/", "areas/", "_inbox/"];
-// "areas/" is legacy — pre-0.7 installs kept the operator + businesses there. It stays
-// on the list so a half-migrated folder is still protected.
+// Only folders that hold NOTHING but user data belong here. people/ · projects/ ·
+// calendar/ · knowledge/ each ship a managed CONTEXT.md, so listing them would make
+// the updater refuse to deliver their own router (caught by harness S17).
+// "areas/" is the pre-0.7 name, kept so a half-migrated folder is still protected.
 
 const sha = (buf) => createHash("sha256").update(buf).digest("hex");
 function safeRel(p) {
@@ -51,13 +53,17 @@ const localVer = mf.aios_version;
 
 const blockedMoves = [];
 
-// 1a. LAYOUT MIGRATION (0.7): the operator and the businesses moved out of areas/
-// to the root. The kernel we are about to write routes to user/ and business/, so the
-// data has to move with it or every path in the new AGENTS.md points at nothing.
-// This is the ONE case where the updater touches user data — it MOVES, never deletes,
-// and copies to the backup first. Skipped entirely once there is no areas/ left.
+// 1a. LAYOUT MIGRATIONS. When a folder is renamed in the template, the kernel we are
+// about to write routes to the NEW name, so the user's data has to move with it or
+// every path in the new AGENTS.md points at nothing. This is the ONE case where the
+// updater touches user data — it MOVES, never deletes, and copies to the backup
+// first. Each entry is skipped once its old folder is gone, so this list is
+// self-clearing and safe to keep growing.
+//   0.7.0  areas/user → user, areas/business → business
+//   0.7.3  network → people (same folder, clearer name)
+const RENAMES = [["areas/user", "user"], ["areas/business", "business"], ["network", "people"]];
 const migrations = [];
-for (const [from, to] of [["areas/user", "user"], ["areas/business", "business"]]) {
+for (const [from, to] of RENAMES) {
   const src = join(ROOT, from), dest = join(ROOT, to);
   if (!existsSync(src)) continue;
   if (lstatSync(src).isSymbolicLink()) { blockedMoves.push(`${from} (symlink)`); continue; }
@@ -129,7 +135,10 @@ for (const p of managedPaths) {
     // dropped from the template → report it (never auto-delete). If it appears
     // ONLY in the incoming list with no shipped file, that's a malformed/tampered
     // manifest entry — ignore it (nothing to write, it was never ours to remove).
-    if (localBaseline.has(p)) removed.push(p);
+    // A path whose folder is being renamed has not been dropped — it moved. Saying
+    // "no longer part of AIOS" about it would be wrong and alarming.
+    const beingRenamed = migrations.some((m) => p === m.from || p.startsWith(m.from + "/"));
+    if (localBaseline.has(p) && !beingRenamed) removed.push(p);
     continue;
   }
   if (!existsSync(abs)) { refresh.push({ p, abs, next, reason: "new" }); continue; }
@@ -153,7 +162,7 @@ if (migrations.length) {
   console.log(`  Nothing inside them changes — only where the folder sits.`);
 }
 if (blockedMoves.length) { console.log(`\nCould not move (left exactly as-is, do it by hand):`); blockedMoves.forEach((b) => console.log(`  x ${b}`)); }
-console.log(`\nThe CONTENT of your data — ${migrations.length ? "the moved folders, " : ""}projects/, calendar/, knowledge/, network/, _inbox/ — is NOT changed.`);
+console.log(`\nThe CONTENT of your data — ${migrations.length ? "the moved folders, " : ""}projects/, calendar/, knowledge/, people/, _inbox/ — is NOT changed.`);
 
 if (!APPLY) { console.log(`\n(Preview only — nothing was written. Re-run with --apply to update.)\n`); process.exit(0); }
 
@@ -170,9 +179,10 @@ for (const m of migrations) {
   renameSync(m.src, m.dest);
   console.log(`moved ${m.from}/ → ${m.to}/`);
 }
-// Drop areas/ only when the move left it empty; anything the user put there stays.
+// Drop an emptied PARENT (areas/) after its children moved out; anything the user
+// put there stays. Folders renamed whole (network → people) leave nothing behind.
 const areasDir = join(ROOT, "areas");
-if (migrations.length && existsSync(areasDir)) {
+if (migrations.some((m) => m.from.startsWith("areas/")) && existsSync(areasDir)) {
   const left = readdirSync(areasDir).filter((n) => n !== ".DS_Store");
   if (!left.length) {
     // plain rmdir: the folder is empty by now, and `recursive` is no longer a
