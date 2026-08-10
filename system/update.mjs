@@ -75,19 +75,33 @@ for (const [from, to] of RENAMES) {
 // the run that delivers the new kernel also creates people/CONTEXT.md, so by the
 // time the move runs the destination is no longer empty. Anything that would
 // collide is left where it is and reported.
-function planMove(src, dest, from, to, baseline, out = [], stale = []) {
+function planMove(src, dest, from, to, baseline, managedNow, out = [], stale = []) {
   for (const name of readdirSync(src)) {
     const s = join(src, name), d = join(dest, name);
     const rel = `${from}/${name}`;
     if (lstatSync(s).isSymbolicLink()) { blockedMoves.push(`${rel} (symlink)`); continue; }
-    if (lstatSync(s).isDirectory()) { planMove(s, d, rel, `${to}/${name}`, baseline, out, stale); continue; }
+    if (lstatSync(s).isDirectory()) { planMove(s, d, rel, `${to}/${name}`, baseline, managedNow, out, stale); continue; }
     if (!existsSync(d)) { out.push({ s, d }); continue; }
     // Something is already there. If the SOURCE copy is a kernel file we shipped and
     // the user never touched, it is our own leftover (the new kernel already put its
     // replacement at the destination) — drop it, don't cry collision. Anything else
     // is the user's, and the user's file always wins.
     const shipped = baseline.get(rel);
-    if (shipped && sha(readFileSync(s)) === shipped) { stale.push({ s, rel }); continue; }
+    if (shipped && sha(readFileSync(s)) === shipped) { stale.push({ s, rel, why: "unchanged since we shipped it" }); continue; }
+    // The baseline only knows the CURRENT layout, and the run that delivered the new
+    // kernel already rewrote it — so by the time the move runs, the old path is not in
+    // it any more. Second signal: the destination file is one WE manage, which makes
+    // the source copy a superseded router, not the user's note. The backup keeps it.
+    if (managedNow.has(`${to}/${name}`)) {
+      // The user may have written their OWN notes into that old system file. Deleting
+      // it would be data loss, so it travels across under a name that cannot collide.
+      const dot = name.lastIndexOf(".");
+      const alt = dot > 0 ? `${name.slice(0, dot)} (old copy)${name.slice(dot)}` : `${name} (old copy)`;
+      const altPath = join(dest, alt);
+      if (!existsSync(altPath)) { out.push({ s, d: altPath, renamedTo: `${to}/${alt}` }); continue; }
+      blockedMoves.push(`${rel} (both ${to}/${name} and ${to}/${alt} are taken)`);
+      continue;
+    }
     blockedMoves.push(`${rel} (a file of that name is already in ${to}/)`);
   }
   return { out, stale };
@@ -161,8 +175,9 @@ const managedPaths = [...new Set([
 // File-level move plan. Runs here, not at apply time, for two reasons: it needs the
 // baseline hashes built just above, and a collision found later would print after the
 // summary the user reads before confirming.
+const managedNow = new Set((incomingMf.managed || []).map((e) => e.path));
 for (const m of migrations) {
-  const { out, stale } = planMove(m.src, m.dest, m.from, m.to, localBaseline);
+  const { out, stale } = planMove(m.src, m.dest, m.from, m.to, localBaseline, managedNow);
   m.files = out; m.stale = stale;
 }
 
@@ -205,6 +220,16 @@ if (migrations.length) {
   console.log(`  Nothing inside them changes — only where the folder sits.`);
 }
 if (blockedMoves.length) { console.log(`\nCould not move (left exactly as-is, do it by hand):`); blockedMoves.forEach((b) => console.log(`  x ${b}`)); }
+const stale = migrations.flatMap((m) => m.stale || []);
+if (stale.length) {
+  console.log(`\nOld system file(s) dropped after the move (copies stay in the backup):`);
+  stale.forEach((t) => console.log(`  - ${t.rel} — ${t.why}`));
+}
+const renamedAcross = migrations.flatMap((m) => (m.files || []).filter((f) => f.renamedTo));
+if (renamedAcross.length) {
+  console.log(`\nKept under a new name (a system file of that name already exists there):`);
+  renamedAcross.forEach((f) => console.log(`  → ${f.renamedTo}`));
+}
 console.log(`\nThe CONTENT of your data — ${migrations.length ? "the moved folders, " : ""}projects/, calendar/, knowledge/, people/, _inbox/ — is NOT changed.`);
 
 if (!APPLY) { console.log(`\n(Preview only — nothing was written. Re-run with --apply to update.)\n`); process.exit(0); }
