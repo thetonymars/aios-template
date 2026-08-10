@@ -75,20 +75,23 @@ for (const [from, to] of RENAMES) {
 // the run that delivers the new kernel also creates people/CONTEXT.md, so by the
 // time the move runs the destination is no longer empty. Anything that would
 // collide is left where it is and reported.
-function planMove(src, dest, from, to, out = []) {
+function planMove(src, dest, from, to, baseline, out = [], stale = []) {
   for (const name of readdirSync(src)) {
     const s = join(src, name), d = join(dest, name);
-    if (lstatSync(s).isSymbolicLink()) { blockedMoves.push(`${from}/${name} (symlink)`); continue; }
-    if (lstatSync(s).isDirectory()) { planMove(s, d, `${from}/${name}`, `${to}/${name}`, out); continue; }
-    if (existsSync(d)) { blockedMoves.push(`${from}/${name} (a file of that name is already in ${to}/)`); continue; }
-    out.push({ s, d });
+    const rel = `${from}/${name}`;
+    if (lstatSync(s).isSymbolicLink()) { blockedMoves.push(`${rel} (symlink)`); continue; }
+    if (lstatSync(s).isDirectory()) { planMove(s, d, rel, `${to}/${name}`, baseline, out, stale); continue; }
+    if (!existsSync(d)) { out.push({ s, d }); continue; }
+    // Something is already there. If the SOURCE copy is a kernel file we shipped and
+    // the user never touched, it is our own leftover (the new kernel already put its
+    // replacement at the destination) — drop it, don't cry collision. Anything else
+    // is the user's, and the user's file always wins.
+    const shipped = baseline.get(rel);
+    if (shipped && sha(readFileSync(s)) === shipped) { stale.push({ s, rel }); continue; }
+    blockedMoves.push(`${rel} (a file of that name is already in ${to}/)`);
   }
-  return out;
+  return { out, stale };
 }
-
-// Planned here, not at apply time: a collision found later would be printed after
-// the summary the user reads before confirming.
-for (const m of migrations) m.files = planMove(m.src, m.dest, m.from, m.to);
 
 // Drop any directory the move emptied, deepest first. Never recursive-deletes.
 function pruneEmpty(dir) {
@@ -155,6 +158,14 @@ const managedPaths = [...new Set([
   ...(incomingMf.managed || []).map((e) => e.path),
 ])];
 
+// File-level move plan. Runs here, not at apply time, for two reasons: it needs the
+// baseline hashes built just above, and a collision found later would print after the
+// summary the user reads before confirming.
+for (const m of migrations) {
+  const { out, stale } = planMove(m.src, m.dest, m.from, m.to, localBaseline);
+  m.files = out; m.stale = stale;
+}
+
 const refresh = [], conflicts = [], blocked = [], removed = [];
 for (const p of managedPaths) {
   if (DENY_PREFIXES.some((d) => p.startsWith(d))) { blocked.push(`${p} (user-data area)`); continue; }
@@ -208,6 +219,7 @@ for (const m of migrations) {
   mkdirSync(dirname(bdest), { recursive: true });
   cpSync(m.src, bdest, { recursive: true });   // full copy in the backup before moving
   for (const f of m.files) { mkdirSync(dirname(f.d), { recursive: true }); renameSync(f.s, f.d); }
+  for (const t of m.stale) { try { rmSync(t.s, { force: true }); } catch {} }   // our own superseded copy
   const gone = pruneEmpty(m.src);
   console.log(`moved ${m.from}/ → ${m.to}/ (${m.files.length} file(s))${gone ? "" : ` — ${m.from}/ kept, something is still in it`}`);
 }
