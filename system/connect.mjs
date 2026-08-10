@@ -14,13 +14,16 @@
 //   - ~/.config/opencode/opencode.jsonc        OpenCode     (only if its dir exists)
 //   - ~/.codex/config.toml                     Codex        (only if ~/.codex exists)
 //   - ~/.gemini/antigravity/mcp_config.json    Antigravity  (only if that dir exists)
-// Auth travels as a standard `Authorization: Bearer <token>` header.
+// Auth travels as a standard `Authorization: Bearer <token>.<device>` header — the
+// device id is derived from this machine (see deviceId below) and caps the license
+// at one computer.
 // Then tells the user to RESTART. Apps (Claude Desktop, Manus, Perplexity) are
 // GUI/cloud — not scriptable; connect those once in the app's own Settings.
 
 import { readFileSync, writeFileSync, existsSync, copyFileSync, renameSync } from "node:fs";
 import { join } from "node:path";
-import { homedir } from "node:os";
+import { homedir, platform, cpus, totalmem } from "node:os";
+import { createHash } from "node:crypto";
 
 const URL_MCP = "https://aios-skills.vercel.app/mcp";
 const NAME = "aios";
@@ -46,7 +49,21 @@ if (!token) {
   console.error("No license token. Run from the AIOS root (needs .aios-license) or pass --license <token>.");
   process.exit(1);
 }
-const AUTH = `Bearer ${token}`; // standard Authorization header value
+// --- device id: one license = one machine ---
+// Derived from stable facts about THIS machine and stored nowhere, so copying the
+// AIOS folder to another computer cannot carry it, and re-running this script here
+// always yields the same id (Claude Code + Codex on one laptop = one device).
+// Reads no files, makes no network call, spawns no process — just node:os + a hash.
+// It travels folded into the token (`<key>.<device>`) because that is the one field
+// every client config format has.
+// Facts about the MACHINE only — deliberately not os.arch() (that describes the node
+// binary, so swapping Rosetta node for a native one would look like a new computer)
+// and not os.hostname() (macOS rewrites it when the network changes).
+function deviceId() {
+  const facts = [homedir(), platform(), cpus()[0]?.model ?? "", String(totalmem())];
+  return createHash("sha256").update(facts.join("|")).digest("hex").slice(0, 12).toUpperCase();
+}
+const AUTH = `Bearer ${token}.${deviceId()}`; // standard Authorization header value
 
 const done = [], skipped = [];
 
@@ -189,4 +206,4 @@ done.length ? done.forEach((d) => console.log("  ✓ " + d)) : console.log("  (n
 if (skipped.length) { console.log("Notes:"); skipped.forEach((s) => console.log("  - " + s)); }
 console.log("\nNEXT: restart your AI client so it loads the server, then ask: \"list my AIOS skills\".");
 console.log("Apps (Claude Desktop / Manus / Perplexity) can't be scripted — in the app's Settings add");
-console.log("server `aios` at " + URL_MCP + " with header  Authorization: " + AUTH);
+console.log("server `aios` at " + URL_MCP + " with header  Authorization: Bearer " + token);

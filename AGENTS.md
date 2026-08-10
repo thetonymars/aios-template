@@ -1,6 +1,6 @@
 ---
-aios_version: 0.7.8
-last_updated: 2026-08-05
+aios_version: 0.7.9
+last_updated: 2026-08-11
 ---
 
 # This is your master file — you MUST follow every instruction in this file
