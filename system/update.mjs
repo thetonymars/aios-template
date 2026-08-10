@@ -67,8 +67,40 @@ for (const [from, to] of RENAMES) {
   const src = join(ROOT, from), dest = join(ROOT, to);
   if (!existsSync(src)) continue;
   if (lstatSync(src).isSymbolicLink()) { blockedMoves.push(`${from} (symlink)`); continue; }
-  if (existsSync(dest) && readdirSync(dest).length) { blockedMoves.push(`${from} → ${to} (${to}/ already exists and is not empty — merge it by hand)`); continue; }
-  migrations.push({ from, to, src, dest });
+  migrations.push({ from, to, src, dest, files: [] });
+}
+
+// Move the CONTENTS across, file by file, and never overwrite something already at
+// the destination. A plain folder rename looks simpler but breaks on the real case:
+// the run that delivers the new kernel also creates people/CONTEXT.md, so by the
+// time the move runs the destination is no longer empty. Anything that would
+// collide is left where it is and reported.
+function planMove(src, dest, from, to, out = []) {
+  for (const name of readdirSync(src)) {
+    const s = join(src, name), d = join(dest, name);
+    if (lstatSync(s).isSymbolicLink()) { blockedMoves.push(`${from}/${name} (symlink)`); continue; }
+    if (lstatSync(s).isDirectory()) { planMove(s, d, `${from}/${name}`, `${to}/${name}`, out); continue; }
+    if (existsSync(d)) { blockedMoves.push(`${from}/${name} (a file of that name is already in ${to}/)`); continue; }
+    out.push({ s, d });
+  }
+  return out;
+}
+
+// Planned here, not at apply time: a collision found later would be printed after
+// the summary the user reads before confirming.
+for (const m of migrations) m.files = planMove(m.src, m.dest, m.from, m.to);
+
+// Drop any directory the move emptied, deepest first. Never recursive-deletes.
+function pruneEmpty(dir) {
+  if (!existsSync(dir)) return true;
+  for (const name of readdirSync(dir)) {
+    const p = join(dir, name);
+    if (lstatSync(p).isDirectory()) pruneEmpty(p);
+  }
+  const left = readdirSync(dir).filter((n) => n !== ".DS_Store");
+  if (left.length) return false;
+  try { for (const n of readdirSync(dir)) rmSync(join(dir, n), { force: true }); rmdirSync(dir); return true; }
+  catch { return false; }
 }
 
 // 2. fetch the latest template
@@ -158,7 +190,7 @@ if (removed.length) { console.log(`\n${removed.length} file(s) are no longer par
 if (blocked.length) { console.log(`\nBlocked for safety (never written):`); blocked.forEach((b) => console.log(`  x ${b}`)); }
 if (migrations.length) {
   console.log(`\nYour folders will be MOVED to the new layout (copied to the backup first):`);
-  migrations.forEach((m) => console.log(`  → ${m.from}/  becomes  ${m.to}/`));
+  migrations.forEach((m) => console.log(`  → ${m.from}/  becomes  ${m.to}/   (${m.files.length} file(s))`));
   console.log(`  Nothing inside them changes — only where the folder sits.`);
 }
 if (blockedMoves.length) { console.log(`\nCould not move (left exactly as-is, do it by hand):`); blockedMoves.forEach((b) => console.log(`  x ${b}`)); }
@@ -175,22 +207,14 @@ for (const m of migrations) {
   const bdest = join(backupDir, m.from);
   mkdirSync(dirname(bdest), { recursive: true });
   cpSync(m.src, bdest, { recursive: true });   // full copy in the backup before moving
-  mkdirSync(dirname(m.dest), { recursive: true });
-  renameSync(m.src, m.dest);
-  console.log(`moved ${m.from}/ → ${m.to}/`);
+  for (const f of m.files) { mkdirSync(dirname(f.d), { recursive: true }); renameSync(f.s, f.d); }
+  const gone = pruneEmpty(m.src);
+  console.log(`moved ${m.from}/ → ${m.to}/ (${m.files.length} file(s))${gone ? "" : ` — ${m.from}/ kept, something is still in it`}`);
 }
-// Drop an emptied PARENT (areas/) after its children moved out; anything the user
-// put there stays. Folders renamed whole (network → people) leave nothing behind.
-const areasDir = join(ROOT, "areas");
-if (migrations.some((m) => m.from.startsWith("areas/")) && existsSync(areasDir)) {
-  const left = readdirSync(areasDir).filter((n) => n !== ".DS_Store");
-  if (!left.length) {
-    // plain rmdir: the folder is empty by now, and `recursive` is no longer a
-    // valid rmdir option on current Node (it throws), which left areas/ behind.
-    try { for (const n of readdirSync(areasDir)) rmSync(join(areasDir, n), { force: true }); rmdirSync(areasDir); console.log("removed the now-empty areas/"); }
-    catch { console.log("kept areas/ — could not remove it, delete it by hand if you want"); }
-  }
-  else console.log(`kept areas/ — it still holds: ${left.join(", ")}`);
+// areas/ is only a parent: once its children moved out it has nothing of its own.
+if (migrations.some((m) => m.from.startsWith("areas/"))) {
+  const areasDir = join(ROOT, "areas");
+  if (existsSync(areasDir) && pruneEmpty(areasDir)) console.log("removed the now-empty areas/");
 }
 
 const toWrite = [...refresh, ...conflicts];
