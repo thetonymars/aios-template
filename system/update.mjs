@@ -92,16 +92,11 @@ function planMove(src, dest, from, to, baseline, managedNow, out = [], stale = [
     // kernel already rewrote it — so by the time the move runs, the old path is not in
     // it any more. Second signal: the destination file is one WE manage, which makes
     // the source copy a superseded router, not the user's note. The backup keeps it.
-    if (managedNow.has(`${to}/${name}`)) {
-      // The user may have written their OWN notes into that old system file. Deleting
-      // it would be data loss, so it travels across under a name that cannot collide.
-      const dot = name.lastIndexOf(".");
-      const alt = dot > 0 ? `${name.slice(0, dot)} (old copy)${name.slice(dot)}` : `${name} (old copy)`;
-      const altPath = join(dest, alt);
-      if (!existsSync(altPath)) { out.push({ s, d: altPath, renamedTo: `${to}/${alt}` }); continue; }
-      blockedMoves.push(`${rel} (both ${to}/${name} and ${to}/${alt} are taken)`);
-      continue;
-    }
+    // The destination file is one the incoming manifest manages, so the source copy is
+    // a superseded SYSTEM file — its replacement is already in place. Drop it: keeping
+    // a renamed duplicate would litter the user's folder with our old plumbing. The
+    // pre-move backup holds it, so nothing is unrecoverable.
+    if (managedNow.has(`${to}/${name}`)) { stale.push({ s, rel, why: `replaced by ${to}/${name}` }); continue; }
     blockedMoves.push(`${rel} (a file of that name is already in ${to}/)`);
   }
   return { out, stale };
@@ -225,11 +220,7 @@ if (stale.length) {
   console.log(`\nOld system file(s) dropped after the move (copies stay in the backup):`);
   stale.forEach((t) => console.log(`  - ${t.rel} — ${t.why}`));
 }
-const renamedAcross = migrations.flatMap((m) => (m.files || []).filter((f) => f.renamedTo));
-if (renamedAcross.length) {
-  console.log(`\nKept under a new name (a system file of that name already exists there):`);
-  renamedAcross.forEach((f) => console.log(`  → ${f.renamedTo}`));
-}
+
 console.log(`\nThe CONTENT of your data — ${migrations.length ? "the moved folders, " : ""}projects/, calendar/, knowledge/, people/, _inbox/ — is NOT changed.`);
 
 if (!APPLY) { console.log(`\n(Preview only — nothing was written. Re-run with --apply to update.)\n`); process.exit(0); }
