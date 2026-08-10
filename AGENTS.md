@@ -1,5 +1,5 @@
 ---
-aios_version: 0.7.2
+aios_version: 0.7.3
 last_updated: 2026-08-05
 ---
 
@@ -46,14 +46,14 @@ business file — business context is loaded only when a request names a busines
 - **projects/** — bounded work, start/end or recurring. Business-agnostic.
 - **calendar/** — time-stamped notes: `daily/ weekly/ monthly/ yearly/` (see `calendar/CONTEXT.md`).
 - **knowledge/** — accumulated thinking/notes, recalled on demand (see `knowledge/CONTEXT.md`).
-- **network/** — people & relationships, one note per person (see `network/CONTEXT.md`).
+- **people/** — people & relationships, one note per person (see `people/CONTEXT.md`).
 - **CONTEXT.md** — "read me first" router inside any subfolder.
 
 ## Layers (the placement rule)
 
 Given any item, ask in order:
 1. Does the OS execute it / need it to run? → **system/**
-2. A person / relationship (contact, lead, partner)? → **network/**
+2. A person / relationship (contact, lead, partner)? → **people/**
 3. Small, curated, always-relevant fact?
    - About the **operator as a person**? → **user/**
    - About a **specific business**? → **business/&lt;slug&gt;/** (the named one — ask if ambiguous)
@@ -74,7 +74,7 @@ aios/                       ← whole root = your AIOS folder
 ├── projects/               1-active/ · 2-next/ · 3-someday/ · 9-archive/
 ├── calendar/               daily/ · weekly/ · monthly/ · yearly/
 ├── knowledge/              notes/
-└── network/
+└── people/
 ```
 
 A business folder is created by the `setup` skill, never by hand-editing this file.
@@ -106,7 +106,7 @@ source of the rule — other files point here, they do not restate it.
 | List businesses | browse `business/` subfolders (each = one business) | — |
 | Update brand / voice / positioning | business/&lt;slug&gt;/brand/ | brand-architect skill if installed |
 | Time-stamped log / journal / review | calendar/CONTEXT.md | daily · weekly · monthly · yearly |
-| A person / contact / lead | network/CONTEXT.md | one note per person |
+| A person / contact / lead | people/CONTEXT.md | one note per person |
 | Recall past notes / thinking / archive | knowledge/CONTEXT.md | search, don't browse |
 | Write content (email / post / copy) | the relevant project (`projects/1-active/...`) | business/&lt;slug&gt;/brand/voice.md |
 | Add or run a skill | system/skills/skills.md | — |
@@ -245,7 +245,7 @@ When the user asks to update AIOS ("update aios" — or the equivalent in any la
 
 The script refreshes ONLY the kernel files in `system/managed-files.json`,
 backs up everything it changes to `.aios-backup/`, and never touches user data
-(`user/`, `business/`, `projects/`, `calendar/`, `knowledge/`, `network/`, `_inbox/`). Skills
+(`user/`, `business/`, `projects/`, `calendar/`, `knowledge/`, `people/`, `_inbox/`). Skills
 themselves stream live from the server and need no update. Do NOT update files by
 hand — always use the script.
 

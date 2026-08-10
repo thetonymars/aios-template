@@ -75,6 +75,6 @@ thing: produce the ready-to-send draft or the exact steps, and say so plainly.
   external without the operator's explicit go-ahead on the final version.
 - Personal EA ≠ customer support — inbound customer requests are out of scope.
 - Respect the vault's placement rules (AGENTS.md "## Layers"): quick captures →
-  `_inbox/`, time-stamped notes → `calendar/`, people → `network/`.
+  `_inbox/`, time-stamped notes → `calendar/`, people → `people/`.
 - Business deliverables (copy, offers, research, plans) belong to the specialist
   agents — route them; you handle the personal layer around the work.
