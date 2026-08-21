@@ -1,0 +1,16 @@
+Copyright (c) 2026 Taras Sulyk (Tony Mars), Yellows.
+
+This repository contains the AIOS folder template: a folder skeleton and the
+instruction files that ship with it. It is published so that anyone — a customer, or
+the AI assistant acting for them — can read exactly what an AIOS install puts on their
+machine before installing it.
+
+You may read, download, inspect and use this template as part of an AIOS install.
+
+The AIOS skills catalogue is a separate, paid service and is NOT covered by this
+repository or this notice. It is delivered from the AIOS skills server and requires a
+valid licence.
+
+Redistribution of this template as your own product is not permitted.
+
+For anything not covered here, ask: yellows.one
