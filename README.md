@@ -47,8 +47,14 @@ entry into the AI client's own config file, keeping a backup.
 
 ## Versioning
 
-`aios_version` in `AGENTS.md` frontmatter is the kernel version; releases are git tags
-(`v0.7.9` and up). Installs pin a tag. Existing installs update through
+`aios_version` in `AGENTS.md` frontmatter is the kernel version; releases are git tags.
+**The live release line is `v0.7.x`, and the newest release is the current one.**
+
+⚠️ This repository also carries four `v4.x` tags from before a numbering reset in June
+2026. They sort higher than `v0.7.x` but are **older and unsupported** — a plain tag list
+shows `v4.4.3` first, which is misleading. Go by the GitHub release, not by tag order.
+
+Installs pin a tag. Existing installs update through
 `system/update.mjs`, which only refreshes the files listed in
 `system/managed-files.json` and never touches the operator's own data.
 
