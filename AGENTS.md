@@ -1,5 +1,5 @@
 ---
-aios_version: 0.7.19
+aios_version: 0.7.20
 last_updated: 2026-08-22
 ---
 
@@ -132,7 +132,9 @@ source of the rule — other files point here, they do not restate it.
    from the index alone — always check the folder first** (the index can be stale,
    e.g. a skill created in another session).
 3. **AIOS catalog — REMOTE** over MCP (the curated/paid catalog): discover with
-   `list_skills`, enter with `start_skill(slug)` (returns SKILL.md + CONTEXT.md),
+   `list_skills`, enter with `start_skill(slug)` (returns SKILL.md + CONTEXT.md) — the
+   tool names are usually PREFIXED by the client (`mcp__aios__list_skills`); match on the
+   ending, and see "## Connecting the skills server" before concluding they are absent,
    lazy-load with `read_skill_file(skill, path)`. Tools absent → server not
    connected, see **## Connecting the skills server**. Catalog skill CONTENT lives
    only on the server — never look for a `system/skills/<catalog-slug>/` folder.
@@ -197,9 +199,22 @@ skills come from TWO places:
 
 ## Connecting the skills server
 
-All non-`setup` skills stream from the AIOS skills server over MCP. If the
-`list_skills` / `start_skill` / `read_skill_file` tools are NOT in your session, the
-server is not connected yet.
+All non-`setup` skills stream from the AIOS skills server over MCP, through three tools:
+`list_skills`, `start_skill`, `read_skill_file`.
+
+> [!important] **Most clients NAMESPACE those tools, and this section is about the ones
+> that are genuinely missing — not the ones you failed to recognise.** In Claude Code and
+> Codex they appear as `mcp__aios__list_skills`, `mcp__aios__start_skill`,
+> `mcp__aios__read_skill_file`; in Codex's code mode they are callable inside `exec` as
+> `await tools.mcp__aios__list_skills({})`. Other clients use other prefixes.
+> **Match on the ENDING, never on the exact string** — any available tool whose name ends
+> in `list_skills` is the one. And before you tell the user anything is unavailable,
+> **call it**: a call that returns skills settles the question, an absent tool does not.
+> On the first call some clients ask the user to approve the MCP tool — that is their
+> permission prompt, not a failure.
+
+If, after looking by ending AND trying the call, those three tools really are not in your
+session, the server is not connected yet.
 
 **This is yours to diagnose — not the user's.** They are not developers. Work out which
 case below you are in, then tell them what to do in ONE sentence, in their own language,
