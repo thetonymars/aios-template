@@ -1,5 +1,5 @@
 ---
-aios_version: 0.7.11
+aios_version: 0.7.12
 last_updated: 2026-08-22
 ---
 
@@ -201,14 +201,16 @@ All non-`setup` skills stream from the AIOS skills server over MCP. If the
 `list_skills` / `start_skill` / `read_skill_file` tools are NOT in your session, the
 server is not connected yet.
 
-**This is yours to diagnose and fix — not the user's.** They are not developers. Work
-out which case below you are in, act, and then say ONE sentence to them, in their own
-language, **with no machinery in it**: never name the server, the status, the file or
-the command, not even in passing. *"The AIOS skills aren't switched on yet — your app
-will ask your permission, say yes and restart it"* is the level. *"The MCP server `aios`
-is Pending approval in .mcp.json"* is not, however true it is. The most they should ever
-have to do is approve a permission and restart their app. If they ask what you did,
-answer plainly and completely — non-technical is not the same as concealed.
+**This is yours to diagnose — not the user's.** They are not developers. Work out which
+case below you are in, then tell them what to do in ONE sentence, in their own language,
+**in ordinary words**: lead with the action they have to take, not with the machinery
+behind it. *"The AIOS skills aren't switched on yet — your app will ask your permission,
+say yes and restart it"* does the job; a status string and a file path do not. The most
+they should ever have to do is approve a permission and restart their app.
+
+**Plain is not the same as hidden.** Say what you changed whenever it matters, always if
+they ask, and ALWAYS before you change anything outside the AIOS folder — that one is
+theirs to decide, not a detail to spare them.
 
 **Check these in order and stop at the first one that matches.**
 
@@ -242,7 +244,7 @@ and match what it PRINTS — the exit code is 0 either way and tells you nothing
 - **`No MCP server found`** — Claude Code sees no `aios` server here. Before you conclude
   anything, open `.mcp.json` at the AIOS root and check it yourself. It must exist, be
   valid JSON, have an `aios` entry, and its `Authorization` header must end in the real
-  device id — **if it still contains `PASTE_ID_FROM_STEP_4`, the install was left
+  device id — **if the header still holds a `PASTE_…` placeholder, the install was left
   half-done**.
   - File missing, unparseable, no `aios` entry, or the placeholder still in it → the
     config is not usable. Go to 3; `connect.mjs` writes a correct one.
@@ -252,20 +254,24 @@ and match what it PRINTS — the exit code is 0 either way and tells you nothing
 
 ### 3. Any other client
 
-Run `node system/connect.mjs` from the AIOS root (the folder with this `AGENTS.md`). It
-reads `.aios-license` and writes the correct config for whichever client is installed —
-you do not need to know any per-client format. Then ask the user to restart the app.
+**Ask the user first, and get a yes.** This path changes files OUTSIDE the AIOS folder:
+`node system/connect.mjs` adds the AIOS entry to the settings of **every AI app it finds
+on this machine**, not only the one you are in. Say that in plain words before you run
+it. It keeps a `.bak-aios` copy of each file the first time it touches one and leaves
+their other MCP servers alone — but it is their machine, so it is their call.
 
-It writes into that client's **own global settings** (backing up what it touches), not
-into the AIOS folder — so unlike the Claude Code path above, this does change something
-outside the folder. Do not hide that: if the user asks, say so plainly.
+With a yes: run it from the AIOS root (the folder with this `AGENTS.md`). It reads
+`.aios-license` and writes the correct config for whichever clients are installed — you
+do not need to know any per-client format. Tell them what it reported writing, then ask
+them to restart the app.
 
 - The script reports which clients it wrote and which it skipped. **If it skipped
   yours**, or you have no shell at all (a GUI-only app such as Claude Desktop), you
   cannot configure it for them: give them the three values to add a connector in the
   app's own settings — name `aios`, url `https://aios-skills.vercel.app/mcp`, header
-  `Authorization` = `Bearer ` followed by the value in `.aios-license`. This is the one
-  place you may show the user machinery, because they have to type it.
+  `Authorization` = `Bearer ` followed by the value in `.aios-license`. Show them those
+  three values in full: here the machinery IS the instruction, because they have to type
+  it.
 
 ### 4. Still nothing after ONE restart
 
