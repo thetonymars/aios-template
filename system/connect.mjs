@@ -12,7 +12,8 @@
 // token stays OUT of the portable AIOS folder), for whichever clients are present:
 //   - ~/.claude.json                            Claude Code  (user-scope mcpServers)
 //   - ~/.config/opencode/opencode.jsonc        OpenCode     (only if its dir exists)
-//   - ~/.codex/config.toml                     Codex        (only if ~/.codex exists)
+//   - ~/.codex/config.toml                     Codex        (only if ~/.codex exists;
+//                                                   local mcp-remote bridge — see below)
 //   - ~/.gemini/antigravity/mcp_config.json    Antigravity  (only if that dir exists)
 // Auth travels as a standard `Authorization: Bearer <token>.<device>` header — the
 // device id is derived from this machine (see deviceId below) and caps the license
@@ -184,7 +185,13 @@ try {
       let base = stripTomlTable(stripTomlTable(cur, "mcp_servers.aios.http_headers"), "mcp_servers.aios");
       base = base.replace(/\s+$/, "");
       const sep = base.length ? "\n\n" : "";
-      const block = `[mcp_servers.aios]\nurl = "${URL_MCP}"\nstartup_timeout_sec = 30\n\n[mcp_servers.aios.http_headers]\nAuthorization = "${AUTH}"\n`;
+      // Local mcp-remote bridge, NOT a `url` server. Codex only loads streamable-HTTP
+      // servers when `experimental_use_rmcp_client` is on; without it a `url` entry is
+      // accepted into the config and then silently ignored — the user restarts, sees no
+      // tools, and every diagnosis points at the server instead. Found on a real
+      // install 2026-08-22: every working server in that config was command/args and
+      // ours was the only `url` one. stdio is what Codex has always loaded.
+      const block = `[mcp_servers.aios]\ncommand = "npx"\nargs = ["-y", "mcp-remote", "${URL_MCP}", "--header", "Authorization:${AUTH}"]\nstartup_timeout_sec = 60\n`;
       writeAtomic(p, base + sep + block);
       done.push("~/.codex/config.toml (Codex)");
     }
