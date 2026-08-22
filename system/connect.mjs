@@ -24,9 +24,21 @@
 import { readFileSync, writeFileSync, existsSync, copyFileSync, renameSync } from "node:fs";
 import { join } from "node:path";
 import { homedir, platform, cpus, totalmem } from "node:os";
+import { dirname } from "node:path";
 import { createHash } from "node:crypto";
 
 const URL_MCP = "https://aios-skills.vercel.app/mcp";
+// A GUI-launched app (Codex.app) inherits PATH=/usr/bin:/bin:/usr/sbin:/sbin — it has
+// NO /usr/local/bin, no homebrew, no nvm. A bare `npx` is therefore not findable, the
+// bridge never starts, and the client reports nothing at all: no tools, no error. Found
+// on a real machine 2026-08-22, after the config had already been "verified correct"
+// three times. So: absolute npx (it sits beside the node running this script), and an
+// explicit PATH for the child, because npx itself is a `#!/usr/bin/env node` script and
+// needs to find node the same way.
+const NODE_DIR = dirname(process.execPath);
+const NPX = existsSync(join(NODE_DIR, "npx")) ? join(NODE_DIR, "npx") : "npx";
+const CHILD_PATH = [NODE_DIR, "/usr/local/bin", "/usr/bin", "/bin", "/usr/sbin", "/sbin"]
+  .filter((v, i, a) => a.indexOf(v) === i).join(":");
 const NAME = "aios";
 const SENTINEL = Symbol("unparseable");
 
@@ -165,7 +177,8 @@ function stripTomlTable(text, name) {
       cfg.mcp = cfg.mcp || {};
       cfg.mcp[NAME] = {
         type: "local",
-        command: ["npx", "-y", "mcp-remote", URL_MCP, "--header", `Authorization:${AUTH}`],
+        command: [NPX, "-y", "mcp-remote", URL_MCP, "--header", `Authorization:${AUTH}`],
+        environment: { PATH: CHILD_PATH, HOME: homedir() },
         enabled: true,
       };
     });
@@ -191,7 +204,7 @@ try {
       // tools, and every diagnosis points at the server instead. Found on a real
       // install 2026-08-22: every working server in that config was command/args and
       // ours was the only `url` one. stdio is what Codex has always loaded.
-      const block = `[mcp_servers.aios]\ncommand = "npx"\nargs = ["-y", "mcp-remote", "${URL_MCP}", "--header", "Authorization:${AUTH}"]\nstartup_timeout_sec = 60\n`;
+      const block = `[mcp_servers.aios]\ncommand = "${NPX}"\nargs = ["-y", "mcp-remote", "${URL_MCP}", "--header", "Authorization:${AUTH}"]\nstartup_timeout_sec = 60\n\n[mcp_servers.aios.env]\nPATH = "${CHILD_PATH}"\nHOME = "${homedir()}"\n`;
       writeAtomic(p, base + sep + block);
       done.push("~/.codex/config.toml (Codex)");
     }
