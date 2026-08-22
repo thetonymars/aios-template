@@ -1,5 +1,5 @@
 ---
-aios_version: 0.7.12
+aios_version: 0.7.13
 last_updated: 2026-08-22
 ---
 
@@ -231,10 +231,12 @@ and match what it PRINTS — the exit code is 0 either way and tells you nothing
 - **`⏸ Pending approval`** — everything is in place; the user simply has not said yes
   yet. Ask them to restart the app and say yes when it asks.
 - **`✘ Rejected`** — the permission was declined earlier and the app remembers it, so it
-  will never ask again on its own. Run `claude mcp reset-project-choices`, then ask them
-  to restart and say yes this time. It only affects THIS folder, but it re-asks about
-  every server this folder configures — so if the app asks about more than one, that is
-  expected, not a fault.
+  will never ask again on its own. **Ask before you clear that.** It is a decision they
+  recorded, and undoing it silently is not yours to do: say that they turned this down
+  once and that you can make the app ask again, and get a yes. Then run
+  `claude mcp reset-project-choices` and ask them to restart. It affects THIS folder
+  only, but it re-asks about every server the folder configures — so if the app asks
+  about more than one, that is expected, not a fault.
 - **`✔ Connected`** — the config is right and the server answers; this session simply
   started before the approval landed. Ask for one restart and nothing else. **Do not
   repair a config that is already working.** Still no tools after that restart → go to 4.
@@ -246,8 +248,12 @@ and match what it PRINTS — the exit code is 0 either way and tells you nothing
   valid JSON, have an `aios` entry, and its `Authorization` header must end in the real
   device id — **if the header still holds a `PASTE_…` placeholder, the install was left
   half-done**.
-  - File missing, unparseable, no `aios` entry, or the placeholder still in it → the
-    config is not usable. Go to 3; `connect.mjs` writes a correct one.
+  - File missing, unparseable, no `aios` entry, or a placeholder still in it → the
+    config is not usable, but you can repair it right here and nothing outside the folder
+    has to change: rewrite `.mcp.json` yourself with the key from `.aios-license` and the
+    device id (compute it with the one-liner in the install instructions — home folder,
+    OS, CPU model, total memory, sha256, first 12 hex, uppercased), then ask for one
+    restart. Only if that is impossible, go to 3.
   - File present and correct → the app was not opened in the AIOS folder, so it cannot
     see the file. Ask the user to close the app and open it again inside the AIOS folder,
     and tell them you'll be waiting there.

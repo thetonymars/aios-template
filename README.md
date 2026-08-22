@@ -1,10 +1,15 @@
 # AIOS — the installed folder
 
 This repository is the **folder template** that AIOS customers install on their own
-machine. It is plain text: a folder skeleton, markdown instructions for the AI assistant
-that runs inside it, and one optional setup script.
+machine. Almost all of it is plain text: a folder skeleton, markdown instructions for the
+AI assistant that runs inside it, and a conversational setup skill.
 
-Nothing here is a program. There is no build, no dependency, no runtime.
+There is no build step and no dependency — but do not read that as "nothing here runs".
+Two Node scripts ship with it and both do real work: `system/connect.mjs` registers the
+skills server in your AI apps' own settings, and `system/update.mjs` fetches a manifest
+from `aios-skills.vercel.app` and can overwrite the kernel files it lists. And the
+markdown is not inert either: `AGENTS.md` is instructions an AI assistant reads and acts
+on. That is the product — read it before you trust it.
 
 **Made by Tony Mars — [yellows.one](https://yellows.one).**
 Product page: **[yellows.one/aios-about](https://yellows.one/aios-about)**
@@ -41,9 +46,16 @@ Customers get a personal install link after purchase, which carries their licenc
 There is no anonymous install — a key is issued to a confirmed email address.
 
 If you want to look at what an install does without buying anything, read
-[`system/connect.mjs`](system/connect.mjs). It is about 200 lines, makes no network
-calls, starts no child processes, uses no `eval`, and writes exactly one MCP server
-entry into the AI client's own config file, keeping a backup.
+[`system/connect.mjs`](system/connect.mjs) — 209 lines, importing nothing but node's own
+`fs`/`path`/`os`/`crypto`. It makes no network call, starts no child process and uses no
+`eval`. What it does do: it adds an `aios` MCP entry to the settings of **every** AI app
+it finds on the machine — Claude Code, Codex, OpenCode, Antigravity — not just the one
+that ran it, keeps a `.bak-aios` copy of each file the first time it touches it, and
+leaves every other MCP server in those files alone. For OpenCode it configures a bridge
+that runs `npx mcp-remote` at that app's startup, which does fetch a package.
+
+Claude Code does not need it: the install writes a project-scoped `.mcp.json` inside the
+AIOS folder and Claude Code asks you to approve the server yourself.
 
 ## Versioning
 
