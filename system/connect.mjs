@@ -13,7 +13,7 @@
 //   - ~/.claude.json                            Claude Code  (user-scope mcpServers)
 //   - ~/.config/opencode/opencode.jsonc        OpenCode     (only if its dir exists)
 //   - ~/.codex/config.toml                     Codex        (only if ~/.codex exists;
-//                                                   local mcp-remote bridge — see below)
+//                                                   native streamable_http — see below)
 //   - ~/.gemini/antigravity/mcp_config.json    Antigravity  (only if that dir exists)
 // Auth travels as a standard `Authorization: Bearer <token>.<device>` header — the
 // device id is derived from this machine (see deviceId below) and caps the license
@@ -198,13 +198,14 @@ try {
       let base = stripTomlTable(stripTomlTable(cur, "mcp_servers.aios.http_headers"), "mcp_servers.aios");
       base = base.replace(/\s+$/, "");
       const sep = base.length ? "\n\n" : "";
-      // Local mcp-remote bridge, NOT a `url` server. Codex only loads streamable-HTTP
-      // servers when `experimental_use_rmcp_client` is on; without it a `url` entry is
-      // accepted into the config and then silently ignored — the user restarts, sees no
-      // tools, and every diagnosis points at the server instead. Found on a real
-      // install 2026-08-22: every working server in that config was command/args and
-      // ours was the only `url` one. stdio is what Codex has always loaded.
-      const block = `[mcp_servers.aios]\ncommand = "${NPX}"\nargs = ["-y", "mcp-remote", "${URL_MCP}", "--header", "Authorization:${AUTH}"]\nstartup_timeout_sec = 60\n\n[mcp_servers.aios.env]\nPATH = "${CHILD_PATH}"\nHOME = "${homedir()}"\n`;
+      // NATIVE streamable HTTP. Codex supports it — the config key is `transport`, and
+      // THAT is what was missing all along: a `url` entry without `transport` matches no
+      // variant of Codex's server enum, so it is dropped silently. The user restarts,
+      // sees no tools, and every diagnosis blames the server. Two intermediate fixes
+      // (an mcp-remote bridge, then an absolute npx path) both "worked" while treating
+      // the symptom; the bridge also spawns a fresh npm process per conversation, which
+      // is slow and flaky. Native needs no child process at all.
+      const block = `[mcp_servers.aios]\ntransport = "streamable_http"\nurl = "${URL_MCP}"\nstartup_timeout_sec = 30\n\n[mcp_servers.aios.http_headers]\nAuthorization = "${AUTH}"\n`;
       writeAtomic(p, base + sep + block);
       done.push("~/.codex/config.toml (Codex)");
     }

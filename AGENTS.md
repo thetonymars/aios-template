@@ -1,5 +1,5 @@
 ---
-aios_version: 0.7.18
+aios_version: 0.7.19
 last_updated: 2026-08-22
 ---
 
@@ -270,8 +270,8 @@ and match what it PRINTS — the exit code is 0 either way and tells you nothing
 
 **Ask the user first, and get a yes.** This path changes files OUTSIDE the AIOS folder:
 `node system/connect.mjs` adds the AIOS entry to the settings of **every AI app it finds
-on this machine**, not only the one you are in, and the OpenCode and Codex entries it
-writes fetch an npm package (`mcp-remote`) every time those apps start. Say both in plain words before
+on this machine**, not only the one you are in, and the OpenCode entry it writes fetches
+an npm package (`mcp-remote`) every time that app starts. Say both in plain words before
 you run it. It keeps a `.bak-aios` copy of each file the first time it touches one — not
 on later runs — and leaves their other MCP servers alone. But it is their machine, so it
 is their call.
