@@ -1,6 +1,6 @@
 ---
-aios_version: 0.7.9
-last_updated: 2026-08-11
+aios_version: 0.7.10
+last_updated: 2026-08-22
 ---
 
 # This is your master file — you MUST follow every instruction in this file
@@ -198,32 +198,61 @@ skills come from TWO places:
 ## Connecting the skills server
 
 All non-`setup` skills stream from the AIOS skills server over MCP. If the
-`list_skills` / `start_skill` / `read_skill_file` tools are NOT in your session,
-the server is not connected yet — connect it (don't tell the user "no skills",
-don't substitute anything else):
+`list_skills` / `start_skill` / `read_skill_file` tools are NOT in your session, the
+server is not connected yet.
 
-1. **Already configured but tools still missing?** If an `aios` MCP server is
-   already in this client's config, it just needs loading: ask the user to
-   approve it (if prompted) and restart the client once. If after one restart the
-   tools are STILL absent, STOP and tell the user the server isn't responding (try
-   later / contact support) — do not loop.
+**This is yours to diagnose and fix — not the user's.** They are not developers: never
+just report "no skills", never hand them a command, a file path or a config term, and
+never ask them to choose between options they cannot judge. Work out which case below
+you are in, then give them ONE short sentence in their own language. The most they
+should ever have to do is approve a permission and restart their app.
 
-2. **Otherwise run the connect script** from the AIOS root (the folder with this
-   `AGENTS.md`): `node system/connect.mjs`. It reads `.aios-license` and writes
-   the correct MCP config for whichever client(s) you're in — you don't need to
-   know any per-client format. Then ask the user to restart the client.
-   - If `.aios-license` is missing, the install is incomplete — tell the user to get
-     their key from the funnel (yellows.one/aios) and reinstall; don't invent a token.
-     (`setup` does NOT set the license.)
-   - If you have NO shell access (a GUI-only app like Claude Desktop), you can't
-     run the script: tell the user to add the server in the app's Settings — name
-     `aios`, url `https://aios-skills.vercel.app/mcp`, header `Authorization` =
-     `Bearer ` followed by the value in `.aios-license`.
+The install writes the server config to **`.mcp.json` at the AIOS root** (beside this
+file). Claude Code reads that file only when the AIOS folder is the folder the app was
+opened in, and it asks the user to approve the server once.
 
-Keep what you tell the user simple, but never hide what you're doing — it's fine to
-say "I'm connecting the AIOS skills server." Until it's connected, only `setup` and
-your own local `system/skills/` skills are available (catalog-vs-native rules: see
-"## Skills").
+### If you are Claude Code
+
+Run `claude mcp get aios` and match the Status line. (No `claude` command available?
+Use "Any other client" below instead.)
+
+- **`⏸ Pending approval`** — everything is in place; the user simply has not said yes
+  yet. Tell them: *"Your app will ask permission to use the AIOS skills — say yes, then
+  restart it."*
+- **`✘ Rejected`** — the permission was declined earlier and the app remembers it, so it
+  will never ask again on its own. Run `claude mcp reset-project-choices` (it clears the
+  saved answers for THIS folder only), then tell them: *"Fixed — your app will ask once
+  more. Say yes, then restart it."*
+- **`No MCP server found`** — the app was not opened in the AIOS folder, so it cannot
+  see the config. Tell them: *"Close your app and open it again inside your AIOS folder
+  — I'll be waiting there."* If `.mcp.json` is genuinely absent from the AIOS root, use
+  "Any other client" below.
+
+### Any other client
+
+Run `node system/connect.mjs` from the AIOS root (the folder with this `AGENTS.md`). It
+reads `.aios-license` and writes the correct config for whichever client is installed —
+you do not need to know any per-client format. Then tell the user: *"Done — restart your
+app."*
+
+- The script reports which clients it wrote and which it skipped. **If it skipped
+  yours**, or you have no shell at all (a GUI-only app such as Claude Desktop), you
+  cannot configure it for them: give them the three values to add a connector in the
+  app's own settings — name `aios`, url `https://aios-skills.vercel.app/mcp`, header
+  `Authorization` = `Bearer ` followed by the value in `.aios-license`.
+
+### In every case
+
+- **No `.aios-license` at the AIOS root** → the install never finished. Tell the user to
+  get their personal install command at `yellows.one/aios`. Never invent a token.
+  (`setup` does NOT set the license.)
+- **Stop after one restart.** If the tools are still missing, tell the user plainly that
+  the skills server is not answering and to contact support. Do not loop, and do not try
+  a third approach.
+- Never hide what you are doing — if the user asks, say plainly what you changed and
+  why. Non-technical is not the same as concealed.
+- Until it is connected, only `setup` and the user's own `system/skills/` skills are
+  available (catalog-vs-native rules: see "## Skills").
 
 ## Updating AIOS
 
