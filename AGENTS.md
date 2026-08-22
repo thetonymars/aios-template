@@ -1,5 +1,5 @@
 ---
-aios_version: 0.7.15
+aios_version: 0.7.16
 last_updated: 2026-08-22
 ---
 
@@ -270,9 +270,11 @@ and match what it PRINTS — the exit code is 0 either way and tells you nothing
 
 **Ask the user first, and get a yes.** This path changes files OUTSIDE the AIOS folder:
 `node system/connect.mjs` adds the AIOS entry to the settings of **every AI app it finds
-on this machine**, not only the one you are in. Say that in plain words before you run
-it. It keeps a `.bak-aios` copy of each file the first time it touches one and leaves
-their other MCP servers alone — but it is their machine, so it is their call.
+on this machine**, not only the one you are in, and the OpenCode entry it writes fetches
+an npm package (`mcp-remote`) every time that app starts. Say both in plain words before
+you run it. It keeps a `.bak-aios` copy of each file the first time it touches one — not
+on later runs — and leaves their other MCP servers alone. But it is their machine, so it
+is their call.
 
 With a yes: run it from the AIOS root (the folder with this `AGENTS.md`). It reads
 `.aios-license` and writes the correct config for whichever clients are installed — you
@@ -285,7 +287,13 @@ them to restart the app.
   app's own settings — name `aios`, url `https://aios-skills.vercel.app/mcp`, header
   `Authorization` = `Bearer ` followed by the value in `.aios-license`. Show them those
   three values in full: here the machinery IS the instruction, because they have to type
-  it.
+  it. **Note this header carries no device id** — unlike every config written for them,
+  a hand-typed connector sits outside the one-machine cap. That is deliberate, not an
+  omission you should correct.
+
+- **Prefer a config the app reads from inside the AIOS folder if it has one**, for the
+  same reason Claude Code does: the user approves it and nothing global is touched. If
+  you are not sure your app supports that, say so rather than assuming either way.
 
 ### 4. Still nothing after ONE restart
 
@@ -314,11 +322,15 @@ When the user asks to update AIOS ("update aios" — or the equivalent in any la
      before applying: which folders, that the content is not changed, and that a
      copy goes to `.aios-backup/`.
 
-The script refreshes ONLY the kernel files in `system/managed-files.json`,
-backs up everything it changes to `.aios-backup/`, and never touches user data
-(`user/`, `business/`, `projects/`, `calendar/`, `knowledge/`, `people/`, `_inbox/`). Skills
-themselves stream live from the server and need no update. Do NOT update files by
-hand — always use the script.
+The script writes only kernel files — those listed in `system/managed-files.json`, plus
+any NEW ones the incoming release adds, which is how a new kernel file ever reaches an
+existing install — and backs up everything it changes to `.aios-backup/`. A hard
+tripwire refuses any path under `user/`, `business/`, `areas/` or `_inbox/` whatever a
+manifest claims. `people/`, `projects/`, `calendar/` and `knowledge/` are not on that
+list, deliberately: each ships its own managed `CONTEXT.md` router, so the script does
+write there — that one file, never the notes beside it, and never without naming it in
+the preview first. Skills stream live from the server and need no update. Do NOT update
+files by hand — always use the script.
 
 ## Memory
 

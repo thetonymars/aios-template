@@ -67,8 +67,10 @@ AIOS folder and Claude Code asks you to approve the server yourself.
 shows `v4.4.3` first, which is misleading. Go by the GitHub release, not by tag order.
 
 Installs pin a tag. Existing installs update through `system/update.mjs`, which fetches
-its manifest from `aios-skills.vercel.app/template` and refreshes only the files listed
-in `system/managed-files.json`, backing up every one it changes. It never edits the
+its manifest from `aios-skills.vercel.app/template` and refreshes only kernel files — those listed
+in `system/managed-files.json` plus any the incoming release adds — backing up every one
+it changes, and refusing outright to write under `user/`, `business/`, `areas/` or
+`_inbox/` whatever a manifest asks for. It never edits the
 operator's own notes. It can, in one declared case, MOVE them: an install predating the
 0.7 layout has its `areas/user`, `areas/business` and `network` folders relocated to the
 root, contents untouched and copied to `.aios-backup/` first. Nothing is applied without
