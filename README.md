@@ -66,9 +66,13 @@ AIOS folder and Claude Code asks you to approve the server yourself.
 2026. They sort higher than `v0.7.x` but are **older and unsupported** — a plain tag list
 shows `v4.4.3` first, which is misleading. Go by the GitHub release, not by tag order.
 
-Installs pin a tag. Existing installs update through
-`system/update.mjs`, which only refreshes the files listed in
-`system/managed-files.json` and never touches the operator's own data.
+Installs pin a tag. Existing installs update through `system/update.mjs`, which fetches
+its manifest from `aios-skills.vercel.app/template` and refreshes only the files listed
+in `system/managed-files.json`, backing up every one it changes. It never edits the
+operator's own notes. It can, in one declared case, MOVE them: an install predating the
+0.7 layout has its `areas/user`, `areas/business` and `network` folders relocated to the
+root, contents untouched and copied to `.aios-backup/` first. Nothing is applied without
+`--apply`.
 
 ## Contact
 

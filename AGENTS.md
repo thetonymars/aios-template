@@ -1,5 +1,5 @@
 ---
-aios_version: 0.7.13
+aios_version: 0.7.14
 last_updated: 2026-08-22
 ---
 
@@ -250,10 +250,16 @@ and match what it PRINTS — the exit code is 0 either way and tells you nothing
   half-done**.
   - File missing, unparseable, no `aios` entry, or a placeholder still in it → the
     config is not usable, but you can repair it right here and nothing outside the folder
-    has to change: rewrite `.mcp.json` yourself with the key from `.aios-license` and the
-    device id (compute it with the one-liner in the install instructions — home folder,
-    OS, CPU model, total memory, sha256, first 12 hex, uppercased), then ask for one
-    restart. Only if that is impossible, go to 3.
+    has to change. Rewrite `.mcp.json` yourself: the key is the one line in
+    `.aios-license`, and the device id is what this prints — run it exactly as written,
+    a hand-retyped variant produces a DIFFERENT id and binds the wrong machine:
+
+    ```
+    node -e "const{createHash}=require('crypto'),os=require('os');console.log(createHash('sha256').update([os.homedir(),os.platform(),os.cpus()[0]?.model??'',String(os.totalmem())].join('|')).digest('hex').slice(0,12).toUpperCase())"
+    ```
+
+    The header is `Bearer <key>.<id>`. Then ask for one restart. Only if that is
+    impossible, go to 3.
   - File present and correct → the app was not opened in the AIOS folder, so it cannot
     see the file. Ask the user to close the app and open it again inside the AIOS folder,
     and tell them you'll be waiting there.
