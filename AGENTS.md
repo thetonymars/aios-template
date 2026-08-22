@@ -1,5 +1,5 @@
 ---
-aios_version: 0.7.10
+aios_version: 0.7.11
 last_updated: 2026-08-22
 ---
 
@@ -201,58 +201,80 @@ All non-`setup` skills stream from the AIOS skills server over MCP. If the
 `list_skills` / `start_skill` / `read_skill_file` tools are NOT in your session, the
 server is not connected yet.
 
-**This is yours to diagnose and fix — not the user's.** They are not developers: never
-just report "no skills", never hand them a command, a file path or a config term, and
-never ask them to choose between options they cannot judge. Work out which case below
-you are in, then give them ONE short sentence in their own language. The most they
-should ever have to do is approve a permission and restart their app.
+**This is yours to diagnose and fix — not the user's.** They are not developers. Work
+out which case below you are in, act, and then say ONE sentence to them, in their own
+language, **with no machinery in it**: never name the server, the status, the file or
+the command, not even in passing. *"The AIOS skills aren't switched on yet — your app
+will ask your permission, say yes and restart it"* is the level. *"The MCP server `aios`
+is Pending approval in .mcp.json"* is not, however true it is. The most they should ever
+have to do is approve a permission and restart their app. If they ask what you did,
+answer plainly and completely — non-technical is not the same as concealed.
+
+**Check these in order and stop at the first one that matches.**
+
+### 1. Is `.aios-license` missing from the AIOS root?
+
+Then the install never finished, and nothing below can help. Tell the user to get their
+personal install command at `yellows.one/aios`. Never invent a token. (`setup` does NOT
+set the license.) Stop here.
+
+### 2. Are you Claude Code?
 
 The install writes the server config to **`.mcp.json` at the AIOS root** (beside this
 file). Claude Code reads that file only when the AIOS folder is the folder the app was
-opened in, and it asks the user to approve the server once.
-
-### If you are Claude Code
-
-Run `claude mcp get aios` and match the Status line. (No `claude` command available?
-Use "Any other client" below instead.)
+opened in, and it asks the user to approve the server once. Run `claude mcp get aios`
+and match what it PRINTS — the exit code is 0 either way and tells you nothing. (No
+`claude` command available? Go to 3.)
 
 - **`⏸ Pending approval`** — everything is in place; the user simply has not said yes
-  yet. Tell them: *"Your app will ask permission to use the AIOS skills — say yes, then
-  restart it."*
+  yet. Ask them to restart the app and say yes when it asks.
 - **`✘ Rejected`** — the permission was declined earlier and the app remembers it, so it
-  will never ask again on its own. Run `claude mcp reset-project-choices` (it clears the
-  saved answers for THIS folder only), then tell them: *"Fixed — your app will ask once
-  more. Say yes, then restart it."*
-- **`No MCP server found`** — the app was not opened in the AIOS folder, so it cannot
-  see the config. Tell them: *"Close your app and open it again inside your AIOS folder
-  — I'll be waiting there."* If `.mcp.json` is genuinely absent from the AIOS root, use
-  "Any other client" below.
+  will never ask again on its own. Run `claude mcp reset-project-choices`, then ask them
+  to restart and say yes this time. It only affects THIS folder, but it re-asks about
+  every server this folder configures — so if the app asks about more than one, that is
+  expected, not a fault.
+- **`✔ Connected`** — the config is right and the server answers; this session simply
+  started before the approval landed. Ask for one restart and nothing else. **Do not
+  repair a config that is already working.** Still no tools after that restart → go to 4.
+- **`Scope: User config`** (whatever the status says) — an older install, wired up by
+  `connect.mjs` before `.mcp.json` existed. Same treatment: one restart, no repairs, and
+  **do not run `connect.mjs` again**. Still nothing → go to 4.
+- **`No MCP server found`** — Claude Code sees no `aios` server here. Before you conclude
+  anything, open `.mcp.json` at the AIOS root and check it yourself. It must exist, be
+  valid JSON, have an `aios` entry, and its `Authorization` header must end in the real
+  device id — **if it still contains `PASTE_ID_FROM_STEP_4`, the install was left
+  half-done**.
+  - File missing, unparseable, no `aios` entry, or the placeholder still in it → the
+    config is not usable. Go to 3; `connect.mjs` writes a correct one.
+  - File present and correct → the app was not opened in the AIOS folder, so it cannot
+    see the file. Ask the user to close the app and open it again inside the AIOS folder,
+    and tell them you'll be waiting there.
 
-### Any other client
+### 3. Any other client
 
 Run `node system/connect.mjs` from the AIOS root (the folder with this `AGENTS.md`). It
 reads `.aios-license` and writes the correct config for whichever client is installed —
-you do not need to know any per-client format. Then tell the user: *"Done — restart your
-app."*
+you do not need to know any per-client format. Then ask the user to restart the app.
+
+It writes into that client's **own global settings** (backing up what it touches), not
+into the AIOS folder — so unlike the Claude Code path above, this does change something
+outside the folder. Do not hide that: if the user asks, say so plainly.
 
 - The script reports which clients it wrote and which it skipped. **If it skipped
   yours**, or you have no shell at all (a GUI-only app such as Claude Desktop), you
   cannot configure it for them: give them the three values to add a connector in the
   app's own settings — name `aios`, url `https://aios-skills.vercel.app/mcp`, header
-  `Authorization` = `Bearer ` followed by the value in `.aios-license`.
+  `Authorization` = `Bearer ` followed by the value in `.aios-license`. This is the one
+  place you may show the user machinery, because they have to type it.
 
-### In every case
+### 4. Still nothing after ONE restart
 
-- **No `.aios-license` at the AIOS root** → the install never finished. Tell the user to
-  get their personal install command at `yellows.one/aios`. Never invent a token.
-  (`setup` does NOT set the license.)
-- **Stop after one restart.** If the tools are still missing, tell the user plainly that
-  the skills server is not answering and to contact support. Do not loop, and do not try
-  a third approach.
-- Never hide what you are doing — if the user asks, say plainly what you changed and
-  why. Non-technical is not the same as concealed.
-- Until it is connected, only `setup` and the user's own `system/skills/` skills are
-  available (catalog-vs-native rules: see "## Skills").
+Stop. Tell the user plainly that the skills server is not answering and that they should
+contact support. Do not loop, do not try a third approach, and do not start rewriting
+config — a wrong repair costs more than the wait.
+
+Until it is connected, only `setup` and the user's own `system/skills/` skills are
+available (catalog-vs-native rules: see "## Skills").
 
 ## Updating AIOS
 
@@ -289,7 +311,10 @@ No automatic session memory. Durable layers:
 
 - Vault-internal: operator → `user/`, businesses → `business/<slug>/`, knowledge → `knowledge/`, skills → `system/skills/`.
 - External/cloud (if any) is **per business** → recorded in that business's `business.md`, not here.
-- MCP servers and code repos live **outside** the vault, in the AI client's own config / your filesystem — referenced, never stored here.
+- MCP servers and code repos live **outside** the vault, in the AI client's own config /
+  your filesystem — referenced, never stored here. **One exception:** the AIOS skills
+  server's own `.mcp.json` sits at the AIOS root, because that is where the install put
+  it and where Claude Code looks for it (see "## Connecting the skills server").
 
 ## Naming Conventions
 
