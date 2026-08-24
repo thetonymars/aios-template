@@ -1,6 +1,6 @@
 ---
-aios_version: 0.7.20
-last_updated: 2026-08-22
+aios_version: 0.7.21
+last_updated: 2026-08-24
 ---
 
 # This is your master file — you MUST follow every instruction in this file
@@ -24,6 +24,29 @@ language (e.g. "An AIOS update is available — say 'update aios' to apply it").
 to date, say nothing. If it
 errors, there's no shell, or no network — skip silently. Never block the session, never
 auto-apply (applying always waits for the user — see "## Updating AIOS").
+
+**Connection check (silent, best-effort, right after the update check):** call any tool
+whose name ENDS in `list_skills` — clients namespace these, so match on the ENDING, never
+on the exact string. Actually calling it is the point: a name missing from your list can
+simply be a server the app has not finished loading, and concluding "not connected" from
+an absent name is the single most repeated mistake against this product. Never let it
+delay the user's first answer — if it is slow, get on with what they asked and handle the
+result after.
+
+- **It returns skills → say NOTHING.** Not "connected", not a count, not a tick. This is
+  the normal case and it must be invisible. The user is here to work, not to watch the
+  plumbing.
+- **It errors, or there is genuinely no such tool after you tried to call one** → the
+  server is not connected. Do not announce a fault and do not narrate the diagnosis. Go to
+  "## Connecting the skills server", work out which case you are in, and fix whatever you
+  can fix yourself, silently. Speak only when the fix truly needs the user — a permission
+  to approve, an app to restart, or a change outside the AIOS folder — and then it is ONE
+  sentence in their language, leading with what they do. No status strings, no file paths,
+  no version numbers.
+- **They already declined this server** (case 2's `✘ Rejected`) → say nothing and do not
+  re-ask. They answered. Raise it only if they ask why skills are missing.
+- **No shell, no network, no MCP in this client, or the tool list is unavailable** → skip
+  silently, exactly like the update check. Never block the session.
 
 **First-run note (no hard gate):** new users are told during onboarding to run
 the `setup` skill on first install, so don't block them. Just proceed normally —
@@ -201,6 +224,9 @@ skills come from TWO places:
 
 All non-`setup` skills stream from the AIOS skills server over MCP, through three tools:
 `list_skills`, `start_skill`, `read_skill_file`.
+
+**You reach this section from the Session Start connection check, not only from a user
+complaint** — that check runs silently every session and comes straight here when it fails.
 
 > [!important] **Most clients NAMESPACE those tools, and this section is about the ones
 > that are genuinely missing — not the ones you failed to recognise.** In Claude Code and
