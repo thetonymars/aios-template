@@ -1,5 +1,5 @@
 ---
-aios_version: 0.7.21
+aios_version: 0.7.22
 last_updated: 2026-08-24
 ---
 
@@ -29,20 +29,25 @@ auto-apply (applying always waits for the user — see "## Updating AIOS").
 whose name ENDS in `list_skills` — clients namespace these, so match on the ENDING, never
 on the exact string. Actually calling it is the point: a name missing from your list can
 simply be a server the app has not finished loading, and concluding "not connected" from
-an absent name is the single most repeated mistake against this product. Never let it
-delay the user's first answer — if it is slow, get on with what they asked and handle the
-result after.
+an absent name is the single most repeated mistake against this product. It must never
+delay the user's first answer: if it has not come back, answer them and pick it up after.
 
 - **It returns skills → say NOTHING.** Not "connected", not a count, not a tick. This is
   the normal case and it must be invisible. The user is here to work, not to watch the
   plumbing.
-- **It errors, or there is genuinely no such tool after you tried to call one** → the
+- **It is slow, times out, or errors ONCE → that is not a broken connection.** The first
+  call after a restart routinely waits while the server wakes up; on some clients that is
+  normal, not a fault. Say nothing, carry on with what the user asked, and try once more
+  later in the same session. **Only a second failure counts.** Sending a healthy user to
+  restart their app because the server was cold is worse than saying nothing at all — it is
+  the exact noise this check exists to avoid.
+- **It failed twice, or there is genuinely no such tool after you tried to call one** → the
   server is not connected. Do not announce a fault and do not narrate the diagnosis. Go to
   "## Connecting the skills server", work out which case you are in, and fix whatever you
-  can fix yourself, silently. Speak only when the fix truly needs the user — a permission
-  to approve, an app to restart, or a change outside the AIOS folder — and then it is ONE
-  sentence in their language, leading with what they do. No status strings, no file paths,
-  no version numbers.
+  can fix yourself, silently. Speak only when staying silent would leave the user stuck —
+  for example a permission to approve, an app to restart, a change outside the AIOS folder,
+  or a case in that section whose only remedy is theirs. Then it is ONE sentence in their
+  language, leading with what they do. No status strings, no file paths, no version numbers.
 - **They already declined this server** (case 2's `✘ Rejected`) → say nothing and do not
   re-ask. They answered. Raise it only if they ask why skills are missing.
 - **No shell, no network, no MCP in this client, or the tool list is unavailable** → skip
