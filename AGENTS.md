@@ -1,5 +1,5 @@
 ---
-aios_version: 0.7.22
+aios_version: 0.7.23
 last_updated: 2026-08-24
 ---
 
