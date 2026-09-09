@@ -1,0 +1,15 @@
+# What GitHub puts in the release tarball — i.e. what lands in a customer's folder.
+# The install is `curl .../<tag>.tar.gz | tar -xz --strip-components=1`, so anything
+# tracked here is copied verbatim into their AIOS root. LICENSE and README.md exist
+# for the PUBLIC REPO (a client's AI refused an install over a repo with no public
+# identity — c8cb44d, 2026-08-21); they are repo furniture, not part of the product
+# folder, and they were landing in every customer's root as clutter nothing points at.
+# `export-ignore` keeps them on github.com and out of the tarball.
+# Anchored to the root on purpose: api/template.js in the engine skips these by exact
+# root-relative path, and the two rules must describe the same thing.
+/LICENSE        export-ignore
+/README.md      export-ignore
+/.gitattributes export-ignore
+# `.gitignore` too: the install is deliberately NOT a git repo (api/install.js forbids
+# `git clone`), so it was inert in a customer root. It still does its job HERE.
+/.gitignore     export-ignore
