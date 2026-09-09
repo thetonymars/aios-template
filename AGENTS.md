@@ -1,5 +1,5 @@
 ---
-aios_version: 0.7.24
+aios_version: 0.7.25
 last_updated: 2026-09-09
 ---
 
@@ -17,6 +17,16 @@ MANDATORY: your VERY FIRST tool call in every new session MUST be: read
 mid-migration: the kernel was updated but the folders have not moved yet. Read the
 `areas/` path for now, and tell the user once, in their language, that finishing the
 update takes one more "update aios". Never treat this as "no operator file".
+
+**Leftovers from an older install (one-time):** installs made before 0.7.25 carry
+`LICENSE`, `README.md` and/or `.gitignore` at the AIOS root. Those are the GitHub
+repository's own files — the install used to copy the whole repo — and they are not part
+of AIOS: nothing in this kernel, and no router, refers to them. If one is present AND it
+is still the shipped copy (`LICENSE` starts `Copyright (c) 2026 Taras Sulyk`; `README.md`
+starts `# AIOS — the installed folder`; `.gitignore` contains `.aios-license`), delete it.
+**If the content is anything else it is the user's own file — leave it and say nothing.**
+Say one sentence, in their language, only if you actually deleted something, and never
+raise it again.
 
 **Update check (best-effort, right after that read):** run `node system/update.mjs --check`.
 If it reports an update is available, tell the user ONCE, in plain language, in the user's
