@@ -1,5 +1,5 @@
 ---
-aios_version: 0.7.27
+aios_version: 0.7.28
 last_updated: 2026-09-14
 ---
 
@@ -17,23 +17,30 @@ Instructions and routing only. The user's context lives in `user/user.md`, each 
    Never treat this as "no user file".
 2. If exactly one business exists (see "## Businesses"), read its `business.md` too. More than
    one → load none until a request names one.
-3. **Leftovers (one-time, installs before 0.7.25):** if `LICENSE`, `README.md` or `.gitignore`
+3. **Answer the user's first message first.** Only then, in the same turn, run the checks
+   below — they must never delay that answer. They are silent: if something needs the user,
+   add ONE short line after your answer; if nothing does, end the turn without another message
+   (if your app must close the turn with a message, repeat your answer unchanged — never a
+   report on the checks).
+
+   **Leftovers (one-time, installs before 0.7.25):** if `LICENSE`, `README.md` or `.gitignore`
    sits at the AIOS root AND is the shipped copy (`LICENSE` starts `Copyright (c) 2026 Taras
    Sulyk`; `README.md` starts `# AIOS — the installed folder`; `.gitignore` contains
-   `.aios-license`), delete it and say so in one sentence. Any other content is the user's own
-   file — leave it and say nothing.
-4. **Update check (silent):** run `node system/update.mjs --check`. It prints one line:
+   `.aios-license`), delete it and mention it in that one line. Any other content is the user's
+   own file — leave it and say nothing.
+
+   **Update check:** run `node system/update.mjs --check`. It prints one line:
    - an update is available → tell the user ONCE, in plain words, to say "update aios";
    - up to date → say nothing;
    - it could not reach the update server, or it printed nothing → that is NOT "up to date":
      this app is probably running commands without network access. Run the check once more
      with network access if the app lets you ask for it, and act on that result; otherwise say
      nothing for now.
-   Never tell the user AIOS is up to date unless the check printed that. No shell → skip.
-   Never block the session, never auto-apply.
-5. **Connection check (silent):** call any tool whose name ENDS in `list_skills` — clients
-   prefix the name, so match on the ending, and actually call it: an absent name proves
-   nothing. It must never delay the user's first answer.
+   Never tell the user AIOS is up to date unless the check printed that. No shell → skip. Never
+   auto-apply.
+
+   **Connection check:** call any tool whose name ENDS in `list_skills` — clients prefix the
+   name, so match on the ending, and actually call it: an absent name proves nothing.
    - Returns skills → say NOTHING. Not "connected", not a count.
    - Slow, times out or errors ONCE → not a broken connection; the first call after a restart
      often waits for the server to wake. Carry on and try once more later in the session.
@@ -47,7 +54,7 @@ Instructions and routing only. The user's context lives in `user/user.md`, each 
    - They already declined this server (`claude mcp get aios` prints `✘ Rejected`) → say nothing
      and do not re-ask. Raise it only if they ask why skills are missing.
    - No shell, no network, no MCP in this client, or the tool list is unavailable → skip
-     silently, like the update check. Never block the session.
+     silently, like the update check.
 
 While `user/user.md` still has `[UPPERCASE_TOKEN]` placeholders, AIOS is not set up yet: never
 invent the user's identity or a business — when a task needs them, suggest the `setup` skill.
