@@ -122,7 +122,8 @@ try {
   if (!res.ok) throw new Error(String(res.status));
   manifest = await res.json();
 } catch {
-  if (CHECK) process.exit(0); // best-effort: stay silent when offline so the session never blocks
+  // best-effort: never block the session — but say so, because silence here was read as "up to date"
+  if (CHECK) { console.log("AIOS update check could not reach the update server (no network access here). This is NOT the same as up to date."); process.exit(0); }
   console.error("Could not reach the AIOS server. Check your connection and try again.");
   process.exit(1);
 }

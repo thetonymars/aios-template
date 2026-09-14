@@ -1,5 +1,5 @@
 ---
-aios_version: 0.7.26
+aios_version: 0.7.27
 last_updated: 2026-09-14
 ---
 
@@ -22,9 +22,15 @@ Instructions and routing only. The user's context lives in `user/user.md`, each 
    Sulyk`; `README.md` starts `# AIOS — the installed folder`; `.gitignore` contains
    `.aios-license`), delete it and say so in one sentence. Any other content is the user's own
    file — leave it and say nothing.
-4. **Update check (silent):** run `node system/update.mjs --check`. Update available → tell the
-   user ONCE, in plain words, to say "update aios". Up to date, an error, no shell or no
-   network → say nothing. Never block the session, never auto-apply.
+4. **Update check (silent):** run `node system/update.mjs --check`. It prints one line:
+   - an update is available → tell the user ONCE, in plain words, to say "update aios";
+   - up to date → say nothing;
+   - it could not reach the update server, or it printed nothing → that is NOT "up to date":
+     this app is probably running commands without network access. Run the check once more
+     with network access if the app lets you ask for it, and act on that result; otherwise say
+     nothing for now.
+   Never tell the user AIOS is up to date unless the check printed that. No shell → skip.
+   Never block the session, never auto-apply.
 5. **Connection check (silent):** call any tool whose name ENDS in `list_skills` — clients
    prefix the name, so match on the ending, and actually call it: an absent name proves
    nothing. It must never delay the user's first answer.
