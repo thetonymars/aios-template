@@ -1,6 +1,6 @@
 ---
-aios_version: 0.7.28
-last_updated: 2026-09-14
+aios_version: 0.7.29
+last_updated: 2026-10-06
 ---
 
 # AIOS
@@ -70,7 +70,7 @@ Before working inside a folder, open its `CONTEXT.md`. Placing something new: it
 |--------|------|
 | `_inbox/` | unsorted capture — when unsure where something goes |
 | `user/user.md` | the user: one person |
-| `business/<slug>/` | one business: `business.md` + `brand/` (voice), `avatars/`, `competitors/`, `products/` |
+| `business/<slug>/` | one business: `business.md` + `brand/` (voice), `avatars/`, `competitors/`, `products/`, `offers/` (where to send people — before using or adding one, read `system/offers.md`) |
 | `projects/` | bounded work, by stage: `1-active/ 2-next/ 3-someday/ 9-archive/` |
 | `calendar/` | daily, weekly, monthly, yearly notes |
 | `knowledge/` | notes and archive, recalled on demand — search, don't browse |
