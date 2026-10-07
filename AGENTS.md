@@ -1,6 +1,6 @@
 ---
-aios_version: 0.7.29
-last_updated: 2026-10-06
+aios_version: 0.7.30
+last_updated: 2026-10-07
 ---
 
 # AIOS
@@ -62,20 +62,20 @@ invent the user's identity or a business — when a task needs them, suggest the
 ## Layers — where things go
 
 Before working inside a folder, open its `CONTEXT.md`. Placing something new: it runs the OS →
-`system/`; a person → `people/`; a fact about the user → `user/`, about one business →
-`business/<slug>/`; bounded work → `projects/`; a dated log → `calendar/`; notes or archive →
-`knowledge/`; unsure → `_inbox/`.
+`system/`; how someone writes → `system/voices/`; a person → `people/`; a fact about the user →
+`user/`, about one business → `business/<slug>/`; bounded work → `projects/`; a dated log →
+`calendar/`; notes or archive → `knowledge/`; unsure → `_inbox/`.
 
 | Folder | What |
 |--------|------|
 | `_inbox/` | unsorted capture — when unsure where something goes |
 | `user/user.md` | the user: one person |
-| `business/<slug>/` | one business: `business.md` + `brand/` (voice), `avatars/`, `competitors/`, `products/`, `offers/` (where to send people — before using or adding one, read `system/offers.md`) |
+| `business/<slug>/` | one business: `business.md` + `brand/` (brand voice), `avatars/`, `competitors/`, `products/`, `offers/` (where to send people — before using or adding one, read `system/offers.md`) |
 | `projects/` | bounded work, by stage: `1-active/ 2-next/ 3-someday/ 9-archive/` |
 | `calendar/` | daily, weekly, monthly, yearly notes |
 | `knowledge/` | notes and archive, recalled on demand — search, don't browse |
 | `people/` | one note per person |
-| `system/` | skills, agents, the update and connect scripts |
+| `system/` | skills, agents, `voices/` (how each person writes — before writing a text for an audience or saving a voice, read `system/voices/CONTEXT.md`), the update and connect scripts |
 
 Heavy files, code and other apps stay outside AIOS and are only referenced.
 
@@ -150,4 +150,4 @@ Folders and files: lowercase, hyphens. Exceptions: `_inbox`, the stage folders `
 2-next/ 3-someday/ 9-archive/`, and project folders `prj-p[NNNN]-[name]-[YYMMDD]` (full rules:
 `projects/CONTEXT.md`). Business slug: lowercase,
 hyphenated, unique, never `user`. Deliverable status: `draft-v1`, `draft-v2`, `final`. UPPERCASE
-only for system files (AGENTS.md, CLAUDE.md, GEMINI.md, CONTEXT.md, SKILL.md).
+only for system files (AGENTS.md, CLAUDE.md, GEMINI.md, CONTEXT.md, SKILL.md, VOICE.md).

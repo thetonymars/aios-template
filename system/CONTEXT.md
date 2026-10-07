@@ -6,6 +6,7 @@ What the OS runs on. Machine-consumed — not read as notes.
 |--------|------|
 | skills/ | repeatable AI workflows. Each = folder with SKILL.md. Catalog in `skills.md`. |
 | agents/ | specialist personas (`<role>/AGENT.md`) that own skills — see `AGENTS.md` → Agents. |
+| voices/ | how each person or character writes. Each = folder with `VOICE.md`. Rules in `voices/CONTEXT.md`. |
 
 The explicit-invocation rule for skills is stated once, in `AGENTS.md` → Skills.
 

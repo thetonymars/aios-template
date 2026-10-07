@@ -1,5 +1,5 @@
 {
-  "aios_version": "0.7.29",
+  "aios_version": "0.7.30",
   "comment": "Lives in system/ (plumbing). Kernel files that `system/update.mjs` may refresh. Everything NOT listed = user data, NEVER touched. update.mjs ALSO enforces a HARDCODED deny-prefix list (user/, business/, areas/, _inbox/) this file cannot override, overwrite-only (never deletes), backs up every changed file to .aios-backup/, refuses absolute/.. /symlink paths, and a downgrade guard. sha256 = as-shipped baseline so update can detect a user-edited kernel file (conflict -> backup + overwrite-on-confirm, never silent). Paths relative to platform root. Regenerate with scripts/gen-managed.mjs after editing any kernel file.",
   "deny_prefixes": [
     "user/",
@@ -10,7 +10,7 @@
   "managed": [
     {
       "path": "AGENTS.md",
-      "sha256": "5790ead2ee47b93501f99b11d334c316699dd120f53ff3d559a6d3942b2b8f7d"
+      "sha256": "cf770bf18cb5952149b4ffe82a938de05041f82a78c63eb5ec9cc8b43e6bd4f2"
     },
     {
       "path": "CLAUDE.md",
@@ -22,7 +22,7 @@
     },
     {
       "path": "system/CONTEXT.md",
-      "sha256": "ddec55fdf19657e613297c911293dd5189647244cb736b6369dc5a2cedabcc2e"
+      "sha256": "982c139b0ec7ef887b36bfcdf5e5d983da803a3daa0c5085c8a522cc3fa9c069"
     },
     {
       "path": "system/update.mjs",
@@ -37,12 +37,16 @@
       "sha256": "57cb386f8a1fa5ccf5ecbe09b92e853560d9b1d6e360eed87cffa33620487760"
     },
     {
+      "path": "system/voices/CONTEXT.md",
+      "sha256": "40c7b32e077cd5980c65728f79618291db34e6eb14ea2c6c52e43877435166e1"
+    },
+    {
       "path": "system/skills/skills.md",
       "sha256": "2bb3af7aa7863c7c4a2c0606c21819a5b03b7ee786e92b4fca8258cf45bc6135"
     },
     {
       "path": "system/skills/setup/SKILL.md",
-      "sha256": "67ad429786c7a8f3289a63dc9016d429b571551b1b209f79c955a6783d33ba97"
+      "sha256": "42cef6dac6881799810eff51863c6f3b4cd40612cbc3cdfa0a0321c50473d395"
     },
     {
       "path": "system/skills/setup/CONTEXT.md",

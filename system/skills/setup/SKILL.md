@@ -7,9 +7,9 @@ description: |
   business/<slug>/ (operator already done). ~5-7 min, conversational, one focused
   question at a time. Captures only the essentials needed for AI personalization:
   for the operator — name, role, how-to-respond rules; for the business — name,
-  niche, and the Jay-Abraham what/how/who triple. Voice, customer profiles, brand
-  voice are owned by OTHER skills (brand-architect, avatar-passport) — setup
-  deliberately does NOT capture them.
+  niche, and the Jay-Abraham what/how/who triple. Customer profiles and the brand
+  voice are owned by OTHER skills (avatar-passport, brand-architect); how a person
+  writes is kept in system/voices/ — setup deliberately does NOT capture them.
 
   Triggers: 'setup', 'set up aios', 'initialize aios', 'onboarding', 'install aios',
   'fill template', 'add business', 'new business', 'onboard business'
@@ -42,9 +42,9 @@ N businesses (`business/<slug>/`). Setup is the only supported way to onboard ei
   follow-up before moving on.
 - **No technical leakage to the user.** Never show file paths, placeholder tokens, or
   system labels ("slug", "frontmatter", "tier"). Speak as a friend writing things down.
-- **Setup is a thin layer.** It captures essentials only. Voice samples, customer
-  profiles (avatars), and brand voice are owned by OTHER skills (`brand-architect`,
-  `avatar-passport`). Setup does NOT duplicate their work.
+- **Setup is a thin layer.** It captures essentials only. Customer profiles (avatars)
+  and the brand voice are owned by OTHER skills (`avatar-passport`, `brand-architect`);
+  how a person writes is kept in `system/voices/`. Setup does NOT duplicate that work.
 - **Catch-all at the end of each stage.** After the structured questions, always ask
   "What else do you want me to always remember about you / this business?" — this is
   where the user adds anything we didn't think to ask.
@@ -66,11 +66,11 @@ Never silently overwrite a filled operator or an existing `business/<slug>/busin
 
 ## What setup does NOT do
 
-- **Voice work** (voice sample, brand voice, voice strategy) — `brand-architect` owns
-  `user/voice.md` and `business/<slug>/brand/voice.md`.
+- **Voice work** — how a person writes: one folder per voice in `system/voices/`, see its
+  `CONTEXT.md`. The brand voice is brand work — see below.
 - **Customer profiles / avatars / ICP deep-dive** — `avatar-passport` owns
   `business/<slug>/avatars/`.
-- **Brand work** (positioning, story, voice strategy) — `brand-architect` owns
+- **Brand work** (positioning, story, brand voice) — `brand-architect` owns
   `business/<slug>/brand/`.
 - **Deeper operator/business profile** (MBTI, CliftonStrengths, pricing tiers, team
   breakdown, market sizing, methodologies, competitor analysis) — a future
