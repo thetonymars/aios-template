@@ -3,7 +3,7 @@
 Show the user what was captured, accept corrections, finalize. **Mode-aware.**
 
 **Rules (do NOT violate):**
-- **Zero file paths** shown to the user. Never `user/user.md`, `business/<slug>/business.md`, or any path.
+- **Zero file paths** shown to the user. Never `user/user.md`, `business/<slug>/core/business.md`, or any path.
 - **Zero technical labels.** Don't say "slug", "frontmatter", "placeholder", "field".
 - **Match the user's language.** The templates below are written in English as the canonical reference — render everything the user sees in their chosen language at runtime.
 - Reads as a friend summarizing back what they heard — NOT a tool printing fields.
@@ -64,7 +64,7 @@ For first-run:
 ```
 ✓ Done.
 
-From here on — just talk to me. Name a business and I'll pick up its context. Or tell me what needs doing (write an email, a series of posts, rework a post…) — I'll bring in the right skill.
+From here on — just talk to me. Name a business and I'll pick up its context. Tell me what needs doing (write an email, a series of posts, rework a post…) and I'll do it. To use a skill, ask for it: "what skills do I have?" or "use a skill for this".
 
 Want to add another business someday — say "new business" and we'll run a short onboarding.
 ```

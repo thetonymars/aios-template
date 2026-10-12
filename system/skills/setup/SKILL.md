@@ -3,7 +3,7 @@ name: setup
 description: |
   Conversational AIOS onboarding. Two modes, auto-detected. FIRST-RUN: captures the
   global operator (one person) → user/user.md, then the first business →
-  business/<slug>/business.md. ADD-BUSINESS: onboards another business into a new
+  business/<slug>/core/ (business.md, numbers.md, goals.md) and its map CONTEXT.md. ADD-BUSINESS: onboards another business into a new
   business/<slug>/ (operator already done). ~5-7 min, conversational, one focused
   question at a time. Captures only the essentials needed for AI personalization:
   for the operator — name, role, how-to-respond rules; for the business — name,
@@ -18,7 +18,7 @@ description: |
   Use when a freshly copied AIOS needs its operator + first business, or when the
   operator wants to add another business to an existing AIOS.
 mode: multi
-version: 4.3.0
+version: 5.0.0
 author: aios-core
 category: aios-system
 requires: []
@@ -29,6 +29,15 @@ requires: []
 Conversational onboarding that creates the file structure + the minimum context AI
 needs for personalization. AIOS is multi-business: ONE global operator (`user/`) runs
 N businesses (`business/<slug>/`). Setup is the only supported way to onboard either.
+
+**Start with `system/skills/setup/CONTEXT.md`** — it detects the mode and routes the stages.
+
+**Every stage is run from its own file, never from this page.** Before the first question
+of a stage, read that stage's file: `system/skills/setup/01_identity/CONTEXT.md`,
+`system/skills/setup/02_business/CONTEXT.md`, `system/skills/setup/03_review/CONTEXT.md`.
+The wording of the questions and the exact text of every file setup writes are only there:
+a business written from memory comes out in the wrong shape, and the rest of AIOS cannot
+read it.
 
 **Design principles (do NOT violate):**
 - **One focused, crystal-clear question per turn.** Never multi-asks-in-one. The
@@ -49,19 +58,19 @@ N businesses (`business/<slug>/`). Setup is the only supported way to onboard ei
   "What else do you want me to always remember about you / this business?" — this is
   where the user adds anything we didn't think to ask.
 
-## Modes (auto-detected — see CONTEXT.md)
+## Modes (auto-detected — see `system/skills/setup/CONTEXT.md`)
 
 - **first-run** — `user/user.md` still has unfilled `[UPPERCASE_TOKEN]` placeholders.
   Run Stage 01 (operator) → Stage 02 (first business) → Stage 03 (review).
 - **add-business** — operator already filled (or user explicitly says "add business").
   Skip Stage 01; Stage 02 creates a NEW `business/<slug>/`; Stage 03 reviews only it.
 
-Never silently overwrite a filled operator or an existing `business/<slug>/business.md`.
+Never silently overwrite a filled operator or an existing `business/<slug>/core/business.md`.
 
 ## Stages
 
 1. **01_identity** (first-run only, ~3 min) → `user/user.md` — 4 turns (name, role, how-to-respond, catch-all). Preceded by a one-shot language pick if not yet set.
-2. **02_business** (both modes, ~4 min) → `business/<slug>/business.md` — 6 turns (name, folder, niche, what+how+who, cloud storage [optional], catch-all).
+2. **02_business** (both modes, ~4 min) → `business/<slug>/core/business.md`, `numbers.md`, `goals.md` and the map `business/<slug>/CONTEXT.md` — 6 turns (name, folder, niche, what+how+who, cloud storage [optional], catch-all). The four files are copied from the templates in `system/skills/setup/02_business/CONTEXT.md`, headings and all (on a confirmed overwrite of an existing business — only `core/business.md`).
 3. **03_review** (~1 min) → friendly recap, corrections, closing.
 
 ## What setup does NOT do
@@ -75,7 +84,7 @@ Never silently overwrite a filled operator or an existing `business/<slug>/busin
 - **Deeper operator/business profile** (MBTI, CliftonStrengths, pricing tiers, team
   breakdown, market sizing, methodologies, competitor analysis) — a future
   `deep-profiler` skill (or domain skills) will own these. Setup does not.
-- **Dynamic state** (current focus, this quarter's goal, blockers) — track in `projects/`.
-- **Cloud/storage restructuring** — setup only ASKS (optionally) whether a business uses cloud storage and records the path in its `business.md`. It moves/syncs nothing.
+- **Numbers and goals** — setup creates `core/numbers.md` and `core/goals.md` with every line `unknown`; it does not ask for them. A later conversation or skill fills them.
+- **Cloud/storage restructuring** — setup only ASKS (optionally) whether a business uses cloud storage and records the path in the business map (`CONTEXT.md` › Sources). It moves/syncs nothing.
 
-Routing between stages: see `CONTEXT.md`.
+Routing between stages: see `system/skills/setup/CONTEXT.md` — read it first.

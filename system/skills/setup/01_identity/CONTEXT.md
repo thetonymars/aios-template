@@ -106,4 +106,5 @@ Replace every `[UPPERCASE_TOKEN]` in `user/user.md` with the captured value. `[D
 - `grep '\[' user/user.md` returns 0.
 - `[ROLE_SENTENCE]` ≥ 6 words (not "I'm in marketing").
 - `[BUGS_LIST]` ≥ 1 concrete item OR an explicit "nothing annoys me" (which is fine).
-- Move on naturally, in the user's language: "Got it. Now a few questions about your business."
+- First-run: move on naturally, in the user's language: "Got it. Now a few questions about your business."
+- **First-run: before the first business question, read `system/skills/setup/02_business/CONTEXT.md`** — the questions and the templates of the four business files are only there. **Redo operator only:** stop here — no business stage.

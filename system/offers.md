@@ -34,17 +34,22 @@ last_updated: 2026-01-31
 
 | Field | Value |
 |---|---|
-| `status` | `live` — send people there. `off` — do not (not launched yet, paused, closed); say why in the body. |
+| `status` | `draft` — still being designed, not launched. `live` — send people there. `off` — paused: it will come back; say why in the body. `archived` — no longer used, kept for the record. People are sent only to `live`. |
 | `offer_type` | one of the six types below |
-| `url` | the ONE public link a person is sent to: the page where this offer starts. Empty while the offer has no link — such an offer stays `off`. |
+| `url` | the ONE public link a person is sent to: the page where this offer starts. Empty while the offer has no link — such an offer is never `live`. |
 | `price` | what the person pays, with the currency (`49 USD`, `20 USD / month`); `free`; or `on request` when the price is not public |
 | `last_updated` | the day these facts were last checked |
 
-The heading is the name of the offer in the words a customer sees. The body is three short
-lines — what the person gets, who it is for, what happens at the link — in the language the
-business sells in. Add a line of notes below them only when needed (why the offer is `off`, a
-restriction on the link). Nothing else goes here: the full description, bonuses, guarantee
-and proof stay on the sales page or in the product file — link to them if useful.
+The heading is the name of the offer in the words a customer sees. The body opens with three
+short lines — what the person gets, who it is for, what happens at the link — in the language
+the business sells in. Add a line of notes below them when needed (why the offer is `off`, a
+restriction on the link).
+
+The full design of the offer lives in the same file, below those lines, under its own
+headings: the promise, what is included, bonuses, guarantee, proof, how the price is argued.
+The file may be as long as the design needs. A `draft` may hold only the design so far —
+whatever is not known yet is written `unknown`, never guessed. What gets delivered stays in
+the product file: point to it, do not copy it.
 
 ## Offer types
 
@@ -82,10 +87,12 @@ When a task or a skill needs to know where to send a person and was not given an
 
 Take the link from `url` as written (adding tracking parameters by the user's own rule is
 fine). Never invent a link, and never pick an offer that is not `live`: if the user names one
-that is `off`, say so and do as they decide.
+that is `draft`, `off` or `archived`, say so and do as they decide.
 
 ## Recording an offer
 
 When the user asks to record an offer — or agrees when you suggest it — write the file above,
 or update the file that offer already has. Ask for whatever is missing before you write; never
-guess a link or a price. This records an offer that exists; it does not design one.
+guess a link or a price. An offer that is still being designed is saved the same way, as a
+`draft`. An offer that is no longer used is not deleted: set `status: archived` and leave the
+file where it is.

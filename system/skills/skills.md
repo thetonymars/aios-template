@@ -1,13 +1,13 @@
 # Skills catalog & authoring
 
 Routing lives in AGENTS.md "## Skills" (three sources). This file is the **on-demand
-detail** — the local-skill index, the authoring format, and the category rules. It is
+detail** — where the local-skill index lives, the authoring format, and the category rules. It is
 NOT pre-loaded every session; read it when you create, list, or look up a skill.
 
 ## setup — local bootstrap
 
 - **setup** — conversational AIOS onboarding. Two auto-detected modes: first-run
-  (operator → `user/user.md` + first business → `business/<slug>/business.md`) and
+  (operator → `user/user.md` + first business → `business/<slug>/core/` and its map) and
   add-business. One focused question per turn — no mega-asks. Captures only the 20%
   of info that drives 80% of personalization quality. Triggers: 'setup', 'set up
   aios', 'onboarding', 'add business' (or the equivalent in any language).
@@ -19,17 +19,17 @@ NOT pre-loaded every session; read it when you create, list, or look up a skill.
 ## Your own skills — local index
 
 Skills the user created live at `system/skills/<slug>/`. They travel with the vault,
-so they work in every AI client. **The folders are the source of truth; this table is
-only a descriptions cache.** To answer "what skills do I have", **ALWAYS list the
-`system/skills/` directory first**, then use this table for the descriptions — never
-report "none" from an empty or stale table without checking the folders. Keep the
-table current: when you create or edit a local skill, add/update its row; if a folder
-is missing here (or a row points to a folder that's gone), read the `SKILL.md`
-frontmatter and rewrite the table.
+so they work in every AI client. **The folders are the source of truth.** Their
+descriptions are cached in `system/skills/_index.md` — one row per local skill
+(`slug · category · agent · description`; no agent → leave the cell empty). `setup` ships with
+AIOS and has no row. That file is the user's own: no update touches it.
 
-| slug | category | agent | description |
-|------|----------|-------|-------------|
-| _(none yet — created by the user)_ | | | |
+To answer "what skills do I have", **ALWAYS list the `system/skills/` directory first**, then
+use `_index.md` for the descriptions — never report "none" from an empty or stale index
+without checking the folders. Keep it current: when you create or edit a local skill,
+add/update its row; if a folder is missing there (or a row points to a folder that's gone),
+read the `SKILL.md` frontmatter and fix the row. The file is missing → create it with a
+`# My skills — index` heading and that four-column table.
 
 ## AIOS catalog — remote (over MCP)
 
@@ -59,7 +59,7 @@ metadata:
   local skill whose `metadata.agent` names its role. No agent file is ever edited.
 - Don't use the `aios-` slug prefix — it's reserved for official catalog skills.
 - Body < 500 lines; push detail into `references/` (loaded on demand).
-- After creating/editing, update the index table above.
+- After creating/editing, update its row in `system/skills/_index.md`.
 
 ## Categories (starter taxonomy — small, grows from use)
 

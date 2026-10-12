@@ -21,5 +21,5 @@ Long-term reference, recalled on demand.
 - Use `[[wikilinks]]` for internal references (not markdown links)
 - Use `> [!type]` callouts for structured info
 - YAML frontmatter (`---` delimited) for properties
-- No `tags:` in frontmatter — use inline `#tags`
+- No tags at all — neither `tags:` in frontmatter nor inline `#tags`
 - Use `![[embeds]]` for cross-note references
