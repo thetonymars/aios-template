@@ -5,8 +5,13 @@
 // config it can't parse, validates the token, writes atomically, and keeps the
 // first backup (<file>.bak-aios) intact across re-runs.
 //
-//   node system/connect.mjs                       # reads .aios-license at the AIOS root
+//   node system/connect.mjs                       # reads .aios-license at the AIOS root, if any
 //   node system/connect.mjs --license AIOS-XXXX   # explicit token
+//
+// Two kinds of install (0.8.1+). KEY install (.aios-license present, every install before
+// 0.8.1): everything below, unchanged. SIGN-IN install (no .aios-license): the same entries,
+// but at the sign-in address with NO header — each app asks the person to sign in with their
+// email (OAuth) the first time; there is no key on this machine to write.
 //
 // Writes the `aios` MCP server into each client's GLOBAL config (so the license
 // token stays OUT of the portable AIOS folder), for whichever clients are present:
@@ -27,7 +32,8 @@ import { homedir, platform, cpus, totalmem } from "node:os";
 import { dirname } from "node:path";
 import { createHash } from "node:crypto";
 
-const URL_MCP = "https://aios-skills.vercel.app/mcp";
+const URL_KEY = "https://aios-skills.vercel.app/mcp";
+const URL_SIGNIN = "https://skills.yellows.one/mcp";
 // A GUI-launched app (Codex.app) inherits PATH=/usr/bin:/bin:/usr/sbin:/sbin — it has
 // NO /usr/local/bin, no homebrew, no nvm. A bare `npx` is therefore not findable, the
 // bridge never starts, and the client reports nothing at all: no tools, no error. Found
@@ -58,10 +64,12 @@ function getToken() {
   return t;
 }
 const token = getToken();
-if (!token) {
-  console.error("No license token. Run from the AIOS root (needs .aios-license) or pass --license <token>.");
+const SIGNIN = !token;
+if (SIGNIN && !existsSync(join(process.cwd(), "AGENTS.md"))) {
+  console.error("Run this from the AIOS root (the folder with AGENTS.md).");
   process.exit(1);
 }
+const URL_MCP = SIGNIN ? URL_SIGNIN : URL_KEY;
 // --- device id: one license = one machine ---
 // Derived from stable facts about THIS machine and stored nowhere, so copying the
 // AIOS folder to another computer cannot carry it, and re-running this script here
@@ -76,7 +84,8 @@ function deviceId() {
   const facts = [homedir(), platform(), cpus()[0]?.model ?? "", String(totalmem())];
   return createHash("sha256").update(facts.join("|")).digest("hex").slice(0, 12).toUpperCase();
 }
-const AUTH = `Bearer ${token}.${deviceId()}`; // standard Authorization header value
+const AUTH = SIGNIN ? null : `Bearer ${token}.${deviceId()}`; // standard Authorization header value
+const headers = () => (AUTH ? { headers: { Authorization: AUTH } } : {});
 
 const done = [], skipped = [];
 
@@ -149,7 +158,7 @@ function stripTomlTable(text, name) {
   } else {
     mergeJSON(claudeJson, "~/.claude.json (Claude Code)", (cfg) => {
       cfg.mcpServers = cfg.mcpServers || {};
-      cfg.mcpServers[NAME] = { type: "http", url: URL_MCP, headers: { Authorization: AUTH } };
+      cfg.mcpServers[NAME] = { type: "http", url: URL_MCP, ...headers() };
     });
     // Clean up the inert `aios` entry older connect.mjs versions wrote to
     // settings.json (Claude Code never read it); leave everything else untouched.
@@ -177,7 +186,7 @@ function stripTomlTable(text, name) {
       cfg.mcp = cfg.mcp || {};
       cfg.mcp[NAME] = {
         type: "local",
-        command: [NPX, "-y", "mcp-remote", URL_MCP, "--header", `Authorization:${AUTH}`],
+        command: [NPX, "-y", "mcp-remote", URL_MCP, ...(AUTH ? ["--header", `Authorization:${AUTH}`] : [])],
         environment: { PATH: CHILD_PATH, HOME: homedir() },
         enabled: true,
       };
@@ -205,7 +214,8 @@ try {
       // (an mcp-remote bridge, then an absolute npx path) both "worked" while treating
       // the symptom; the bridge also spawns a fresh npm process per conversation, which
       // is slow and flaky. Native needs no child process at all.
-      const block = `[mcp_servers.aios]\ntransport = "streamable_http"\nurl = "${URL_MCP}"\nstartup_timeout_sec = 30\n\n[mcp_servers.aios.http_headers]\nAuthorization = "${AUTH}"\n`;
+      const block = `[mcp_servers.aios]\ntransport = "streamable_http"\nurl = "${URL_MCP}"\nstartup_timeout_sec = 30\n` +
+        (AUTH ? `\n[mcp_servers.aios.http_headers]\nAuthorization = "${AUTH}"\n` : "");
       writeAtomic(p, base + sep + block);
       done.push("~/.codex/config.toml (Codex)");
     }
@@ -218,7 +228,7 @@ try {
   if (!existsSync(dir)) { skipped.push("Antigravity not detected"); }
   else mergeJSON(join(dir, "mcp_config.json"), "Antigravity mcp_config.json", (cfg) => {
     cfg.mcpServers = cfg.mcpServers || {};
-    cfg.mcpServers[NAME] = { serverUrl: URL_MCP, headers: { Authorization: AUTH } }; // serverUrl, not url
+    cfg.mcpServers[NAME] = { serverUrl: URL_MCP, ...headers() }; // serverUrl, not url
   });
 }
 
@@ -226,5 +236,11 @@ console.log("AIOS skills server connected to:");
 done.length ? done.forEach((d) => console.log("  ✓ " + d)) : console.log("  (nothing written)");
 if (skipped.length) { console.log("Notes:"); skipped.forEach((s) => console.log("  - " + s)); }
 console.log("\nNEXT: restart your AI client so it loads the server, then ask: \"list my AIOS skills\".");
-console.log("Apps (Claude Desktop / Manus / Perplexity) can't be scripted — in the app's Settings add");
-console.log("server `aios` at " + URL_MCP + " with header  Authorization: Bearer " + token);
+if (SIGNIN) {
+  console.log("The app will ask you to sign in with your email the first time (Codex: `codex mcp login aios`).");
+  console.log("Apps (Claude Desktop / Manus / Perplexity) can't be scripted — in the app's Settings add");
+  console.log("a connector `aios` at " + URL_MCP + " and sign in with your email.");
+} else {
+  console.log("Apps (Claude Desktop / Manus / Perplexity) can't be scripted — in the app's Settings add");
+  console.log("server `aios` at " + URL_MCP + " with header  Authorization: Bearer " + token);
+}

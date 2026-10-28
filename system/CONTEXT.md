@@ -51,11 +51,18 @@ theirs to decide, not a detail to spare them.
 
 **Check these in order and stop at the first one that matches.**
 
-### 1. Is `.aios-license` missing from the AIOS root?
+### 1. Are BOTH `.mcp.json` and `.aios-license` missing from the AIOS root?
 
-Then the install never finished, and nothing below can help. Tell the user to get their
-personal install command at `yellows.one/aios`. Never invent a token. (`setup` does NOT
-set the license.) Stop here.
+Then the install never finished, and nothing below can help. Tell the user to get the
+install line at `yellows.one/aios`. Never invent a token. (`setup` does NOT set the
+license.) Stop here.
+
+There are two kinds of install, and both are finished ones:
+- **Sign-in (0.8.1 and later):** `.mcp.json` points at `https://skills.yellows.one/mcp` with
+  no header, and there is no `.aios-license`. The person proves who they are by signing in
+  with their email when the app asks — there is no key to find, and none to ask them for.
+- **Key (older installs):** `.aios-license` holds an `AIOS-` key and `.mcp.json` sends it in
+  an `Authorization` header. It keeps working exactly as it did; never convert it.
 
 ### 2. Are you Claude Code?
 
@@ -75,6 +82,11 @@ and match what it PRINTS — the exit code is 0 either way and tells you nothing
   `claude mcp reset-project-choices` and ask them to restart. It affects THIS folder
   only, but it re-asks about every server the folder configures — so if the app asks
   about more than one, that is expected, not a fault.
+- **`! Needs authentication`** — the server is approved and answering; the person has not
+  signed in yet (a sign-in install), or their sign-in lapsed. Tell them: type `/mcp`, pick
+  `aios`, choose to authenticate; a browser page opens — sign in there with the email they
+  bought or registered with (a code arrives by mail unless that browser already knows them).
+  Then one restart. Reached from the silent Session Start check → add that one line, nothing more.
 - **`✔ Connected`** — the config is right and the server answers; this session simply
   started before the approval landed. Ask for one restart and nothing else. **Do not
   repair a config that is already working.** Still no tools after that restart → go to 4.
@@ -83,10 +95,14 @@ and match what it PRINTS — the exit code is 0 either way and tells you nothing
   **do not run `connect.mjs` again**. Still nothing → go to 4.
 - **`No MCP server found`** — Claude Code sees no `aios` server here. Before you conclude
   anything, open `.mcp.json` at the AIOS root and check it yourself. It must exist, be
-  valid JSON, have an `aios` entry, and its `Authorization` header must end in the real
-  device id — **if the header still holds a `PASTE_…` placeholder, the install was left
-  half-done**.
-  - File missing, unparseable, no `aios` entry, or a placeholder still in it → the
+  valid JSON and have an `aios` entry. In a sign-in install (no `.aios-license`) that entry
+  is `{"type": "http", "url": "https://skills.yellows.one/mcp"}` and nothing else. In a key
+  install its `Authorization` header must end in the real device id — **if the header still
+  holds a `PASTE_…` placeholder, the install was left half-done**.
+  - Sign-in install, file unparseable or no `aios` entry → write exactly that entry yourself
+    (it is inside the folder, nothing else changes), then ask for one restart. (A sign-in
+    install with NO `.mcp.json` at all never gets here: case 1 has already stopped it.)
+  - Key install, file missing, unparseable, no `aios` entry, or a placeholder still in it → the
     config is not usable, but you can repair it right here and nothing outside the folder
     has to change. Rewrite `.mcp.json` yourself: the key is the one line in
     `.aios-license`, and the device id is a sha256 of the home path, platform, CPU model
@@ -115,14 +131,19 @@ on later runs — and leaves their other MCP servers alone. But it is their mach
 is their call.
 
 With a yes: run it from the AIOS root (the folder with `AGENTS.md`). It reads
-`.aios-license` and writes the correct config for whichever clients are installed — you
-do not need to know any per-client format. Tell them what it reported writing, then ask
-them to restart the app.
+`.aios-license` if there is one (a key install) — otherwise it writes the sign-in address with
+no key — and writes the correct config for whichever clients are installed; you do not need
+to know any per-client format. Tell them what it reported writing, then ask them to restart
+the app. In a sign-in install the app then asks them to sign in with their email. Codex does
+not ask by itself: run `codex mcp login aios` for them — it opens their browser, and the
+signing in is theirs to do there.
 
 - The script reports which clients it wrote and which it skipped. **If it skipped
   yours**, or you have no shell at all (a GUI-only app such as Claude Desktop), you
-  cannot configure it for them: give them the three values to add a connector in the
-  app's own settings — name `aios`, url `https://aios-skills.vercel.app/mcp`, header
+  cannot configure it for them. **Sign-in install:** give them two values to add a connector in
+  the app's own settings — name `aios`, url `https://skills.yellows.one/mcp` — and say the app
+  will ask them to sign in with their email; no key, no header. **Key install:** give them the
+  three values — name `aios`, url `https://aios-skills.vercel.app/mcp`, header
   `Authorization` = `Bearer ` followed by the value in `.aios-license`. Show them those
   three values in full: here the machinery IS the instruction, because they have to type
   it. **Note this header carries no device id** — unlike every config written for them,
