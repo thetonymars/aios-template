@@ -53,14 +53,33 @@ theirs to decide, not a detail to spare them.
 
 ### 1. Are BOTH `.mcp.json` and `.aios-license` missing from the AIOS root?
 
-Then the install never finished, and nothing below can help. Tell the user to get the
-install line at `yellows.one/aios`. Never invent a token. (`setup` does NOT set the
-license.) Stop here.
+Then this is a **connector install** (0.8.2 and later). The folder holds no server config at
+all: the skills come through the AIOS connector — address `https://skills.yellows.one/mcp` —
+that the user adds in their AI app and signs in to with their email. Their personal page
+(the link in their email from yellows.one) shows these steps.
 
-There are two kinds of install, and both are finished ones:
-- **Sign-in (0.8.1 and later):** `.mcp.json` points at `https://skills.yellows.one/mcp` with
-  no header, and there is no `.aios-license`. The person proves who they are by signing in
-  with their email when the app asks — there is no key to find, and none to ask them for.
+- **Claude Code:** a connector the user added in the Claude app shows up in Claude Code by
+  itself when both are signed in to the same Claude account — `claude mcp list` prints it as
+  `claude.ai AIOS`. Listed but `! Needs authentication` → ask them to open the Claude app's
+  connector settings and connect AIOS there (sign in with their email). Not listed → tell them
+  in one sentence to add the AIOS connector in the Claude app's connector settings with that
+  address. If they use Claude Code without a Claude account, offer instead to add the server
+  inside this folder: write `.mcp.json` with
+  `{"mcpServers": {"aios": {"type": "http", "url": "https://skills.yellows.one/mcp"}}}` (it is
+  inside the folder, nothing else changes), then they reopen the app in this folder, approve the
+  server and sign in with `/mcp`. From then on the folder is a sign-in install (below), and
+  case 2 is the one that applies.
+- **Any other app:** tell them to add a connector in that app's settings with that address and
+  sign in with their email. No key, no header.
+
+Reached from the silent Session Start check, this is the one sentence the user hears — say it
+once, and only if they have no AIOS tools at all (an app that loads tools on demand: search for
+a name ending in `list_skills` first). Never ask them for a key and never invent one. Stop here.
+
+There are three kinds of install, and all three are finished ones:
+- **Connector (0.8.2 and later):** neither file — see above.
+- **Sign-in (0.8.1):** `.mcp.json` points at `https://skills.yellows.one/mcp` with no header, and
+  there is no `.aios-license`. The person signs in with their email when the app asks.
 - **Key (older installs):** `.aios-license` holds an `AIOS-` key and `.mcp.json` sends it in
   an `Authorization` header. It keeps working exactly as it did; never convert it.
 

@@ -1,5 +1,5 @@
 {
-  "aios_version": "0.8.1",
+  "aios_version": "0.8.2",
   "comment": "Lives in system/ (plumbing). Kernel files that `system/update.mjs` may refresh: this list, plus any path an incoming release lists. Everything else is user data; beyond the listed files update.mjs does only the fixed steps described in its own header (folder moves of the 0.7 layout, the 0.8 business layout, four create-once files, missing router rows). It refuses any path under user/, business/, areas/, _inbox/ whatever a manifest asks, backs up every file it changes to .aios-backup/, refuses absolute/.. /symlink paths, and will not downgrade. sha256 = as-shipped baseline so an update can detect a kernel file the user edited (conflict -> backup, then overwrite on --apply, never silent). Paths relative to the AIOS root. Regenerate with scripts/gen-managed.mjs after editing any kernel file.",
   "deny_prefixes": [
     "user/",
@@ -10,7 +10,7 @@
   "managed": [
     {
       "path": "AGENTS.md",
-      "sha256": "d6a2611e61fc73a72bb6d058db06de26a67739ffd3d264ee4c82ff8c772a681e"
+      "sha256": "b88c535c0b5581bb017499907321531c4934553eb7c358db8c2f896f83e9f225"
     },
     {
       "path": "CLAUDE.md",
@@ -22,7 +22,7 @@
     },
     {
       "path": "system/CONTEXT.md",
-      "sha256": "8535ddc36def574b666c3ed67e4428f95c6bb9f0d16c5de40969e6a1b477546c"
+      "sha256": "91996dc4ebf92393b3a88a93021ff5eebe45c6752454a6458154d3f2a8bc839b"
     },
     {
       "path": "system/update.mjs",

@@ -1,5 +1,5 @@
 ---
-aios_version: 0.8.1
+aios_version: 0.8.2
 last_updated: 2026-10-12
 ---
 
@@ -161,10 +161,11 @@ You reach this from the Session Start check or a user complaint.
 - **This is yours to diagnose, not the user's.** Tell them what to do in ONE sentence, in their
   language, in ordinary words, leading with the action. Say what you changed whenever it
   matters, and ALWAYS ask before changing anything outside the AIOS folder.
-- **First: are BOTH `.mcp.json` and `.aios-license` missing from the AIOS root?** Then the
-  install never finished: tell them to get the install line at `yellows.one/aios`. Never invent
-  a token. Stop there. (Since 0.8.1 an install has no `.aios-license` — the person signs in
-  with their email instead; older installs keep theirs. Either one present is a finished install.)
+- **First: are BOTH `.mcp.json` and `.aios-license` missing from the AIOS root?** Then this is
+  a connector install (0.8.2 and later): the skills reach this folder only through the AIOS
+  connector the user adds in their AI app — there is no key and no config file to find. Follow
+  `system/CONTEXT.md` → "Connecting the skills server" › case 1 and stop there. Never invent a
+  token.
 - Otherwise open `system/CONTEXT.md` → "Connecting the skills server" and follow its cases in
   order, stopping at the first match. Never loop, and never rewrite config on a guess.
 
