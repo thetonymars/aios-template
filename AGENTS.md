@@ -1,6 +1,6 @@
 ---
-aios_version: 0.8.2
-last_updated: 2026-10-12
+aios_version: 0.8.3
+last_updated: 2026-10-29
 ---
 
 # AIOS
