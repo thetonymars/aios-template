@@ -126,8 +126,17 @@ a business" means run it.
    `read_skill_file(skill, path)`. Content lives only on the server. A locked skill → relay the
    upsell; never fake a catalog skill from memory.
 
+**Two AIOS servers at once** — an older folder still carries its own server config, and the
+user has also added the AIOS connector in their app, so two sets of tools end in `list_skills`
+(for example `mcp__aios__list_skills` and `mcp__claude_ai_AIOS__list_skills`). It is ONE
+catalog: list it once, never twice. Use the server that opens more (a skill locked in one and
+open in the other → the open one) and stay with it for the session. It is not a fault: say
+nothing about it and remove nothing on your own. Only if the user asks to keep one connection:
+the one to remove is the folder's own (`.mcp.json` and `.aios-license` in the AIOS root), after
+their yes; the folder then works through the connector.
+
 **"What skills do I have?"** — you run the discovery and present it as "Presenting the list" in
-`system/skills/skills.md` says. Same slug in two sources → show both, told apart by the tag.
+`system/skills/skills.md` says. Same slug in two sources (local and catalog) → show both, told apart by the tag.
 Never pass this AI app's own tools off as AIOS skills. No file paths, no local/remote talk.
 
 ## Agents
