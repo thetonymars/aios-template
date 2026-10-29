@@ -13,7 +13,6 @@ And the markdown is not inert either: `AGENTS.md` is instructions an AI assistan
 and acts on. That is the product — read it before you trust it.
 
 **Made by Tony Mars — [yellows.one](https://yellows.one).**
-Product page: **[yellows.one/aios-about](https://yellows.one/aios-about)**
 
 ## What AIOS is
 
