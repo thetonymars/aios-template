@@ -96,7 +96,7 @@ aios/                  ← the root is never a destination: it holds AGENTS.md, 
 | A person — add or look up a contact, a client, a partner | `people/CONTEXT.md` |
 | A dated note — today, this week, a month, a year | `calendar/CONTEXT.md` |
 | Past notes, thinking, the archive | `knowledge/CONTEXT.md` |
-| A file or a folder outside AIOS: a drive, a cloud folder, an app, a program on this computer | `system/external.md` |
+| A file or a folder outside AIOS. A drive, a cloud folder, an app, a program on this computer. A bot or a server outside. Recordings of calls | `system/external.md` |
 | Create a new skill | `system/skills/CONTEXT.md` |
 | Run a skill; "what skills do I have?" | `system/skills/skills.md` |
 | Set up AIOS; add a business; change the answers about the person. Only when `system/skills/setup/` exists | the `setup` skill — `system/skills/setup/SKILL.md` |

@@ -10,7 +10,7 @@
   "managed": [
     {
       "path": "AGENTS.md",
-      "sha256": "fc015ae1cd35dd0a5c5fc74d87e170615fedcd1de500b2c2db9fdd1bf7b39551"
+      "sha256": "b8723036f83cc903321b35b59dd5b5126beeaef1cf86b76520e275f8a835b0f7"
     },
     {
       "path": "system/CONTEXT.md",
@@ -22,7 +22,7 @@
     },
     {
       "path": "system/scripts/check-maps.py",
-      "sha256": "ae2a71773f35b5322b8437e5edda37379562b1ecc3369daab45f63d364e744ec"
+      "sha256": "c61c0412366a695dd6ccaccea9333335bd1f789ba13c9037512338dc66194742"
     },
     {
       "path": "system/scripts/CONTEXT.md",
