@@ -341,10 +341,13 @@ def section_ok(target, name):
 # same AGENTS.md everywhere, switches its client-only parts on by a file (D48). The condition holds for its
 # line; a section that opens with "Only when `<path>` exists" holds it for the whole section.
 COND = re.compile(r"`([^`]+)`\s+exists")
+COND_NOT = re.compile(r"`([^`]+)`\s+does not exist")
 GATE = re.compile(r"^Only when `([^`]+)` exists")
 
 
 def cond_off(v, line, base_root):
+    if COND_NOT.search(line):
+        return True   # a rule for the case without that path: nothing on the line is a live pointer
     for p in COND.findall(line):
         if not os.path.exists(os.path.join(base_root, p.rstrip("/"))):
             return True

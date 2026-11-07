@@ -12,4 +12,4 @@ Small programs that agents run. No AI inside: a script does one mechanical check
 - Run from the root of this folder with `python3 -I` (on Windows `python -I`); a script takes the root as its argument and finds everything else through the maps — no machine paths inside.
 - Added, changed what it does, or removed a script → update its row in the table above in the same step.
 - A script that changes files says so in its row; by default a script here only reads.
-- A folder or a file here that the table does not name is the person's own tool: `user/user.md` › Own tools and places says what it is.
+- A folder here that the table does not name is the person's own tool. Its own `CONTEXT.md` says what it is.

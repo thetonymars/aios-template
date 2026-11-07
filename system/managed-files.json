@@ -10,7 +10,7 @@
   "managed": [
     {
       "path": "AGENTS.md",
-      "sha256": "a30522af39f96d035de540d790b64b6b396e4870d2619884ae617c5ef6b365e1"
+      "sha256": "6637b223171919528cae3f932b073ad2b95ad7e75a15dd28a0278c1c0aa43eae"
     },
     {
       "path": "system/CONTEXT.md",
@@ -22,11 +22,11 @@
     },
     {
       "path": "system/scripts/check-maps.py",
-      "sha256": "64e62f5753885ed676b02497fd6b52d2bc294142cd34afd291c6b0380c2f43f7"
+      "sha256": "ae2a71773f35b5322b8437e5edda37379562b1ecc3369daab45f63d364e744ec"
     },
     {
       "path": "system/scripts/CONTEXT.md",
-      "sha256": "5c914324827365839d5e62f3501f21e386aab75c9aa249d563b18fbf2d3256a6"
+      "sha256": "4a6498346c16e276ab160909922d48aeb207f5b8cd17da7facdd93b64241f286"
     },
     {
       "path": "system/scripts/build-skills-catalog.py",
@@ -38,11 +38,11 @@
     },
     {
       "path": "system/update.mjs",
-      "sha256": "14884e4e6b7d2b05b4bbf745b8fc5afe902a6a08be0dc6f4b9e94d14bffaeb10"
+      "sha256": "a518b5e55141297147807ac017424ba51b34563b21a02747553d815efc8343f2"
     },
     {
       "path": "system/migrate-0.9.mjs",
-      "sha256": "dd52dffbd46c810193479061f9d41fe6bc5a8b302e9e9cd93672190c1e55e663"
+      "sha256": "02abcf58c9f2460f33f30d7f6ee77689007f45f4879ee014ca5f33ebaf905d31"
     },
     {
       "path": "system/migrate-0.9-base.json",

@@ -462,6 +462,7 @@ function allowed(rel, action) {
     (rel === "user/user.md" && action === "edit") ||
     (rel === ".gitignore" && ["create", "edit"].includes(action)) ||
     (rel === "system/skills/skill-settings.md" && action === "create") ||
+    (rel === "system/external.md" && action === "create") ||
     (biz(/^business\/([^/]+)\/CONTEXT\.md$/) && ["replace", "create"].includes(action)) ||
     (biz(/^business\/([^/]+)\/offers\/CONTEXT\.md$/) && ["replace", "create"].includes(action)) ||
     (biz(/^business\/([^/]+)\/core\/business\.md$/) && ["append", "edit"].includes(action)) ||
@@ -572,7 +573,6 @@ function S3(C) {
   if (d) doOp(C, "S3-soul", "SOUL.md", d.action, d.buf, d.action === "create" ? `${TEMPLATES_DIR}/soul.md + user/user.md` : "user/user.md + your own lines",
     d.action === "create" ? "SOUL.md is new in 0.9: how to talk to you, and your own rules" : "your SOUL.md stays as it was; the moved text is added at its end");
 }
-const OWN_TOOLS = "## Own tools and places\n\nWhere the person's own tools, drives, servers and accounts are, and which file to open for a task with them. `AGENTS.md` › Task router sends here. One row per tool or place, added when the person names one.\n\n| Task | Open first |\n| --- | --- |\n| _(none yet)_ | |";   // = the section of the template user/user.md
 function S4(C) {
   const orig = C.readOrig("user/user.md");
   if (!orig || !isFile(C.abs("user/user.md"))) return;
@@ -590,8 +590,6 @@ function S4(C) {
   }
   while (out.length && !normLine(out[out.length - 1]) && rm.has(L.length - 1)) out.pop();
   let t = out.join("\n") + (hadNL ? "\n" : "");
-  // 0.9: AGENTS.md routes the person's own tools and places here (D48). An older user.md has no such section.
-  if (!/^## Own tools and places\s*$/m.test(t)) t = appendBlock(t, OWN_TOOLS.split("\n"));
   const um = C.st.additions.filter((a) => a.target === "user/user.md");
   if (um.length) {
     const B = [`## ${HEADING}`, `<!-- from user/CONTEXT.md; old file: ${C.st.backup}/user/CONTEXT.md -->`];
@@ -600,7 +598,7 @@ function S4(C) {
   }
   if (t === meta.text) return;
   doOp(C, "S4-user", "user/user.md", "edit", encode(meta, t), "user/user.md + user/CONTEXT.md",
-    "How to respond to me and the name and language lines moved to SOUL.md; the section Own tools and places added (0.9 AGENTS.md routes there); own lines of the old user map added at the end");
+    "How to respond to me and the name and language lines moved to SOUL.md; own lines of the old user map added at the end");
 }
 function S5(C) {
   if (opState(C, "S4-user:user/user.md") === "open") { C.notes.push("user/CONTEXT.md was not replaced: user/user.md could not be written first."); return; }
@@ -654,7 +652,11 @@ function S6(C) {
 // The settings file of skills (0.9: the person's data next to the skills catalog). Same text as the template's
 // system/skills/skill-settings.md — a test keeps the two equal. Created only when missing.
 const SKILL_SETTINGS = "# Skill settings\n\nOne file for all skills: one section `## <skill>` per skill. Your own data and preferences that a skill reads while it works live here. The skills themselves hold none of it, so a skill can be given to another person without anything personal.\n\nEdit it as plain text. Never write a secret (a key, a token) here: keys live in `system/.secrets/`; here only the names of those files.\n";
+// The list of places outside AIOS (0.9, D48): the person's data. Same text as the template's system/external.md.
+const EXTERNAL = "# External — places outside AIOS\n\nThe files and folders of the person that live outside this folder: a drive, a cloud folder, an app, a program on this computer. `AGENTS.md` sends here.\n\n- One row per place. The map of the place says what is inside it.\n- The person names a new place → add a row.\n- A new drive or a folder outside AIOS gets one `CONTEXT.md` in its own root, and a row here.\n- Go to a place only when the task needs it.\n\n| Place | What is there (one line) | Path | Map of the place |\n| --- | --- | --- | --- |\n| _(none yet)_ | | | |\n";
 function S7(C) {
+  if (!there(C.abs("system/external.md")) && isDir(C.abs("system")))
+    doOp(C, "S7-gitignore", "system/external.md", "create", Buffer.from(EXTERNAL), "0.9 template", "the list of places outside AIOS; AGENTS.md routes there (D48)");
   if (!there(C.abs("system/skills/skill-settings.md")) && isDir(C.abs("system/skills")))
     doOp(C, "S7-gitignore", "system/skills/skill-settings.md", "create", Buffer.from(SKILL_SETTINGS), "0.9 template", "the settings file of skills, next to the skills catalog (0.9)");
   const p = C.abs(".gitignore"), s = lst(p);
