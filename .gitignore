@@ -8,3 +8,6 @@ opencode.json
 
 # API keys of the customer (D12, D34). The installed folder gets its own .gitignore with this line.
 system/.secrets/
+
+# Python caches of the scripts in system/scripts/
+__pycache__/
