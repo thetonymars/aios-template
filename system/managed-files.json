@@ -10,7 +10,7 @@
   "managed": [
     {
       "path": "AGENTS.md",
-      "sha256": "eaffab36e1878e3835daa50c072a9b9685b9096d778d6d8e2ab4f97618900d69"
+      "sha256": "a30522af39f96d035de540d790b64b6b396e4870d2619884ae617c5ef6b365e1"
     },
     {
       "path": "system/CONTEXT.md",
@@ -58,7 +58,7 @@
     },
     {
       "path": "system/voices/CONTEXT.md",
-      "sha256": "40c7b32e077cd5980c65728f79618291db34e6eb14ea2c6c52e43877435166e1"
+      "sha256": "498504ebc8700ec375f52d228dc0f10e950fb8ad7fac8051b474910205cb5969"
     },
     {
       "path": "system/skills/CONTEXT.md",

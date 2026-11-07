@@ -67,7 +67,9 @@ When a task or a skill writes a text for people outside the business, or rewrite
 voice:
 
 1. Find the voice. One was named (by the user, or by the skill that is running) → take it.
-   Nobody named one → there is one voice folder: take it; there are several: ask which.
+   Nobody named one → read `business/<slug>/core/business.md` › Rules for agents of the
+   business the text is for: a voice it names for this kind of text → take it. Still none →
+   there is one voice folder: take it; there are several: ask which.
 2. Read its `VOICE.md` whole, then the files it sends you to for this task, and write as
    that speaker.
 3. A voice changes how a thing is said, never what is true. What a text says about the
