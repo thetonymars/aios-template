@@ -166,7 +166,8 @@ for (const [id, fill] of Object.entries(CASES)) {
   const root = join(OUT, id);
   if (existsSync(root)) rmSync(root, { recursive: true, force: true });
   mkdirSync(root, { recursive: true });
-  execSync(`git -C "${TPL}" archive ${TAG} | tar -x -C "${root}"`, SH);
+  // tar runs inside the folder: GNU tar on Windows reads "D:\\…" in -C as a remote host.
+  execSync(`git -C "${TPL}" archive ${TAG} | tar -x`, { ...SH, cwd: root });
   fill(root);
   const sums = walk(root).filter((p) => !p.endsWith("SHA256SUMS")).map((p) => `${createHash("sha256").update(readFileSync(p)).digest("hex")}  ${relative(root, p)}`);
   writeFileSync(join(OUT, `${id}.SHA256SUMS`), sums.join("\n") + "\n");

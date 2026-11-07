@@ -41,7 +41,7 @@ jobs:
         run: |
           D="$AIOS_WORK/Мій AIOS тест"
           mkdir -p "$D"
-          git archive HEAD | tar -x -C "$D"
+          git archive HEAD | (cd "$D" && tar -x)   # not -C: GNU tar on Windows reads "D:\…" as a remote host
           cd "$D"
           printf 'line one\r\nline two\r\n' > _inbox/crlf-note.md
           mkdir -p .aios-backup/x && printf 'see `no/such/file.md`\n' > .aios-backup/x/CONTEXT.md
