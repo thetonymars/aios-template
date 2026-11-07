@@ -14,11 +14,17 @@
 //
 //   node system/update.mjs            # preview (safe, writes nothing)
 //   node system/update.mjs --apply    # apply the update
+//   node system/update.mjs --apply --delete-old=all|none|<a>,<b>   # the answer about old files (0.9 move)
+//   node system/update.mjs --restore [--apply]                      # put 0.8.3 back after the 0.9 move
+//
+// The 0.9 move (system/migrate-0.9.mjs) runs FIRST and needs no network: it finishes from this
+// disk even when the server is down or was rolled back. Its own header lists what it may write.
 //
 // Run it from the root of your aios/ folder.
 import { readFileSync, writeFileSync, mkdirSync, existsSync, lstatSync, cpSync, renameSync, readdirSync, rmdirSync, rmSync } from "node:fs";
 import { createHash } from "node:crypto";
 import { join, resolve, dirname, sep } from "node:path";
+import { pathToFileURL } from "node:url";
 
 const ROOT = process.cwd();
 // Prod default; overridable for isolated tests (never set in normal use).
@@ -26,6 +32,8 @@ const MANIFEST_URL = process.env.AIOS_MANIFEST_URL || "https://aios-skills.verce
 const APPLY = process.argv.includes("--apply");
 const CHECK = process.argv.includes("--check"); // version compare only; for the session-start nudge
 const FORCE_DOWNGRADE = process.argv.includes("--force-downgrade");
+const RESTORE = process.argv.includes("--restore");
+const DELETE_OLD = (process.argv.find((a) => a.startsWith("--delete-old=")) || "").slice("--delete-old=".length) || null;
 
 // Hardcoded tripwire — directories that hold ONLY user data. No kernel file
 // lives here, so a managed entry under these = a bug or a tampered manifest →
@@ -54,6 +62,35 @@ if (!existsSync(mfPath)) {
 }
 const mf = JSON.parse(readFileSync(mfPath, "utf8"));
 const localVer = mf.aios_version;
+
+// 0. THE 0.9 MOVE. The old updater (run 1) delivered the 0.9 kernel; the customer's settings move
+// here, from the disk only. Version 0.9 counts as installed only when the move is "done" — the number
+// in managed-files.json does not say it. Before the kernel is in (a cut-off run 1 that this new code
+// is finishing), the move runs after the files are written, at the end of this script.
+const MIGRATE = join(ROOT, "system", "migrate-0.9.mjs");
+let mig = null, movedNow = false;
+if (existsSync(MIGRATE)) {
+  try { mig = await import(pathToFileURL(MIGRATE).href); }
+  catch (e) { console.error(`Could not load system/migrate-0.9.mjs (${e.message}).`); }
+}
+const printMig = (r) => { for (const l of r.lines) console.log(l); };
+const kernelIn = cmpVer(localVer, "0.9.0") >= 0;
+if (RESTORE) {
+  if (!mig) { console.error("--restore needs system/migrate-0.9.mjs, and it is not in this folder."); process.exit(1); }
+  const r = await mig.run({ root: ROOT, apply: APPLY, restore: true });
+  printMig(r);
+  process.exit(r.status === "refused" || r.status === "busy" ? 1 : 0);
+}
+if (CHECK && mig && mig.needsMigration(ROOT)) { console.log(mig.NOT_FINISHED); process.exit(0); }
+if (mig && !CHECK && kernelIn) {
+  const r = await mig.run({ root: ROOT, apply: APPLY, deleteOld: DELETE_OLD });
+  printMig(r);
+  if (r.status === "blocked" || r.status === "busy") process.exit(1);
+  if (DELETE_OLD !== null) process.exit(0);          // the answer about old files: nothing else to do
+  if (r.needed) process.exit(0);                       // preview of the move, or an iCloud wait: stop here
+  movedNow = APPLY && r.lines.length > 0;
+  console.log("");
+}
 
 const blockedMoves = [];
 
@@ -128,6 +165,7 @@ try {
 } catch {
   // best-effort: never block the session — but say so, because silence here was read as "up to date"
   if (CHECK) { console.log("AIOS update check could not reach the update server (no network access here). This is NOT the same as up to date."); process.exit(0); }
+  if (movedNow) { console.log("The move to the new layout is done. The AIOS server could not be reached, so the check for a newer version was skipped."); process.exit(0); }
   console.error("Could not reach the AIOS server. Check your connection and try again.");
   process.exit(1);
 }
@@ -144,7 +182,9 @@ const fileMap = new Map(manifest.files.map((f) => [f.path, f.content]));
 // are fixed in this code (a manifest cannot add one), and the text of the new files is
 // read from the setup skill — the one place that owns those templates.
 const BIZ_SETUP = "system/skills/setup/02_business/CONTEXT.md";
-const BIZ_NEW = ["core/numbers.md", "core/goals.md", "CONTEXT.md"];
+// The map (CONTEXT.md) is no longer created here: since 0.9 the move in system/migrate-0.9.mjs writes
+// every business map and offers map from system/skills/setup/templates/.
+const BIZ_NEW = ["core/numbers.md", "core/goals.md"];
 const there = (p) => { try { lstatSync(p); return true; } catch { return false; } };   // true for a symlink too
 const plainFile = (p) => { try { return lstatSync(p).isFile(); } catch { return false; } };
 const plainDir = (p) => { try { return lstatSync(p).isDirectory(); } catch { return false; } };
@@ -161,12 +201,11 @@ function bizTemplates() {
     const m = src.match(new RegExp("^###[^\\n]*`business/<slug>/" + file.replace(/\./g, "\\.") + "`[^\\n]*\\n[\\s\\S]*?^```\\n([\\s\\S]*?)\\n```$", "m"));
     return m ? m[1] + "\n" : "";
   };
-  const t = { numbers: block("core/numbers.md"), goals: block("core/goals.md"), map: block("CONTEXT.md") };
-  const tokens = (s) => s.replace(/\[(DATE|BUSINESS_NAME|CLOUD_ROW)\]/g, "");
+  const t = { numbers: block("core/numbers.md"), goals: block("core/goals.md") };
+  const tokens = (s) => s.replace(/\[DATE\]/g, "");
   const shaped = t.numbers.startsWith("---\ntype: numbers\n") && t.goals.startsWith("---\ntype: goals\n") &&
-    t.map.startsWith("# [BUSINESS_NAME]") && t.map.includes("\n[CLOUD_ROW]\n") &&
-    ![t.numbers, t.goals, t.map].some((s) => /\[[A-Z][A-Z_]+\]/.test(tokens(s)));
-  return shaped && bizMap(t.map, "", [], "x") ? t : null;
+    ![t.numbers, t.goals].some((s) => /\[[A-Z][A-Z_]+\]/.test(tokens(s)));
+  return shaped ? t : null;
 }
 
 // The map of one business, from the template: folders that are already there go into
@@ -407,7 +446,9 @@ for (const p of managedPaths) {
     // A path whose folder is being renamed has not been dropped — it moved. Saying
     // "no longer part of AIOS" about it would be wrong and alarming.
     const beingRenamed = migrations.some((m) => p === m.from || p.startsWith(m.from + "/"));
-    if (localBaseline.has(p) && !beingRenamed) removed.push(p);
+    // The old files of the 0.9 move are asked about by system/migrate-0.9.mjs, never "remove manually".
+    const askedByMove = mig && mig.DELETE_CANDIDATES.includes(p);
+    if (localBaseline.has(p) && !beingRenamed && !askedByMove) removed.push(p);
     continue;
   }
   if (!existsSync(abs)) { refresh.push({ p, abs, next, reason: "new" }); continue; }
@@ -496,6 +537,16 @@ for (const w of toWrite) {
 const newMf = fileMap.get("system/managed-files.json");
 if (newMf) { const b = join(backupDir, "system/managed-files.json"); mkdirSync(dirname(b), { recursive: true }); cpSync(mfPath, b); writeFileSync(mfPath, newMf); }
 console.log(`\nDone — updated ${toWrite.length} file(s) to v${newVer}. Backups in .aios-backup/${stamp}/`);
+
+// The 0.9 move, when this run itself delivered the 0.9 kernel (run 1 was cut off and this new code
+// finished it). The module was just written: load the new text, not a copy from before.
+if (!kernelIn && cmpVer(newVer, "0.9.0") >= 0 && existsSync(MIGRATE)) {
+  try {
+    const m2 = await import(pathToFileURL(MIGRATE).href + `?v=${Date.now()}`);
+    console.log("");
+    printMig(await m2.run({ root: ROOT, apply: true }));
+  } catch (e) { console.log(`\nThe move to the new layout did not run (${e.message}). Run "node system/update.mjs --apply" again.`); }
+}
 
 // If this run replaced the updater itself, the NEW version's work (e.g. a folder
 // move) could not run here — the old code was already in memory. Say so loudly:

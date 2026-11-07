@@ -5,3 +5,6 @@ Thumbs.db
 .aios-license
 .mcp.json
 opencode.json
+
+# API keys of the customer (D12, D34). The installed folder gets its own .gitignore with this line.
+system/.secrets/

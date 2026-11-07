@@ -1,17 +1,17 @@
 # Calendar
 
-Time-stamped notes — anything tied to a point in time lives here.
+Time-stamped notes: anything tied to a point in time. The update replaces this map, so keep no notes in it.
 
 | Folder | What |
-|--------|------|
-| `daily/` | the daily journal / log — what happened, notes, todos |
+|---|---|
+| `daily/` | the daily journal: what happened, notes, todos |
 | `weekly/` | weekly reviews |
-| `monthly/` | monthly reviews / summaries |
-| `yearly/` | yearly reviews / summaries |
+| `monthly/` | monthly reviews and summaries |
+| `yearly/` | yearly reviews and summaries |
 
 ## How to use it
 
-- One note per period, named by date so they sort (e.g. `2026-06-09.md`, `2026-W23.md`,
-  `2026-06.md`, `2026.md`).
-- `daily/` is lifecycle-hot (today's log); the wider periods are cooler reviews.
-- Quick unsorted capture goes to `_inbox/`, not here; durable reference goes to `knowledge/`.
+- Name a note by its period, so that notes sort: `2026-06-09.md`, `2026-W23.md`, `2026-06.md`, `2026.md`. A folder whose notes already follow another pattern (for example one file per year) keeps it: follow the files already there.
+- A folder is created together with its first note.
+- A folder here that the table does not name holds reports that a skill makes. Only that skill writes there.
+- Quick unsorted capture → `_inbox/`, not here. Durable reference → `knowledge/`.

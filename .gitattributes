@@ -10,6 +10,8 @@
 /LICENSE        export-ignore
 /README.md      export-ignore
 /.gitattributes export-ignore
-# `.gitignore` too: the install is deliberately NOT a git repo (api/install.js forbids
-# `git clone`), so it was inert in a customer root. It still does its job HERE.
-/.gitignore     export-ignore
+# `.gitignore` is NOT export-ignored since 0.9.0 (D34): every customer folder gets it, so
+# `system/.secrets/` (API keys), `.aios-license` and `.mcp.json` never reach git even if the
+# customer later makes the folder a repo. api/template.js ships it on the manifest route too.
+# CI of this repo: not part of the product folder.
+/.github        export-ignore

@@ -1,6 +1,6 @@
 {
-  "aios_version": "0.8.3",
-  "comment": "Lives in system/ (plumbing). Kernel files that `system/update.mjs` may refresh: this list, plus any path an incoming release lists. Everything else is user data; beyond the listed files update.mjs does only the fixed steps described in its own header (folder moves of the 0.7 layout, the 0.8 business layout, four create-once files, missing router rows). It refuses any path under user/, business/, areas/, _inbox/ whatever a manifest asks, backs up every file it changes to .aios-backup/, refuses absolute/.. /symlink paths, and will not downgrade. sha256 = as-shipped baseline so an update can detect a kernel file the user edited (conflict -> backup, then overwrite on --apply, never silent). Paths relative to the AIOS root. Regenerate with scripts/gen-managed.mjs after editing any kernel file.",
+  "aios_version": "0.9.0",
+  "comment": "Lives in system/ (plumbing). Kernel files that `system/update.mjs` may refresh: this list, plus any path an incoming release lists. Everything else is user data; beyond the listed files update.mjs does only the fixed steps described in its own header (folder moves of the 0.7 layout, the 0.8 business layout, create-once files) and the 0.9 transition in system/migrate-0.9.mjs (its own narrow allowlist, a state file, deletions only after the customer's yes). It refuses any path under user/, business/, areas/, _inbox/ whatever a manifest asks, backs up every file it changes to .aios-backup/, refuses absolute/.. /symlink paths, and will not downgrade. sha256 = as-shipped baseline so an update can detect a kernel file the user edited (conflict -> backup, then overwrite on --apply, never silent). Paths relative to the AIOS root. Regenerate with scripts/gen-managed.mjs after editing any kernel file.",
   "deny_prefixes": [
     "user/",
     "business/",
@@ -10,115 +10,103 @@
   "managed": [
     {
       "path": "AGENTS.md",
-      "sha256": "8849b0e4fe177abd15c8455908487c795e9b24a2058d6668219bf4800cfb7ecc"
-    },
-    {
-      "path": "CLAUDE.md",
-      "sha256": "336cc4fbf19beaada7ccf9986414fa91851a8d7a07dfb3ccbe800a69eed0ab49"
-    },
-    {
-      "path": "GEMINI.md",
-      "sha256": "336cc4fbf19beaada7ccf9986414fa91851a8d7a07dfb3ccbe800a69eed0ab49"
+      "sha256": "018066fc76b8e4edc10cb63931abe7181536b7b32bc547a53d122c80b1a681ad"
     },
     {
       "path": "system/CONTEXT.md",
-      "sha256": "91996dc4ebf92393b3a88a93021ff5eebe45c6752454a6458154d3f2a8bc839b"
+      "sha256": "9fb6e4a1da6f61a08d510597f9d8d38b32a93159aa3059ada1d9971d03dcf2c9"
+    },
+    {
+      "path": "system/architecture.md",
+      "sha256": "50d5c043e8f643c9d1dee8b0bb0ea511af0263415c18036f01ea2fa54e01aaea"
+    },
+    {
+      "path": "system/scripts/check-maps.py",
+      "sha256": "13df79702080f4c952ff33c8a5bb467ef345fce2e646ee5070efa54d432f0d0d"
     },
     {
       "path": "system/update.mjs",
-      "sha256": "d61aec02ea2d18a3ae9c47ca66ad5fbc7a2ca14f4fc1bc14e40486f85955ccab"
+      "sha256": "9c84b1d30759d752093eb2f9b8f46abcdddd58e050672167912f359e070143eb"
+    },
+    {
+      "path": "system/migrate-0.9.mjs",
+      "sha256": "a5ca95f37e48aceafa5b564d067aa4916beecc22e8b434518e3e65dc40897d69"
+    },
+    {
+      "path": "system/migrate-0.9-base.json",
+      "sha256": "bc1bb7b04d397dfa1fa0f0775c3d53f92a8faf1d87aea2b1b0b852bfc864ffdf"
     },
     {
       "path": "system/connect.mjs",
       "sha256": "b93f9874412428af00f74a0b4566aea206aa73257ad8d2d71b3b538ddea6aeec"
     },
     {
-      "path": "system/offers.md",
-      "sha256": "2d387ca2bb02f8ac09dafebcbde0ad4c36ae6046f06a5ae9b64876ac89244a5b"
+      "path": "system/connect.md",
+      "sha256": "7922e0d347427086a052188d3fd8ca90f848ad00ae671f85b61a12ca73bffe03"
     },
     {
       "path": "system/voices/CONTEXT.md",
       "sha256": "40c7b32e077cd5980c65728f79618291db34e6eb14ea2c6c52e43877435166e1"
     },
     {
+      "path": "system/skills/CONTEXT.md",
+      "sha256": "4d9bd9afe6a892254949c40c46148877bf79f33a1236e7b73dfecd56bc6b9801"
+    },
+    {
       "path": "system/skills/skills.md",
-      "sha256": "5a69b296975b640ce3a6d69f2159d4f49415339594d914ee059b4b28979ed430"
+      "sha256": "a2b9b8e3341e194b854825add3659827ad947d69dd65e43417d8ed55b0d56b80"
     },
     {
       "path": "system/skills/setup/SKILL.md",
-      "sha256": "99d055494e9247a554ba0ad54c3b5c29b738a1b7872b369e1ee04b26e27b5fa9"
+      "sha256": "7104b1d159147b635c34a925a6190f260bce4d78909eb9c6c66a0a5b9a844db9"
     },
     {
       "path": "system/skills/setup/CONTEXT.md",
-      "sha256": "26279a04c69650af5bd6f11bed71e4d78f31d31389673ba8bc22e0b239d985a3"
+      "sha256": "2c2d3703936513ba5027504bc098e5651bd50f4dbf641522d5002fd574cd4c52"
     },
     {
       "path": "system/skills/setup/01_identity/CONTEXT.md",
-      "sha256": "ab470f170b1a69c93a0abeb428b8af78e1616bbdd0fce8ee5ba4d3b6d30eefa4"
+      "sha256": "45325e3ff8d2782a94f0eaf5ef6daffc61e8e2f022c54ba210a4c90d1abac450"
     },
     {
       "path": "system/skills/setup/02_business/CONTEXT.md",
-      "sha256": "d643a6b9517b1c1097dd5b9165274670abff183be88b67237222c4a42f21140c"
+      "sha256": "38db2ac3410c288fc8c1bc803ec1235d6d02a21bbda9fbc8315e4c6842379d36"
     },
     {
       "path": "system/skills/setup/03_review/CONTEXT.md",
-      "sha256": "156e39fec8a2048285bea02f85c59dc6fe7bdb168ab4c51470837e5389979656"
+      "sha256": "a5ed8ebcc3a6f9c205c3e5053ca0c8587bf179d387a9422a5b2efa5e1bf809b1"
     },
     {
-      "path": "system/agents/assistant/AGENT.md",
-      "sha256": "a9ee493cb12bbe28a2b54a97963d65306cfe63776f93abd9c408f408e9d0d3a4"
+      "path": "system/skills/setup/templates/soul.md",
+      "sha256": "5e7ab728b724867edf973107cb4ad4c484d74a5b5985704e97b1670076c399e4"
     },
     {
-      "path": "system/agents/ceo/AGENT.md",
-      "sha256": "1ca07c1d6c10c552cea87342828cc649a6add5661d78788400534bc8ce88366b"
+      "path": "system/skills/setup/templates/user-map.md",
+      "sha256": "60cb2d76ef85f6fb9a24c69e06bfa940c79bd29bcf8d8a2386919e23d05dc098"
+    },
+    {
+      "path": "system/skills/setup/templates/business-map.md",
+      "sha256": "fd8a16890054e8a8aaab681062024f4b4dd10c554a2b2be288242ad9f7a116a5"
+    },
+    {
+      "path": "system/skills/setup/templates/offers-map.md",
+      "sha256": "e8e79e32afac07727d2874017553f617b22b9624941fa13e88a542295b5ddb40"
     },
     {
       "path": "system/agents/curator/AGENT.md",
       "sha256": "da2ff99c948a4048e1d5f31a02aff36b3a2dadf0e67a7185d4cd7e6a31351530"
     },
     {
-      "path": "system/agents/finance/AGENT.md",
-      "sha256": "dbf27e6ceef07e7cb37b3a689855d7f8acba8eabeb3bfbbe6dfcd7acfcdb6191"
-    },
-    {
-      "path": "system/agents/it/AGENT.md",
-      "sha256": "4de2a5863cdd5e82db7724dbfcdbe1f087f8b6b7b8e088e39c116e96cd5f85c2"
-    },
-    {
-      "path": "system/agents/legal/AGENT.md",
-      "sha256": "589e92fa361acae83c0b4c995d34201e81026afb7669cbf56b67548a295da52b"
-    },
-    {
-      "path": "system/agents/marketer/AGENT.md",
-      "sha256": "2f31c86664a9b4479a37cccf65aa8b518ab54c6797917c5c8272a94d463cc654"
-    },
-    {
-      "path": "system/agents/pm/AGENT.md",
-      "sha256": "406e923e03705a8e75eb725d0991c5dd260c96eb635245cf8cbcff6795831ee4"
-    },
-    {
-      "path": "system/agents/product/AGENT.md",
-      "sha256": "9e62a243b52093151f0c9bd518739494f4ea51507a9897adac5ae88270e8a9f3"
-    },
-    {
-      "path": "system/agents/researcher/AGENT.md",
-      "sha256": "bce13f4d02e1d7d8c92cd62aebd66aafd39474c860a0647bde092c8327409203"
-    },
-    {
-      "path": "system/agents/sales/AGENT.md",
-      "sha256": "23d92311d2e591b75e4be7c04b5af0d4ce9ff5748b1e6d2cdc8f6f5fa4c4e12f"
-    },
-    {
       "path": "knowledge/CONTEXT.md",
-      "sha256": "83e1c43a9dc1c52fd0cfe18806781ce31543fa9174d3333fa52b0a8caa3ad708"
+      "sha256": "43331a8d3a1135d705a41d3ebbeef845d696a3167200784eaaec1aa7cd98ab60"
     },
     {
       "path": "calendar/CONTEXT.md",
-      "sha256": "9b610cb0223d8f16e16ef9fb0223fb6f19b09f35da2b7f7748cc67309f87d2d5"
+      "sha256": "1da38630cc0a6bec185ea36ced039e14ae5a7d994ac9897c7852a8173cf7e053"
     },
     {
       "path": "people/CONTEXT.md",
-      "sha256": "7363af62418df4f2a434012a4b8bbcb26192008af8e7f9fc61f718df6d269f45"
+      "sha256": "592c7ed354c58ad318888b23df5440d4eaa461508f31a280dd55aae842b9b514"
     },
     {
       "path": "projects/CONTEXT.md",

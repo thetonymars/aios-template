@@ -1,0 +1,55 @@
+# Stress test of the updater, the 0.9 move and check-maps.py on Windows and macOS (P0140, check 9).
+# Not part of the customer folder: `.github` is export-ignore and api/template.js skips it.
+name: stress
+on:
+  push:
+  workflow_dispatch:
+jobs:
+  stress:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
+    env:
+      AIOS_WORK: ${{ github.workspace }}/../work
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0          # the tag v0.8.3 builds the 0.8.3 customer copies
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Work folder (template + 0.8.3 customer copies)
+        run: |
+          mkdir -p "$AIOS_WORK"
+          cp -R "$GITHUB_WORKSPACE" "$AIOS_WORK/aios-template"
+          node .github/tests/build-fixtures.mjs
+      - name: 0.9 move — tests on four customer copies (move, rerun, cut-off after each step, deletions, restore)
+        env:
+          AIOS_MIGRATE_CLI: ${{ github.workspace }}/.github/tests/migrate/cli.mjs
+        run: node .github/tests/migrate/run-tests.mjs
+      - name: check-maps.py on an install copy, in a path with spaces and Cyrillic
+        run: |
+          D="$AIOS_WORK/Мій AIOS тест"
+          mkdir -p "$D"
+          git archive HEAD | tar -x -C "$D"
+          cd "$D"
+          printf 'line one\r\nline two\r\n' > _inbox/crlf-note.md
+          mkdir -p .aios-backup/x && printf 'see `no/such/file.md`\n' > .aios-backup/x/CONTEXT.md
+          python -I system/scripts/check-maps.py . | tee ../check-maps.out
+          grep -q "nothing broken" ../check-maps.out
+      - name: update.mjs and the move need no Python
+        run: |
+          D="$AIOS_WORK/no-python"
+          cp -R "$AIOS_WORK/fixtures/c2" "$D"
+          cp -R system "$D/"
+          cp AGENTS.md "$D/"
+          cd "$D"
+          env PATH="$(dirname "$(command -v node)")" node system/update.mjs --check

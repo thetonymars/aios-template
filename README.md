@@ -26,10 +26,9 @@ server.
 ## What is in this repository
 
 ```
-AGENTS.md              the kernel: what the folder is, its layout and its rules — the AI reads it first
-CONTEXT.md             the router: which file owns each task. Yours after install — you add rows
-CLAUDE.md / GEMINI.md  pointers to AGENTS.md for those clients
-system/                connect.mjs (registers the skills server), update.mjs, the setup skill
+AGENTS.md              the kernel: what the folder is, its layout, the task router and the rules — the AI reads it first
+SOUL.md                who the agent is and how it talks to this person. The person's file: setup writes it, no update touches it
+system/                connect.mjs (registers the skills server), update.mjs and migrate-0.9.mjs, the setup skill, architecture.md
 user/ business/        where the operator's own context lives: user/ ships a blank user.md and
                        its map, business/ is empty until setup. Each gets a map — a CONTEXT.md
                        that says which file holds which kind of fact

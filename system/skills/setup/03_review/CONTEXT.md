@@ -3,7 +3,7 @@
 Show the user what was captured, accept corrections, finalize. **Mode-aware.**
 
 **Rules (do NOT violate):**
-- **Zero file paths** shown to the user. Never `user/user.md`, `business/<slug>/core/business.md`, or any path.
+- **Zero file paths** shown to the user. Never `SOUL.md`, `user/user.md`, `business/<slug>/core/business.md`, or any path.
 - **Zero technical labels.** Don't say "slug", "frontmatter", "placeholder", "field".
 - **Match the user's language.** The templates below are written in English as the canonical reference — render everything the user sees in their chosen language at runtime.
 - Reads as a friend summarizing back what they heard — NOT a tool printing fields.
@@ -28,6 +28,9 @@ YOU
 • {ROLE_SENTENCE}
 • Tone/length: {TONE} · {LENGTH}
 • Pet peeves: {BUGS_LIST}
+• Tech level: {TECH_LEVEL}
+• You dictate by voice: {VOICE_INPUT}
+• More rules for my replies: {EXTRA_RULES or "—"}
 • More about you: {EXTRA_USER or "—"}
 
 YOUR BUSINESS: {BUSINESS_NAME}
@@ -48,12 +51,21 @@ YOUR BUSINESS: {BUSINESS_NAME}
 
 ### Add-business mode
 
-Show only the BUSINESS block in the code block (the operator block was already confirmed earlier). Same CTA underneath.
+Show only the BUSINESS block in the code block (the YOU block was already confirmed earlier). Same CTA underneath.
+
+### Change-person mode
+
+Show only the YOU block in the code block, with the current values (changed and unchanged). Same CTA underneath. On confirm, close with:
+
+```
+✓ Saved. From now on I'll talk to you this way.
+```
 
 ### On a correction
 
 If the user says something like "no, the tone isn't right", "rewrite what I sell", "change the niche to…" (in any language):
 - Edit the relevant file silently (user does not see paths or edit operations).
+- A YOU-block correction changes only the value the user names, as in `01_identity/CONTEXT.md` › Change-person mode. The YOU block lives in `SOUL.md` › `## The person you work with` and `user/user.md`.
 - Re-display the recap (same shape, updated values). Code block + CTA outside.
 - Loop until the user confirms (e.g. "ok", "done", "good", "yes" — in any language).
 
@@ -67,6 +79,7 @@ For first-run:
 From here on — just talk to me. Name a business and I'll pick up its context. Tell me what needs doing (write an email, a series of posts, rework a post…) and I'll do it. To use a skill, ask for it: "what skills do I have?" or "use a skill for this".
 
 Want to add another business someday — say "new business" and we'll run a short onboarding.
+Want me to talk to you differently — say "change how you talk to me".
 ```
 
 For add-business:
@@ -81,4 +94,5 @@ For add-business:
 - No file paths, placeholder tokens, or system labels anywhere in the user-facing output.
 - User confirmed (e.g. "ok", "done", "good", "yes" — in any language).
 - Closing message printed in plain text below the recap (not inside a code block).
+- `grep '\[' SOUL.md user/user.md` returns 0, and `SOUL.md` › `## Who you are` is unchanged.
 - `system/skills/skills.md` lists `setup` (ships listed — verify, don't duplicate).

@@ -3,24 +3,13 @@ type: identity
 last_updated: [DATE]
 ---
 
-# [DISPLAY_NAME]
+# About me
 
-> The operator. One global person. AI loads this every session.
-
-## Identity
-
-- **Address me as:** [DISPLAY_NAME]
-- **Language:** [LANGUAGE]
+> Who the user is: work, role, more. Read it when a task needs facts about the user. How to talk to the user → `SOUL.md`.
 
 ## What I do
 
 [ROLE_SENTENCE]
-
-## How to respond to me
-
-- **Tone:** [TONE]
-- **Length:** [LENGTH]
-- **What bugs me in AI replies:** [BUGS_LIST]
 
 ## More about me
 
