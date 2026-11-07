@@ -52,6 +52,12 @@ def line_of(text, slug):
 
 
 def main():
+    # A Windows console is often cp1252: a path or a word in Cyrillic would stop the script.
+    try:
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+        sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+    except (AttributeError, ValueError):
+        pass
     tmp = tempfile.mkdtemp(prefix="skills-stress-")
     try:
         v = os.path.join(tmp, "vault")

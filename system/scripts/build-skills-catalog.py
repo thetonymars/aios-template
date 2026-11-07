@@ -235,6 +235,12 @@ def write_whole(target, text):
 
 
 def main():
+    # A Windows console is often cp1252: a path or a word in Cyrillic would stop the script.
+    try:
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+        sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+    except (AttributeError, ValueError):
+        pass
     args = [a for a in sys.argv[1:] if not a.startswith("--")]
     vault = args[0] if args else "."
     target = os.path.join(vault, "system", "skills", "skills.md")

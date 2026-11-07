@@ -30,11 +30,11 @@
     },
     {
       "path": "system/scripts/build-skills-catalog.py",
-      "sha256": "7c1447e985b58c545b537ab5cb9901ea0e0442312165ee78bea4fe71ceea89de"
+      "sha256": "00cb8c3271ed35fce77759892562e59c92509b685feb39c36411941e0d3b3edf"
     },
     {
       "path": "system/scripts/tests/test_build_skills_catalog.py",
-      "sha256": "bb249932444dee2b8d104a71b0041ef6b2bc21bb257640e710957fdc761cc850"
+      "sha256": "ffee52cbe11f550cc26d98668bceb268f5c2ca81dab58294d9f8575e03d07903"
     },
     {
       "path": "system/update.mjs",
