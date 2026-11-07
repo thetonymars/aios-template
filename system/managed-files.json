@@ -10,7 +10,7 @@
   "managed": [
     {
       "path": "AGENTS.md",
-      "sha256": "6637b223171919528cae3f932b073ad2b95ad7e75a15dd28a0278c1c0aa43eae"
+      "sha256": "fc015ae1cd35dd0a5c5fc74d87e170615fedcd1de500b2c2db9fdd1bf7b39551"
     },
     {
       "path": "system/CONTEXT.md",
@@ -86,7 +86,7 @@
     },
     {
       "path": "system/skills/setup/templates/soul.md",
-      "sha256": "80ffa0fd0f43f8f8240bee744e01f724c30843f4dd1c95b3ba56e1acfbbecb01"
+      "sha256": "10056b2671601c4b0bcac9fb1d2d55fb637620fdcb91928e21790fb32104d6fa"
     },
     {
       "path": "system/skills/setup/templates/user-map.md",

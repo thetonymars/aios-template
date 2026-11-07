@@ -10,7 +10,8 @@ last_updated: 2026-11-07
 - `SOUL.md` is next to this file. It says who you are here and how you talk to this person.
 - Your app may load `SOUL.md` by itself. You do not see its text? Read the file before your first reply.
 - Read nothing else in advance. Before a task, find its row in the Task router below. Open the file of that row first.
-- `SOUL.md` does not exist → an update is not finished. Add the update sentence at the end of your first reply. The update sentence is under "Silent checks".
+- `SOUL.md` does not exist, and `system/update.mjs` exists → an update is not finished. Add the update sentence at the end of your first reply. The update sentence is under "Silent checks".
+- `SOUL.md` and `system/update.mjs` do not exist → AIOS is not set up yet. Act as for placeholders below.
 - Until the update is finished, take how to talk to the person from `user/user.md`. Never create `SOUL.md` or a map by hand.
 - `SOUL.md` or `user/user.md` has `[UPPERCASE_TOKEN]` placeholders → AIOS is not set up yet. Never invent the person or a business.
 - A task needs the missing answers and `system/skills/setup/` exists → offer the `setup` skill. Run it after their yes.
@@ -115,7 +116,7 @@ aios/                  ← the root is never a destination: it holds AGENTS.md, 
 - **History never wins.** An archived project or an old note is history. The file that a map names wins over it.
 - **Open the map first.** Before you work further inside a folder, open its `CONTEXT.md`. `_inbox/` has no map.
 - **Maps belong to the system.** An update replaces every `CONTEXT.md` that the system ships. Never add the person's facts to a map.
-- **Where a fact goes.** A fact of a business → `business/<slug>/core/business.md`. A fact of the person → `user/`.
+- **Where a fact goes.** A fact of a business → the file that `business/<slug>/CONTEXT.md` names. A fact of the person → the file that `user/CONTEXT.md` names.
 - **Several files at once.** You delete, move or rename several files or folders of the person? Show the list first, and wait for their yes.
 - This rule is not for one file that the person named. It is not for files that you made in this task.
 - **A move ends with the maps.** In the same step, fix every row that points at the old place → `system/architecture.md` › Moves.
