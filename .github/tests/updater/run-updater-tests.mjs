@@ -142,6 +142,21 @@ console.log("== updater: code review findings");
   ok(!existsSync(join(d, "CLAUDE.md")) && !existsSync(join(d, "GEMINI.md")) && existsSync(join(d, "system/offers.md")), "U10: both named files deleted, the rest kept");
 }
 
+{ // RR6: a leftover areas/ with a folder of the customer does not hold the move back
+  const d = copy("a", "rr6-areas-leftover");
+  mkdirSync(join(d, "areas/custom"), { recursive: true }); writeFileSync(join(d, "areas/custom/note.md"), "мій файл\n");
+  served = manifest("0.9.0");
+  await run(d, ["--apply"]); await run(d, ["--apply"]);
+  ok(existsSync(join(d, "system/.aios-migration.json")) && state(d).status === "done" && existsSync(join(d, "SOUL.md")) && existsSync(join(d, "areas/custom/note.md")), "RR6: the move is done, areas/custom untouched");
+}
+{ // RR7: a restore cut off after the move's code went can run again, without the server
+  const d = await migrated("a", "rr7-restore-cut");
+  const r1 = await run(d, ["--restore", "--apply"], { AIOS_MIGRATE_STOP_AFTER: "restore-module" });
+  ok(r1.code === 75 && !existsSync(join(d, "system/migrate-0.9.mjs")), "RR7 setup: stopped after the module was removed");
+  const r2 = await run(d, ["--restore", "--apply"], { AIOS_MANIFEST_URL: "http://127.0.0.1:1/none" });
+  ok(r2.code === 0 && /0\.8\.3 is back/.test(r2.out) && readFileSync(join(d, "system/update.mjs")).equals(readFileSync(join(FX, "a", "system/update.mjs"))), "RR7: the second restore finished: the 0.8.3 updater is back");
+}
+
 srv.close();
 console.log(`\n${fails ? "FAILED" : "ALL PASSED"}: ${passes} checks passed, ${fails} failed`);
 process.exit(fails ? 1 : 0);

@@ -521,11 +521,63 @@ const { symlinkSync, renameSync } = await import("node:fs");
   cli(dir, ["--apply"]);
   const plan = cli(dir, ["--restore"]).out.split("\n").filter((l) => /^\s+[←\-+] /.test(l));
   const last = plan.slice(-4).join("\n");
-  ok(/update\.mjs/.test(last) && /managed-files\.json/.test(last) && /migrate-0\.9\.mjs/.test(plan[plan.length - 1] + plan[plan.length - 2]), "R19 restore: updater, marker, then the move's code last");
+  ok(/system\/update\.mjs/.test(plan[plan.length - 1]) && /managed-files\.json/.test(plan[plan.length - 2]) && /migrate-0\.9/.test(plan[plan.length - 3] + plan[plan.length - 4]), "R19/RR7 restore: the move's code, then the version marker, then the updater last");
 }
 { // R20 (Claude 9, DeepSeek 12): setup asks a line whose value is unknown, and an overwrite keeps the business's own sections
   const id = readFileSync(join(T, "system/skills/setup/01_identity/CONTEXT.md"), "utf8"), bz = readFileSync(join(T, "system/skills/setup/02_business/CONTEXT.md"), "utf8");
   ok(/value is exactly `unknown`/.test(id) && /put the copied sections back/.test(bz), "R20 setup texts: unknown is asked; overwrite keeps Sources, Own, Rules");
+}
+
+// ===== the second review (handoff/rereview-codex.md) =====
+console.log("\n== second review");
+{ // RR1a: a rule added to CLAUDE.md after SOUL.md was written is moved too, before CLAUDE.md is offered for deletion
+  const { dir } = setup("c1", "rr1a-late-claude");
+  cli(dir, ["--apply"], { AIOS_MIGRATE_STOP_AFTER: "S3" });
+  writeFileSync(join(dir, "CLAUDE.md"), rd(dir, "CLAUDE.md") + "Нове правило між запусками.\n");
+  cli(dir, ["--apply"]);
+  ok(state(dir).status === "done" && rd(dir, "SOUL.md").includes("Нове правило між запусками.") && /added during the update/.test(rd(dir, "SOUL.md")), "RR1a: the late rule is in SOUL.md");
+  cli(dir, ["--apply", "--delete-old=all"]);
+  ok(!existsSync(join(dir, "CLAUDE.md")) && rd(dir, "SOUL.md").includes("Нове правило між запусками."), "RR1a: after yes the rule still lives in SOUL.md");
+}
+{ // RR1b: an own row added to user/CONTEXT.md after user.md was written is moved before the map is replaced
+  const { dir } = setup("c1", "rr1b-late-user-map");
+  cli(dir, ["--apply"], { AIOS_MIGRATE_STOP_AFTER: "S4" });
+  writeFileSync(join(dir, "user/CONTEXT.md"), rd(dir, "user/CONTEXT.md").replace("| `sport/` |", "| `garden/` | мій город | `garden/plan.md` |\n| `sport/` |"));
+  cli(dir, ["--apply"]);
+  ok(state(dir).status === "done" && rd(dir, "user/user.md").includes("`garden/`") && !rd(dir, "user/CONTEXT.md").includes("garden"), "RR1b: the late row is in user.md");
+}
+{ // RR5: How to respond to me changed after SOUL.md was written → the new line goes to SOUL.md; no endless stop
+  const { dir } = setup("c1", "rr5-respond-late");
+  cli(dir, ["--apply"], { AIOS_MIGRATE_STOP_AFTER: "S3" });
+  writeFileSync(join(dir, "user/user.md"), rd(dir, "user/user.md").replace("## How to respond to me\n", "## How to respond to me\n\n- Без смайликів у відповідях.\n"));
+  cli(dir, ["--apply"]);
+  ok(state(dir).status === "done" && rd(dir, "SOUL.md").includes("Без смайликів у відповідях.") && !rd(dir, "user/user.md").includes("How to respond"), "RR5: the changed rule moved, the move finished");
+}
+{ // RR2: the 0.8.3 text next to a changed file never overwrites a file of the customer with that name
+  const { dir } = setup("a", "rr2-beside-free-name");
+  cli(dir, ["--apply"]);
+  const p = "business/kavarnia-zerno/core/business.md";
+  writeFileSync(join(dir, p), rd(dir, p) + "\n- **Факт:** після оновлення\n");
+  writeFileSync(join(dir, "business/kavarnia-zerno/core/business.0.8.3.md"), "МІЙ ВЛАСНИЙ ФАЙЛ\n");
+  cli(dir, ["--restore", "--apply"]);
+  ok(rd(dir, "business/kavarnia-zerno/core/business.0.8.3.md") === "МІЙ ВЛАСНИЙ ФАЙЛ\n" && sha(readFileSync(join(dir, "business/kavarnia-zerno/core/business.0.8.3-2.md"))) === sums("a").get(p), "RR2: own file kept, the 0.8.3 text under a free name");
+}
+{ // RR3: a deleted old file that the customer made again is not overwritten by --restore
+  const { dir } = setup("a", "rr3-recreated");
+  cli(dir, ["--apply"]); cli(dir, ["--apply", "--delete-old=all"]);
+  writeFileSync(join(dir, "CLAUDE.md"), "НОВЕ ПРАВИЛО\n");
+  cli(dir, ["--restore", "--apply"]);
+  ok(rd(dir, "CLAUDE.md") === "НОВЕ ПРАВИЛО\n" && sha(readFileSync(join(dir, "CLAUDE.0.8.3.md"))) === sums("a").get("CLAUDE.md"), "RR3: the new CLAUDE.md kept, the old one beside");
+}
+{ // RR4: a record rebuilt after it was lost lists no changes → --restore refuses instead of a false success
+  const { dir } = setup("a", "rr4-recovered-restore");
+  cli(dir, ["--apply"]);
+  rmSync(join(dir, "system/.aios-migration.json"));
+  cli(dir, ["--apply"]);
+  ok(state(dir).recovered, "RR4 setup: the record was rebuilt");
+  const before = walk(dir);
+  const r = cli(dir, ["--restore", "--apply"]);
+  ok(/rebuilt after it was lost/.test(r.out) && diffMaps(before, walk(dir)).length === 0, "RR4: refused, nothing changed");
 }
 
 // fixtures untouched

@@ -118,6 +118,12 @@ const deferMove = !!(mig && !CHECK && !RESTORE && mig.olderLayout && mig.olderLa
 // A run 1 that was cut off may already have put everything the move needs on this disk.
 const moveReady = kernelIn || !!(mig && mig.kernelReady && mig.kernelReady(ROOT));
 if (RESTORE) {
+  if (!mig) {
+    // a restore that was cut off after the move's code went: its copy is in the restore backup
+    const bk = join(ROOT, ".aios-backup");
+    const saved = existsSync(bk) ? readdirSync(bk).filter((n) => /-restore$/.test(n)).sort().reverse().map((n) => join(bk, n, "system", "migrate-0.9.mjs")).find((p) => existsSync(p)) : null;
+    if (saved) { try { mig = await import(pathToFileURL(saved).href); } catch {} }
+  }
   if (!mig) { console.error("--restore needs system/migrate-0.9.mjs, and it is not in this folder."); process.exit(1); }
   const r = await runMig(mig, { apply: APPLY, restore: true });
   printMig(r);

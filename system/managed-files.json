@@ -38,11 +38,11 @@
     },
     {
       "path": "system/update.mjs",
-      "sha256": "57428598d88657b9d7aff76e8ab54010cb30189df6f1da10041bdf98c0b08835"
+      "sha256": "a3bf8dc372103e70d4f595c7a861ffc57f9c8b2322b0cc0ecc7fe55a1dd581a8"
     },
     {
       "path": "system/migrate-0.9.mjs",
-      "sha256": "a3a46954ec7478d0db75cb96c88f9ea91cb1535708ac3966158ead384962e2b2"
+      "sha256": "94763bc0f49c12323fa3d6e3625ce49a12e66832ceeafc2310844ed33f2dff8e"
     },
     {
       "path": "system/migrate-0.9-base.json",

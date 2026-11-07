@@ -259,7 +259,8 @@ function signs(C) {
 // While one is there, the 0.9 move waits: update.mjs first moves them, then runs the move.
 export function olderLayout(root) {
   const C = ctx(root);
-  if (isDir(C.abs("areas")) || isDir(C.abs("network"))) return true;
+  // exactly what update.mjs moves (its RENAMES): a leftover areas/ with other folders in it holds nothing back
+  if (["areas/user", "areas/business", "network"].some((r) => isDir(C.abs(r)))) return true;
   const bdir = C.abs("business");
   if (isDir(bdir)) for (const slug of readdirSync(bdir)) {
     if (slug.startsWith(".")) continue;
@@ -547,7 +548,7 @@ function doOp(C, step, rel, action, desired, source, reason, extra = {}) {
       halt(C, rel, `${rel} is not saved as UTF-8 text, so it was not changed. Open it, save it as UTF-8, then say "update aios" again`); return "blocked";
     }
     if (action === "create" && cur) { halt(C, rel, `${rel} appeared while the update ran`); return "blocked"; }
-    const backup = action === "create" ? null : `${st.backup}/${rel}`;
+    const backup = extra.backup || (action === "create" ? null : `${st.backup}/${rel}`);
     if (backup && (!isFile(C.abs(backup)) || sha(readFileSync(C.abs(backup))) !== curSha)) {
       halt(C, rel, `${rel} changed while the update ran`); return "blocked";
     }
@@ -615,12 +616,47 @@ function resync(C) {
     if (i >= 0) C.st.ops[i] = { ...op, id: C.st.ops[i].id }; else C.st.ops.push({ ...op, id: `O${C.st.ops.length + 1}` });
     log(C, `resync: ${rel} changed between two runs; the backup copy is refreshed`); n++;
   }
-  if (n) for (const s of C.st.steps) if (s.id === "S2-collect") s.status = "todo";
+  if (n) for (const s of C.st.steps) if (s.id === "S2-collect" && s.status === "done") { s.status = "todo"; C.st.additions_delivered = C.st.additions; }
   return n;
+}
+// The step that writes each target, by the key of its op.
+const writerKey = (target) => target === "SOUL.md" ? "S3-soul:SOUL.md" : target === "user/user.md" ? "S4-user:user/user.md" : `S6-business:${target}`;
+// Lines the customer added between two runs, after their target was already written: they go to the end of
+// that target in a block of their own (a copy of the target first, so --restore can undo it).
+function lateAppend(C, target, entries, why) {
+  if (!entries.length || C.halt) return;
+  const k = C.st.ops.filter((o) => /^late-/.test(o.step)).length + 1, step = `late-${k}`;
+  const p = C.abs(target), cur = readBuf(p);
+  if (!cur) {
+    if (target === "user/user.md") doOp(C, step, target, "create", Buffer.from(appendBlock("---\ntype: identity\n---\n\n# About me\n", [`## ${HEADING} (added during the update)`, `<!-- ${why} -->`, ...entries])), "lines added between two runs", why);
+    else halt(C, target, `${target} is missing, so lines added during the update have no place`);
+    return;
+  }
+  const copy = `${C.st.backup}/late-${k}/${target}`;
+  if (badPath(C, copy)) { halt(C, target, `the backup copy of ${target} ${badPath(C, copy)}`); return; }
+  mkdirSync(dirname(C.abs(copy)), { recursive: true }); copyFileSync(p, C.abs(copy));
+  if (!validUtf8(cur)) { halt(C, target, `${target} is not saved as UTF-8 text, so it was not changed. Open it, save it as UTF-8, then say "update aios" again`); return; }
+  const meta = decode(cur);
+  const B = [`## ${HEADING} (added during the update)`, `<!-- ${why}; old files: ${C.st.backup}/ -->`, ...entries];
+  doOp(C, step, target, target === "SOUL.md" ? "append" : target === "user/user.md" ? "edit" : "append", encode(meta, appendBlock(meta.text, B)), "lines added between two runs", why, { backup: copy });
 }
 function S2(C) {
   const r = collect(C, C.st.businesses);
   if (C.halt) return;
+  const before = C.st.additions_delivered;
+  if (before) {
+    const seen = new Set(before.map((a) => `${a.source}\u0000${a.text}`));
+    const fresh = r.additions.filter((a) => !seen.has(`${a.source}\u0000${a.text}`));
+    const byTarget = new Map();
+    const stepOf = (target) => target === "SOUL.md" ? "S3-soul" : target === "user/user.md" ? "S4-user" : "S6-business";
+    const written = (target) => opState(C, writerKey(target)) === "done" || C.st.steps.find((s) => s.id === stepOf(target))?.status === "done";
+    for (const a of fresh) if (written(a.target)) byTarget.set(a.target, [...(byTarget.get(a.target) || []), a]);
+    for (const [target, adds] of byTarget) {
+      lateAppend(C, target, adds.flatMap((a) => ["", ...entry(a)]), "your lines added between two runs of the update");
+      if (C.halt) return;
+    }
+    delete C.st.additions_delivered;
+  }
   C.st.additions = r.additions; C.st.person = r.person;
   log(C, `S2-collect: ${r.additions.length} own text pieces`);
 }
@@ -681,8 +717,14 @@ function S4(C) {
   const L = meta.text.replace(/\n$/, "").split("\n");
   const p = parseUser(orig);
   const sp = C.st.soul_person;
-  if (sp && (JSON.stringify(p.respondLines) !== JSON.stringify(sp.respondLines) || JSON.stringify(p.identityLines) !== JSON.stringify(sp.identityLines))) {
-    halt(C, "user/user.md", "user/user.md › How to respond to me (or your name or language) changed after SOUL.md was written. Copy the change into SOUL.md › The person you work with, then delete it in user/user.md by hand, and say \"update aios\" again"); return;
+  if (sp && opState(C, "S3-soul:SOUL.md") === "done") {
+    const had = new Set([...sp.respondLines, ...sp.identityLines].map(normLine));
+    const extra = [...p.identityLines, ...p.respondLines].filter((l) => normLine(l) && !had.has(normLine(l)));
+    if (extra.length) {
+      lateAppend(C, "SOUL.md", ["", "<!-- from user/user.md, changed between two runs of the update -->", ...extra], "user/user.md › How to respond to me changed between two runs");
+      if (C.halt) return;
+      C.st.soul_person = { respondLines: [...sp.respondLines, ...extra], identityLines: sp.identityLines };
+    }
   }
   const rm = new Set(p.identity);
   if (p.respond) for (let i = p.respond[0]; i < p.respond[1]; i++) rm.add(i);
@@ -906,14 +948,24 @@ const kernelPathOk = (C, rel) => !badPath(C, rel) && !KERNEL_DENY.some((d) => re
 const backupPathOk = (C, rel) => typeof rel === "string" && /^\.aios-backup\/[^/]+\/./.test(rel) && !badPath(C, rel);
 const migrateBackupExists = (C) => isDir(C.abs(".aios-backup")) && readdirSync(C.abs(".aios-backup")).some((n) => /-migrate-0\.9$/.test(n));
 // The 0.8.3 text of a file the customer changed after the update goes next to it: SOUL.md → SOUL.0.8.3.md
-const besideName = (rel) => rel.replace(/(\.[^./]+)?$/, (ext) => `.0.8.3${ext || ""}`);
+// A free name: an existing file with other text is never overwritten (SOUL.0.8.3.md, SOUL.0.8.3-2.md, …).
+function besideName(C, rel, buf) {
+  for (let i = 1; i < 100; i++) {
+    const name = rel.replace(/(\.[^./]+)?$/, (ext) => `.0.8.3${i > 1 ? `-${i}` : ""}${ext || ""}`);
+    const cur = readBuf(C.abs(name));
+    if (!there(C.abs(name)) || (cur && buf && sha(cur) === sha(buf))) return name;
+  }
+  return null;
+}
+const restoredRecord = (C) => isDir(C.abs("system")) && readdirSync(C.abs("system")).some((n) => /^\.aios-migration\.restored-.*\.json$/.test(n));
 
 function restore(C, apply) {
   const st = loadState(C);
   if (st?.lock && st.lock.pid !== process.pid && alive(st.lock.pid) && Date.now() - Date.parse(st.lock.at) < LOCK_MS)
     return { needed: true, status: "busy", lines: ["An AIOS update is already running. Wait for it to end, then try again."], pendingDeletions: [] };
   const refuse = (msg) => ({ needed: false, status: "refused", lines: [msg + " Nothing was changed."], pendingDeletions: [] });
-  if (!st && migrateBackupExists(C)) return refuse("Cannot restore 0.8.3: the move to 0.9 ran, but its record (system/.aios-migration.json) is missing, so your own files cannot be put back safely. Tell support.");
+  if (st?.recovered) return refuse("Cannot restore 0.8.3: the record of the move was rebuilt after it was lost, and it does not list what the move changed. Tell support.");
+  if (!st && migrateBackupExists(C) && !restoredRecord(C)) return refuse("Cannot restore 0.8.3: the move to 0.9 ran, but its record (system/.aios-migration.json) is missing, so your own files cannot be put back safely. Tell support.");
   const prev = st?.prev_backup ? [...(st.prev_backup_extra || []), st.prev_backup] : findPrev(C);
   if (!prev) return refuse("Cannot restore 0.8.3: no backup of the old system files was found in .aios-backup/.");
   if (!prev.every((d) => /^\.aios-backup\/[^/]+$/.test(d) && !badPath(C, d + "/x"))) return refuse("Cannot restore 0.8.3: the record names a backup outside .aios-backup/.");
@@ -940,10 +992,13 @@ function restore(C, apply) {
     const b = readBuf(C.abs(op.backup));
     if (!b) { keep.push(`${op.path} — its backup copy is missing: left as it is`); continue; }
     if (curSha === sha(b)) continue;
-    if (cur !== null && op.sha_after !== null && curSha !== op.sha_after) {
-      // the customer changed it after the update: their text stays; the 0.8.3 text goes next to it
-      plan.push({ kind: "beside", rel: op.path, to: besideName(op.path), from: op.backup });
-      keep.push(`${op.path} — you changed it after the update: kept as it is; its 0.8.3 text is next to it in ${besideName(op.path)}`);
+    // the customer changed it after the update, or made it again after it was deleted: their text stays;
+    // the 0.8.3 text goes next to it under a free name
+    if (cur !== null && (op.action === "delete" || (op.sha_after !== null && curSha !== op.sha_after))) {
+      const to = besideName(C, op.path, b);
+      if (!to) { keep.push(`${op.path} — you changed it after the update: kept as it is; its 0.8.3 text stays in ${op.backup}`); continue; }
+      plan.push({ kind: "beside", rel: op.path, to, from: op.backup });
+      keep.push(`${op.path} — you changed it after the update: kept as it is; its 0.8.3 text is next to it in ${to}`);
       continue;
     }
     plan.push({ kind: "put", rel: op.path, from: op.backup });
@@ -970,8 +1025,10 @@ function restore(C, apply) {
     else keep.push(`${rel} — a 0.9 file you changed: left as it is`);
   }
   // 3. last: the updater and the version marker, then the move's own code
-  for (const rel of LAST) { const f = prevLookup(C, prev, rel); if (f && sha(readBuf(C.abs(rel)) || "") !== sha(f.buf)) tail.push({ kind: "put", rel, from: f.rel }); }
-  for (const rel of MODULE) if (!p08.has(rel) && isFile(C.abs(rel))) tail.push({ kind: "delete", rel, why: "the code of the 0.9 move" });
+  // the end, in this order: the move's own code goes, then the version marker, then the updater. A copy of the
+  // code is kept in the restore backup, so a restore cut off before the updater is replaced can run again.
+  for (const rel of MODULE) if (!p08.has(rel) && isFile(C.abs(rel))) tail.push({ kind: "delete", rel, why: "the code of the 0.9 move", module: true });
+  for (const rel of ["system/managed-files.json", "system/update.mjs"]) { const f = prevLookup(C, prev, rel); if (f && sha(readBuf(C.abs(rel)) || "") !== sha(f.buf)) tail.push({ kind: "put", rel, from: f.rel }); }
   plan.push(...tail);
 
   const L = [apply ? "Restoring AIOS 0.8.3:" : "Restore AIOS 0.8.3 — plan (nothing was written):"];
@@ -987,9 +1044,24 @@ function restore(C, apply) {
   if (st) { C.st = st; C.st.lock = { pid: process.pid, at: nowIso() }; saveState(C); }
   const stamp = new Date().toISOString().replace(/[:.]/g, "-");
   const saveDir = `.aios-backup/${stamp}-restore`;
+  let recorded = false;
+  const finishRecord = () => {   // before the move's code goes: the record says "restored", so a later 0.9 update moves again
+    if (recorded || !st) return; recorded = true;
+    st.status = "restored"; st.restored_at = nowIso(); st.lock = null;
+    st.log.push(`${nowIso()} restored 0.8.3: ${plan.length} file(s)`);
+    writeAtomic(C.abs(`system/.aios-migration.restored-${stamp}.json`), Buffer.from(JSON.stringify(st, null, 2) + "\n"));
+    rmSync(C.abs(STATE_REL), { force: true });
+  };
   for (const x of plan) {
     const p = C.abs(x.rel);
-    if (x.kind === "beside") { writeAtomic(C.abs(x.to), readFileSync(C.abs(x.from))); continue; }
+    if (x.module) {
+      finishRecord();
+      if (isFile(p)) { const d = C.abs(`${saveDir}/${x.rel}`); mkdirSync(dirname(d), { recursive: true }); copyFileSync(p, d); }
+      rmSync(p, { force: true });
+      if (x.rel === "system/migrate-0.9.mjs" && process.env.AIOS_MIGRATE_STOP_AFTER === "restore-module") { process.stderr.write("[test] stopped after the move's code was removed\n"); process.exit(75); }
+      continue;
+    }
+    if (x.kind === "beside") { if (!there(C.abs(x.to))) writeFileSync(C.abs(x.to), readFileSync(C.abs(x.from)), { flag: "wx" }); continue; }   // the same text there already: nothing to write
     if (x.kind === "put") {
       if (x.save && isFile(p)) { const d = C.abs(`${saveDir}/${x.rel}`); mkdirSync(dirname(d), { recursive: true }); copyFileSync(p, d); }
       writeAtomic(p, readFileSync(C.abs(x.from)));
@@ -999,12 +1071,7 @@ function restore(C, apply) {
       if (x.prune) pruneEmpty(C, x.rel);
     }
   }
-  if (st) {
-    st.status = "restored"; st.restored_at = nowIso(); st.lock = null;
-    st.log.push(`${nowIso()} restored 0.8.3: ${plan.length} file(s)`);
-    writeAtomic(C.abs(`system/.aios-migration.restored-${stamp}.json`), Buffer.from(JSON.stringify(st, null, 2) + "\n"));
-    rmSync(C.abs(STATE_REL), { force: true });
-  }
+  finishRecord();
   L.push(`Done: AIOS 0.8.3 is back. ${plan.length} file(s) restored or removed. Backups stay in .aios-backup/.`);
   return { needed: false, status: "restored", lines: L, pendingDeletions: [] };
 }
