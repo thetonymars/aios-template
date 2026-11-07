@@ -572,6 +572,7 @@ function S3(C) {
   if (d) doOp(C, "S3-soul", "SOUL.md", d.action, d.buf, d.action === "create" ? `${TEMPLATES_DIR}/soul.md + user/user.md` : "user/user.md + your own lines",
     d.action === "create" ? "SOUL.md is new in 0.9: how to talk to you, and your own rules" : "your SOUL.md stays as it was; the moved text is added at its end");
 }
+const OWN_TOOLS = "## Own tools and places\n\nWhere the person's own tools, drives, servers and accounts are, and which file to open for a task with them. `AGENTS.md` › Task router sends here. One row per tool or place, added when the person names one.\n\n| Task | Open first |\n| --- | --- |\n| _(none yet)_ | |";   // = the section of the template user/user.md
 function S4(C) {
   const orig = C.readOrig("user/user.md");
   if (!orig || !isFile(C.abs("user/user.md"))) return;
@@ -589,6 +590,8 @@ function S4(C) {
   }
   while (out.length && !normLine(out[out.length - 1]) && rm.has(L.length - 1)) out.pop();
   let t = out.join("\n") + (hadNL ? "\n" : "");
+  // 0.9: AGENTS.md routes the person's own tools and places here (D48). An older user.md has no such section.
+  if (!/^## Own tools and places\s*$/m.test(t)) t = appendBlock(t, OWN_TOOLS.split("\n"));
   const um = C.st.additions.filter((a) => a.target === "user/user.md");
   if (um.length) {
     const B = [`## ${HEADING}`, `<!-- from user/CONTEXT.md; old file: ${C.st.backup}/user/CONTEXT.md -->`];
@@ -597,7 +600,7 @@ function S4(C) {
   }
   if (t === meta.text) return;
   doOp(C, "S4-user", "user/user.md", "edit", encode(meta, t), "user/user.md + user/CONTEXT.md",
-    "How to respond to me and the name and language lines moved to SOUL.md; own lines of the old user map added at the end");
+    "How to respond to me and the name and language lines moved to SOUL.md; the section Own tools and places added (0.9 AGENTS.md routes there); own lines of the old user map added at the end");
 }
 function S5(C) {
   if (opState(C, "S4-user:user/user.md") === "open") { C.notes.push("user/CONTEXT.md was not replaced: user/user.md could not be written first."); return; }

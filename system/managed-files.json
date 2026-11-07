@@ -10,7 +10,7 @@
   "managed": [
     {
       "path": "AGENTS.md",
-      "sha256": "89f108e0261e9fdb16b54992084d53505b93f31632fd7058076005d35fcc235a"
+      "sha256": "eaffab36e1878e3835daa50c072a9b9685b9096d778d6d8e2ab4f97618900d69"
     },
     {
       "path": "system/CONTEXT.md",
@@ -22,7 +22,7 @@
     },
     {
       "path": "system/scripts/check-maps.py",
-      "sha256": "13df79702080f4c952ff33c8a5bb467ef345fce2e646ee5070efa54d432f0d0d"
+      "sha256": "64e62f5753885ed676b02497fd6b52d2bc294142cd34afd291c6b0380c2f43f7"
     },
     {
       "path": "system/scripts/CONTEXT.md",
@@ -42,7 +42,7 @@
     },
     {
       "path": "system/migrate-0.9.mjs",
-      "sha256": "9449916417a5c81d90f3753347fe02f4a6596c949bee57776ce403b058518a13"
+      "sha256": "dd52dffbd46c810193479061f9d41fe6bc5a8b302e9e9cd93672190c1e55e663"
     },
     {
       "path": "system/migrate-0.9-base.json",
@@ -94,7 +94,7 @@
     },
     {
       "path": "system/skills/setup/templates/business-map.md",
-      "sha256": "7b60d7d6722082ec52f2f84ab2d234447e6929caa1bd06a3925fdb9217a1474a"
+      "sha256": "4ecb070a78ac14d6d20fa2c63cc2599980c160db4ff9909254dc00901efbd561"
     },
     {
       "path": "system/skills/setup/templates/offers-map.md",
@@ -102,11 +102,11 @@
     },
     {
       "path": "system/skills/setup/templates/products-map.md",
-      "sha256": "77564c18e7fc72ee1c276fa4a24d9d6d92385a3e6a62b490249fa418fbfea9d4"
+      "sha256": "592aa2aaf4b41c638fdcbfbd36d2c976308ae3b5d99a952be2825bdd9edd2681"
     },
     {
       "path": "system/skills/setup/templates/markets-map.md",
-      "sha256": "437a3bd55533fbbe820e5d30eadd37f4c21e305f98ce95c27e0a6bf947b51ee6"
+      "sha256": "766216dbf4732d3d7b09095a00d7fcabf17a36da809d649f818df38a2e5ba471"
     },
     {
       "path": "system/skills/setup/templates/channels-map.md",

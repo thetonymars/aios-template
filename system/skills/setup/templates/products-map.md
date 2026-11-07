@@ -7,7 +7,7 @@ The list of this business's products, their status and its own rules for product
 ## How a product is laid out
 
 - **One folder per thing that can be given on its own** — a module of a programme or a bonus too — straight in `products/`. What cannot be given on its own is a line in its product's file.
-- Inside: `product.md` — everything about the product, every fact with its source, gaps marked `unknown`; `source/` — copies and transcripts of the materials, an interview, a merge table; later `sales-copy.md` — the sales text another skill writes from `product.md`.
+- Inside: `product.md` — everything about the product, every fact with its source, gaps marked `unknown`; the folder `source` — copies and transcripts of the materials, an interview, a merge table; later `sales-copy.md` — the sales text another skill writes from `product.md`.
 - Heavy files (videos, audio) stay outside this folder; `product.md` names where they are.
 - A skill that unpacks a product (takes it out of its box: what the buyer does not see until they buy) makes and updates `product.md`. Packaging it for the buyer (a sales text, an offer) is other skills' work.
 

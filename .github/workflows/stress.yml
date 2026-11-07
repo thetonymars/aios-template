@@ -45,6 +45,13 @@ jobs:
           mkdir -p .aios-backup/x && printf 'see `no/such/file.md`\n' > .aios-backup/x/CONTEXT.md
           python -I system/scripts/check-maps.py . | tee ../check-maps.out
           grep -q "nothing broken" ../check-maps.out
+      - name: build-skills-catalog.py — its tests, and a build in a path with spaces and Cyrillic
+        run: |
+          python -I system/scripts/tests/test_build_skills_catalog.py
+          D="$AIOS_WORK/Мій AIOS тест"
+          cd "$D"
+          python -I system/scripts/build-skills-catalog.py . --check || python -I system/scripts/build-skills-catalog.py .
+          grep -q "setup" system/skills/skills.md
       - name: update.mjs and the move need no Python
         run: |
           D="$AIOS_WORK/no-python"

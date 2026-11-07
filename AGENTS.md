@@ -18,7 +18,7 @@ The next line imports `SOUL.md` in apps that support it. Other apps: ignore it a
 
 ### Silent checks
 
-Each check runs only when its script exists in this folder: the update check needs `system/update.mjs`, the connection check needs `system/connect.mjs`. No such file → skip that check silently.
+The update check runs only when `system/update.mjs` exists; the connection check runs only when `system/connect.mjs` exists. A check whose script is missing is skipped silently.
 
 In your first turn, run the two checks below together with the work on the first message. They never change what you answer. Write the answer first. If a check needs the person, add its sentence at the end of that same answer: at most two sentences, the update sentence first, then the connection sentence. If no check needs the person, add nothing. Never send a separate message about the checks.
 

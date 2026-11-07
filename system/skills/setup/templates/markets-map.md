@@ -24,7 +24,7 @@ The list of this business's markets (which folder, which market, for which produ
 | · the reports one passport was merged from | `avatars/<segment>--<market>/reports/report-<tool>-<mode>.<ext>` — as in the dossier's reports; link them by path, never by a bare `[[name]]` |
 | the profile of one competitor | `competitors/<name>--<market>.md` |
 
-A folder inside a market (`avatars/`, `competitors/`) is created with its first file, never empty in advance.
+A folder inside a market — avatars, competitors — is created with its first file, never empty in advance.
 
 ## Rules
 

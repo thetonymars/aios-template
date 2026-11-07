@@ -337,12 +337,26 @@ def section_ok(target, name):
     return False
 
 
+# A pointer under a condition "`<path>` exists" is checked only when that path exists: one core, the
+# same AGENTS.md everywhere, switches its client-only parts on by a file (D48). The condition holds for its
+# line; a section that opens with "Only when `<path>` exists" holds it for the whole section.
+COND = re.compile(r"`([^`]+)`\s+exists")
+GATE = re.compile(r"^Only when `([^`]+)` exists")
+
+
+def cond_off(v, line, base_root):
+    for p in COND.findall(line):
+        if not os.path.exists(os.path.join(base_root, p.rstrip("/"))):
+            return True
+    return False
+
+
 def check_map(v, path, label, base_root):
     text = read(path)
     if text is None:
         return [], 0
     here = os.path.dirname(path)
-    bad, n, fence, unplanned, planned = [], 0, False, False, False
+    bad, n, fence, unplanned, planned, gated = [], 0, False, False, False, False
     for i, line in enumerate(text.splitlines(), 1):
         if line.lstrip().startswith("```"):
             fence = not fence
@@ -351,6 +365,12 @@ def check_map(v, path, label, base_root):
             continue
         if line.startswith("#"):
             unplanned = False
+            gated = False
+        g = GATE.match(line)
+        if g and not os.path.exists(os.path.join(base_root, g.group(1).rstrip("/"))):
+            gated = True
+        if gated or cond_off(v, line, base_root):
+            continue
         if UNPLANNED.search(line):
             unplanned = True
             continue
@@ -408,6 +428,8 @@ def check_root(v):
         p = os.path.join(v.root, e)
         if e.startswith(".") or v.is_leftover(e):
             continue
+        if os.path.isdir(p) and e not in top and os.path.isfile(os.path.join(p, "CONTEXT.md")):
+            continue   # the tree says: a folder it does not name is the person's own; its own map says what it is
         if os.path.isdir(p) and e not in top:
             bad.append((0, e + "/", "folder in the root that the tree in AGENTS.md does not name"))
         elif os.path.isfile(p) and e not in allowed:

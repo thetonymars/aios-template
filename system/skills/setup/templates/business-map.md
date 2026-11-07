@@ -41,6 +41,6 @@ The map of one business folder: where a new fact about this business goes. It is
 ## Folders
 
 - A folder is created together with its first file, never empty in advance. `offers/` comes with its map from the start.
-- These folders have a system map of their own: `offers/`, `products/`, `markets/`, `channels/`, `data/`, `brand/`. Such a map routes by kind and never lists the folder's content: the list and this business's own rules for the folder live in a file of the folder itself (`products.md`, `markets.md`, `data.md` …). The map comes together with the folder's first file: copy `system/skills/setup/templates/<folder>-map.md` to `<folder>/CONTEXT.md` when that file exists.
+- These folders have a system map of their own: offers, products, markets, channels, data, brand. Such a map routes by kind and never lists the folder's content: the list and this business's own rules for the folder live in a file of the folder itself (`products.md`, `markets.md`, `data.md` …). The map comes together with the folder's first file: copy `system/skills/setup/templates/<folder>-map.md` to `<folder>/CONTEXT.md` when that file exists.
 - A folder that neither this table nor `core/business.md` › Own to this business names: ask the person what it holds. Then record it in Own to this business. Never move it on your own.
 - How a record is written (date and source on a number, `unknown`, one home per fact) → `system/architecture.md` › Records.
