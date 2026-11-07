@@ -17,6 +17,8 @@ jobs:
     env:
       AIOS_WORK: ${{ github.workspace }}/../work
     steps:
+      # Line ends as in the release tarball (LF). Git on Windows turns them into CRLF by default.
+      - run: git config --global core.autocrlf false
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0          # the tag v0.8.3 builds the 0.8.3 customer copies
