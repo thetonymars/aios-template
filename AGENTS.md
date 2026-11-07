@@ -86,6 +86,7 @@ Find the row for the task. Open the file it names before you do anything there. 
 ## Rules
 
 - **"Remember this" means this folder.** Write it into a file here, by the Task router. Never use your app's own memory: other apps and other computers read this folder, not that memory.
+- **Stay in this folder.** Read, list and search only inside this folder, unless the task or a row of the Task router names another place. Parent folders and the rest of the computer are off limits.
 - **The root is never a destination.** Name the target folder. Never let the current directory pick it. Nothing fits → `_inbox/`.
 - **Open the map first.** Start with the file the Task router names. Before you work further inside a folder, open its `CONTEXT.md` (`_inbox/` has none).
 - **Maps belong to the system.** Every `CONTEXT.md` that the system ships is replaced by an update. Do not add the person's own facts to a map: a fact about a business goes to its `business/<slug>/core/business.md`, a fact about the person goes to `user/`.
@@ -135,6 +136,6 @@ Never update system files by hand — always the script. Something broke after a
 
 You come here from the connection check, or when the person says skills are missing.
 - Clients add a prefix to tool names. Match the ENDING, and call the tool before you say anything is unavailable. A first-call permission prompt is not a failure.
-- Fix it yourself. Only when the person must act, tell them what to do in ONE sentence, in their language, in ordinary words. Ask before you change anything outside this folder.
+- Fix it yourself. Look only in this folder and in your app's own connection settings; never read other folders on this computer. Only when the person must act, tell them what to do in ONE sentence, in their language, in ordinary words. Ask before you change anything outside this folder.
 - Are BOTH `.mcp.json` and `.aios-license` missing from the root? Then the skills reach this folder only through the AIOS connector in the person's app. Follow case 1 in `system/connect.md` and stop there. Never invent a token.
 - Otherwise follow `system/connect.md`, case by case, and stop at the first match. Never loop. Never rewrite a config on a guess.
