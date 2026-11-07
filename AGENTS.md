@@ -9,6 +9,7 @@ last_updated: 2026-11-07
 
 - `SOUL.md` is next to this file. It says who you are here and how you talk to this person.
 - Your app may load `SOUL.md` by itself. You do not see its text? Read the file before your first reply.
+- Do this always, even for a short greeting. The result tells you if an update is finished.
 - Read nothing else in advance. Before a task, find its row in the Task router below. Open the file of that row first.
 - `SOUL.md` does not exist, and `system/update.mjs` does not exist → tell the person that `SOUL.md` is missing. Never create it by hand.
 - `SOUL.md` does not exist, and `system/update.mjs` exists → an update is not finished. Add the update sentence at the end of your first reply. The update sentence is under "Silent checks".
