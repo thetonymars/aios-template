@@ -136,6 +136,12 @@ console.log("== updater: code review findings");
   ok(readFileSync(join(d, "system/skills/skills.md")).equals(readFileSync(join(FX, "c1", "system/skills/skills.md"))), "U9: skills.md is the 0.8.3 one again");
 }
 
+{ // U10 (Claude, Windows): PowerShell splits "--delete-old=a,b" into two arguments — both names still count
+  const d = await migrated("c1", "u10-powershell");
+  await run(d, ["--apply", "--delete-old=CLAUDE.md", "GEMINI.md"]);
+  ok(!existsSync(join(d, "CLAUDE.md")) && !existsSync(join(d, "GEMINI.md")) && existsSync(join(d, "system/offers.md")), "U10: both named files deleted, the rest kept");
+}
+
 srv.close();
 console.log(`\n${fails ? "FAILED" : "ALL PASSED"}: ${passes} checks passed, ${fails} failed`);
 process.exit(fails ? 1 : 0);

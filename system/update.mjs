@@ -33,7 +33,13 @@ const APPLY = process.argv.includes("--apply");
 const CHECK = process.argv.includes("--check"); // version compare only; for the session-start nudge
 const FORCE_DOWNGRADE = process.argv.includes("--force-downgrade");
 const RESTORE = process.argv.includes("--restore");
-const DELETE_OLD = (process.argv.find((a) => a.startsWith("--delete-old=")) || "").slice("--delete-old=".length) || null;
+// PowerShell splits "--delete-old=a,b" at the comma into separate arguments: the bare words that follow are names too.
+const DELETE_OLD = (() => {
+  const i = process.argv.findIndex((a) => a.startsWith("--delete-old="));
+  if (i < 0) return null;
+  const parts = [process.argv[i].slice("--delete-old=".length), ...process.argv.slice(i + 1).filter((a) => !a.startsWith("--"))];
+  return parts.map((s) => s.replace(/,+$/, "")).filter(Boolean).join(",") || null;
+})();
 
 // Hardcoded tripwire — directories that hold ONLY user data. No kernel file
 // lives here, so a managed entry under these = a bug or a tampered manifest →

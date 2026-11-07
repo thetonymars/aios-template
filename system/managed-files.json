@@ -38,7 +38,7 @@
     },
     {
       "path": "system/update.mjs",
-      "sha256": "75d6456bbbc56674c92db83f4851a7493e22c68197579a6b6df1c20399cf8f3f"
+      "sha256": "57428598d88657b9d7aff76e8ab54010cb30189df6f1da10041bdf98c0b08835"
     },
     {
       "path": "system/migrate-0.9.mjs",
