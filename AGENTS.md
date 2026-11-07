@@ -92,7 +92,7 @@ aios/                  ← the root is never a destination: it holds AGENTS.md, 
 | --- | --- |
 | Any project work — new, status, move, archive | `projects/CONTEXT.md` |
 | Find a past project and its files | `projects/_index.md` — search by the `PNNNN` code |
-| A fact of a business — look it up or save it. Its brand, avatars, competitors, market, products, numbers, sales, customers, team. Its own tools, processes and rules | `business/<slug>/CONTEXT.md` — which business → "Businesses" below |
+| A fact of a business — look it up or save it. Its brand, avatars, competitors, market, products, numbers, sales, customers, team. Its own tools and rules. How a recurring job is done: record, cut, publish | `business/<slug>/CONTEXT.md` — which business → "Businesses" below |
 | The live offer; where to send a person; record or change an offer | `business/<slug>/offers/CONTEXT.md` |
 | What you know about the person: who they are, what they do | `user/user.md` |
 | A personal fact — look it up or save it. Health, money, family, home, travel, learning | `user/CONTEXT.md` |
@@ -102,7 +102,7 @@ aios/                  ← the root is never a destination: it holds AGENTS.md, 
 | A person — add or look up a contact, a client, a partner | `people/CONTEXT.md` |
 | A dated note — today, this week, a month, a year | `calendar/CONTEXT.md` |
 | Past notes, thinking, the archive | `knowledge/CONTEXT.md` |
-| A file or a folder outside AIOS. A drive, a cloud folder, an app, a program on this computer. A bot or a server outside. Recordings of calls | `system/external.md` |
+| A file or a folder outside AIOS. A drive, a cloud folder, an app, a program, a plugin. A bot or a server outside. Recordings of calls | `system/external.md` — answer from it, not from memory |
 | Create a new skill | `system/skills/CONTEXT.md` |
 | Run a skill; "what skills do I have?" | `system/skills/skills.md` |
 | Set up AIOS; add a business; change the answers about the person. Only when `system/skills/setup/` exists | the `setup` skill — `system/skills/setup/SKILL.md` |
