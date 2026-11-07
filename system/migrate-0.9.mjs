@@ -31,6 +31,9 @@ export const DELETE_CANDIDATES = ["CLAUDE.md", "GEMINI.md", "system/offers.md",
   ...PERSONAS.map((p) => `system/agents/${p}/AGENT.md`), "CONTEXT.md"];
 export const NOT_FINISHED = "AIOS update is NOT finished. Tell the person in this reply, in their language: \"The AIOS update is not finished yet — say “update aios”.\" If you are running “update aios” right now: run `node system/update.mjs --apply` again. Never delete or move a file by hand: the update asks about old files itself.";
 const HEADING = "Moved here by the 0.9 update — check";
+// Folders of a business that have a system map of their own (D48). The map is created when the folder
+// exists without one; a map that exists is replaced, and its own lines go to <folder>/<folder>.md first.
+const SUBMAPS = ["products", "markets", "channels", "data", "brand"];
 const STEPS = ["S1-backup", "S2-collect", "S3-soul", "S4-user", "S5-user-map", "S6-business", "S7-gitignore", "S8-deletions"];
 const TMP = ".aios-migrate.tmp";
 const LOCK_MS = 10 * 60 * 1000;
@@ -121,6 +124,11 @@ function readTemplates(C) {
   if (!/^## The person you work with\s*$/m.test(normWhole(t.soul.toString("utf8")))) return { error: `${TEMPLATES_DIR}/soul.md` };
   for (const [k, n] of [["userMap", "user-map.md"], ["bizMap", "business-map.md"], ["offersMap", "offers-map.md"]])
     if (/\[[A-Z][A-Z_]+\]/.test(t[k].toString("utf8"))) return { error: `${TEMPLATES_DIR}/${n}` };
+  t.sub = {};
+  for (const f of SUBMAPS) {   // optional: a missing one only skips that folder's map
+    const b = readBuf(C.abs(`${TEMPLATES_DIR}/${f}-map.md`));
+    if (b && b.toString("utf8").trim() && !/\[[A-Z][A-Z_]+\]/.test(b.toString("utf8"))) t.sub[f] = b;
+  }
   return { tpl: t };
 }
 
@@ -183,7 +191,14 @@ function scanBusinesses(C) {
     const ms = lst(C.abs(`business/${slug}/CONTEXT.md`));
     const map = !ms ? "create" : ms.isFile() ? "replace" : "skip";
     if (map === "skip") C.notes.push(`business/${slug}/CONTEXT.md is a link: the map was not replaced.`);
-    out.push({ slug, name, offers, map });
+    const subs = {};
+    for (const f of SUBMAPS) {
+      const ds = lst(C.abs(`business/${slug}/${f}`));
+      if (!ds || !ds.isDirectory()) continue;                 // no folder (or a link) → no map; it comes with the first file
+      const ms2 = lst(C.abs(`business/${slug}/${f}/CONTEXT.md`));
+      subs[f] = !ms2 ? "create" : ms2.isFile() ? "replace" : "skip";
+    }
+    out.push({ slug, name, offers, map, subs });
   }
   return out;
 }
@@ -446,9 +461,12 @@ function allowed(rel, action) {
     (rel === "user/CONTEXT.md" && ["replace", "create"].includes(action)) ||
     (rel === "user/user.md" && action === "edit") ||
     (rel === ".gitignore" && ["create", "edit"].includes(action)) ||
+    (rel === "system/skills/skill-settings.md" && action === "create") ||
     (biz(/^business\/([^/]+)\/CONTEXT\.md$/) && ["replace", "create"].includes(action)) ||
     (biz(/^business\/([^/]+)\/offers\/CONTEXT\.md$/) && ["replace", "create"].includes(action)) ||
     (biz(/^business\/([^/]+)\/core\/business\.md$/) && ["append", "edit"].includes(action)) ||
+    (biz(new RegExp(`^business/([^/]+)/(?:${SUBMAPS.join("|")})/CONTEXT\\.md$`)) && ["replace", "create"].includes(action)) ||
+    (SUBMAPS.some((f) => biz(new RegExp(`^business/([^/]+)/${f}/${f}\\.md$`))) && ["append", "create"].includes(action)) ||
     (DELETE_CANDIDATES.includes(rel) && action === "delete");
 }
 
@@ -485,7 +503,10 @@ const opState = (C, key) => { const o = C.st.ops.find((x) => x.key === key); ret
 // ---------- steps ----------
 function backupList(C) {
   const L = ["user/CONTEXT.md", "user/user.md", "SOUL.md", ".gitignore"];
-  for (const b of C.st.businesses) L.push(`business/${b.slug}/CONTEXT.md`, `business/${b.slug}/core/business.md`, `business/${b.slug}/offers/CONTEXT.md`);
+  for (const b of C.st.businesses) {
+    L.push(`business/${b.slug}/CONTEXT.md`, `business/${b.slug}/core/business.md`, `business/${b.slug}/offers/CONTEXT.md`);
+    for (const f of Object.keys(b.subs || {})) L.push(`business/${b.slug}/${f}/CONTEXT.md`, `business/${b.slug}/${f}/${f}.md`);
+  }
   L.push(...deleteList(C));
   return L;
 }
@@ -600,9 +621,39 @@ function S6(C) {
     if (b.map !== "skip") doOp(C, "S6-business", `business/${b.slug}/CONTEXT.md`, b.map, C.tpl.bizMap, `${TEMPLATES_DIR}/business-map.md`, "the same business map for every business in 0.9 (D36)");
     if (b.offers !== "skip") doOp(C, "S6-business", `business/${b.slug}/offers/CONTEXT.md`, b.offers === "replace" ? "replace" : "create", C.tpl.offersMap,
       `${TEMPLATES_DIR}/offers-map.md`, "the offers map of every business in 0.9 (contract 3.6)", b.offers === "create-dir" && !there(C.abs(`business/${b.slug}/offers`)) ? { created_dirs: [`business/${b.slug}/offers`] } : {});
+    for (const [f, how] of Object.entries(b.subs || {})) {
+      const tplBuf = C.tpl.sub?.[f];
+      if (!tplBuf) { C.notes.push(`business/${b.slug}/${f}/: its map was not written (no template ${TEMPLATES_DIR}/${f}-map.md).`); continue; }
+      if (how === "skip") { C.notes.push(`business/${b.slug}/${f}/CONTEXT.md is a link: it was left as it is.`); continue; }
+      const mapRel = `business/${b.slug}/${f}/CONTEXT.md`, dataRel = `business/${b.slug}/${f}/${f}.md`;
+      if (how === "replace") {
+        const old = C.readOrig(mapRel);
+        if (old && sha(old) !== sha(tplBuf)) {
+          // the old map's own lines (not in the new map) → a block in the folder's own file, first
+          const tplLines = new Set(tplBuf.toString("utf8").split("\n").map(normLine).filter((l) => l.trim()));
+          const own = decode(old).text.split("\n").filter((l) => !tplLines.has(normLine(l)));
+          while (own.length && !own[0].trim()) own.shift();
+          while (own.length && !own[own.length - 1].trim()) own.pop();
+          if (own.some((l) => l.trim())) {
+            const block = [`## ${HEADING}`, `<!-- from ${mapRel}; old file: ${C.st.backup}/${mapRel} -->`, "", demote(own.join("\n"))].join("\n") + "\n";
+            const curData = C.readOrig(dataRel);
+            const meta = curData ? decode(curData) : null;
+            const desired = meta ? encode(meta, appendBlock(meta.text, block)) : Buffer.from(`# ${f[0].toUpperCase() + f.slice(1)}\n\n` + block);
+            doOp(C, "S6-business", dataRel, meta ? "append" : "create", desired, mapRel, `what only this business had in its ${f}/ map: the system map routes by kind and lists no content (D48)`);
+            if (opState(C, `S6-business:${dataRel}`) === "open") { C.notes.push(`${mapRel} was not replaced, because ${dataRel} could not be written first.`); continue; }
+          }
+        }
+      }
+      doOp(C, "S6-business", mapRel, how, tplBuf, `${TEMPLATES_DIR}/${f}-map.md`, `the system map of ${f}/ in 0.9, the same in every business (D48)`);
+    }
   }
 }
+// The settings file of skills (0.9: the person's data next to the skills catalog). Same text as the template's
+// system/skills/skill-settings.md — a test keeps the two equal. Created only when missing.
+const SKILL_SETTINGS = "# Skill settings\n\nOne file for all skills: one section `## <skill>` per skill. Your own data and preferences that a skill reads while it works live here. The skills themselves hold none of it, so a skill can be given to another person without anything personal.\n\nEdit it as plain text. Never write a secret (a key, a token) here: keys live in `system/.secrets/`; here only the names of those files.\n";
 function S7(C) {
+  if (!there(C.abs("system/skills/skill-settings.md")) && isDir(C.abs("system/skills")))
+    doOp(C, "S7-gitignore", "system/skills/skill-settings.md", "create", Buffer.from(SKILL_SETTINGS), "0.9 template", "the settings file of skills, next to the skills catalog (0.9)");
   const p = C.abs(".gitignore"), s = lst(p);
   if (s && !s.isFile()) return;
   if (!s) return void doOp(C, "S7-gitignore", ".gitignore", "create", Buffer.from(SECRETS_LINE + "\n"), "D34", "keeps API keys (system/.secrets/) out of git");
@@ -727,6 +778,7 @@ function preview(C, businesses) {
   for (const b of businesses) {
     L.push(`  ~ business/${b.slug}/CONTEXT.md — the new business map${C.st.additions.some((a) => a.target === `business/${b.slug}/core/business.md`) ? "; what only this business has goes to its core/business.md" : ""}`);
     if (b.offers !== "skip") L.push(`  ${b.offers === "replace" ? "~" : "+"} business/${b.slug}/offers/CONTEXT.md — the offers map`);
+    for (const [f, how] of Object.entries(b.subs || {})) if (how !== "skip") L.push(`  ${how === "replace" ? "~" : "+"} business/${b.slug}/${f}/CONTEXT.md — the map of ${f}/${how === "replace" ? "; what only this business had there goes to " + f + "/" + f + ".md" : ""}`);
   }
   if (r.additions.length) L.push(`  ${r.additions.length} piece(s) of your own text move: ${[...new Set(r.additions.map((a) => a.target))].join(", ")}`);
   L.push("Every changed file is copied to .aios-backup/ first. Old files are deleted only after you say yes.");
@@ -853,7 +905,8 @@ export async function run({ root = process.cwd(), apply = false, deleteOld = nul
   const businesses = st?.businesses || scanBusinesses(C);
   // iCloud: a file that is not on this computer stops everything
   const need = ["user/user.md", "user/CONTEXT.md", "SOUL.md", ".gitignore", ...deleteList(C),
-    ...businesses.filter((b) => !b.evicted).flatMap((b) => [`business/${b.slug}/CONTEXT.md`, `business/${b.slug}/offers/CONTEXT.md`])];
+    ...businesses.filter((b) => !b.evicted).flatMap((b) => [`business/${b.slug}/CONTEXT.md`, `business/${b.slug}/offers/CONTEXT.md`,
+      ...Object.keys(b.subs || {}).flatMap((f) => [`business/${b.slug}/${f}/CONTEXT.md`, `business/${b.slug}/${f}/${f}.md`])])];
   const ev = [...businesses.filter((b) => b.evicted).map((b) => `business/${b.slug}/core/business.md`), ...need.filter((r) => C.evicted(r))];
   if (ev.length) {
     C.lines.push(`The move to the new layout is waiting: ${ev.length} file(s) are in iCloud and not on this computer (${ev.join(", ")}). Open the AIOS folder so the files download, then say "update aios". Nothing was changed.`);

@@ -316,7 +316,9 @@ function bizApply(p, tpl, backupDir) {
 // one file this script creates under user/.
 // 0.9: the root CONTEXT.md is no longer part of AIOS (routing lives in AGENTS.md, D39) — never create it.
 // An older server (a rollback to 0.8.x) still ships one; without this, a 0.9 folder would hear "unfinished".
-const SEED = ["user/CONTEXT.md", "projects/_index.md", "system/skills/_index.md"];
+// 0.9: the skills catalog (skills.md, built by system/scripts/build-skills-catalog.py) and skill-settings.md are
+// the person's data — created once, never refreshed. The old hand-made _index.md is no longer shipped.
+const SEED = ["user/CONTEXT.md", "projects/_index.md", "system/skills/skills.md", "system/skills/skill-settings.md"];
 const ROUTER = "CONTEXT.md";
 function seedTodo(movesDone) {
   return SEED.filter((p) => {

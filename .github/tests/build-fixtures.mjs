@@ -126,7 +126,9 @@ function dopysy(r, withSoul) {
     cloud: "iCloud Drive › Пекарня", folders: ["offers"], own: [["retsepty", "рецептури й техкарти"]],
     files: { "offers/pidpyska.md": offer("Підписка на хліб", "live", "continuity", "https://example.com/khlib/sub", "600 UAH/міс"),
       "retsepty/zakvaska.md": "# Закваска\n\nВигадана рецептура.\n",
-      ...(withSoul ? { "offers/CONTEXT.md": "# Мої офери\n\nПідписку пропонуй першою.\n" } : {}) },
+      ...(withSoul ? { "offers/CONTEXT.md": "# Мої офери\n\nПідписку пропонуй першою.\n",
+        "products/CONTEXT.md": "# Продукти пекарні\n\n| Папка | Продукт |\n|---|---|\n| `khlib-na-zakvasci/` | хліб на заквасці |\n",
+        "products/khlib-na-zakvasci/product.md": "---\ntype: product\nlast_updated: 2026-10-30\n---\n\n# Хліб на заквасці\n" } : {}) },
   });
   // дописи в AGENTS.md: правило людини; правило бізнесу; змінений рядок шаблону
   edit(r, "AGENTS.md", (t) => {

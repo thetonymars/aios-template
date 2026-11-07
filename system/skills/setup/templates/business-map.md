@@ -22,8 +22,8 @@ The map of one business folder: where a new fact about this business goes. It is
 | the brand: identity, positioning, story, strategy, brand voice; a dated audit of the brand | `brand/<what>.md`; colours, logo, fonts → `brand/visual.md`; an audit → `brand/<what>-<YYMMDD>.md`. How a person writes is not here → `system/voices/` |
 | an audience segment | `avatars/<segment>.md` |
 | a competitor | `competitors/<name>.md` |
-| the market: the picture now; what to keep an eye on; a dated study | `market/market.md`; `market/watchlist.md`; `market/<what>-<YYMMDD>.md` |
-| a product: what the customer gets, the mechanism, unit cost. Not the price and not the terms of sale: they live in the offer | `products/<product>.md` |
+| the market: the picture now; what to keep an eye on; a dated study | `market/market.md`; `market/watchlist.md`; `market/<what>-<YYMMDD>.md`. A business that studies one market per product keeps them in `markets/<market>/` instead — the layout → `markets/CONTEXT.md` |
+| a product: what the customer gets, the mechanism, unit cost. Not the price and not the terms of sale: they live in the offer | `products/<product>/product.md` — the layout → `products/CONTEXT.md` |
 | where to send a person: an offer or a lead magnet | `offers/<short-name>.md` — the rules → `offers/CONTEXT.md` |
 | channels; short links | `channels/channels.md`; `channels/links.md` |
 | rows that a collector skill or an integration gathers (statistics, payments) | `data/` — nothing by hand |
@@ -41,5 +41,6 @@ The map of one business folder: where a new fact about this business goes. It is
 ## Folders
 
 - A folder is created together with its first file, never empty in advance. `offers/` comes with its map from the start.
+- These folders have a system map of their own: `offers/`, `products/`, `markets/`, `channels/`, `data/`, `brand/`. Such a map routes by kind and never lists the folder's content: the list and this business's own rules for the folder live in a file of the folder itself (`products.md`, `markets.md`, `data.md` …). The map comes together with the folder's first file: copy `system/skills/setup/templates/<folder>-map.md` to `<folder>/CONTEXT.md` when that file exists.
 - A folder that neither this table nor `core/business.md` › Own to this business names: ask the person what it holds. Then record it in Own to this business. Never move it on your own.
 - How a record is written (date and source on a number, `unknown`, one home per fact) → `system/architecture.md` › Records.

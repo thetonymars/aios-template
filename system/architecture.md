@@ -48,9 +48,6 @@ The folder's map says where a fact goes. This section says how you write it. The
 - A record of one thing (a segment, a competitor, a product, an offer) has a stable name, without a status or a date.
 - A dated report ends with `-<YYMMDD>`.
 - Use UPPERCASE only for system files: `AGENTS.md`, `SOUL.md`, `CONTEXT.md`, `SKILL.md`, `AGENT.md`, `VOICE.md`, `SETUP.md`, and the project files that the project skill names.
-- Never name a file `claude.md`, `agents.md` or `gemini.md` in any letter case. On a disk that ignores letter case, the AI app loads it as instructions. Name a report from a model `report-<model>.md`.
-- A file that other files link by its short name (`[[name]]`) has a name that is unique in this whole folder.
-- On macOS, a change of letter case only (`Notes.md` → `notes.md`) takes two steps: first a temporary name, then the new name.
 
 ## Moves
 

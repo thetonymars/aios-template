@@ -10,7 +10,7 @@
   "managed": [
     {
       "path": "AGENTS.md",
-      "sha256": "6db4b0b329f0c04777bb7c896702b87f213f0a65070ed9e051a2573c6228e4ae"
+      "sha256": "89f108e0261e9fdb16b54992084d53505b93f31632fd7058076005d35fcc235a"
     },
     {
       "path": "system/CONTEXT.md",
@@ -18,19 +18,31 @@
     },
     {
       "path": "system/architecture.md",
-      "sha256": "50d5c043e8f643c9d1dee8b0bb0ea511af0263415c18036f01ea2fa54e01aaea"
+      "sha256": "6e6a70849bd7d2ae8c4f169713e81123af2d559b2308394b3482983b6e03ef2a"
     },
     {
       "path": "system/scripts/check-maps.py",
       "sha256": "13df79702080f4c952ff33c8a5bb467ef345fce2e646ee5070efa54d432f0d0d"
     },
     {
+      "path": "system/scripts/CONTEXT.md",
+      "sha256": "5c914324827365839d5e62f3501f21e386aab75c9aa249d563b18fbf2d3256a6"
+    },
+    {
+      "path": "system/scripts/build-skills-catalog.py",
+      "sha256": "7c1447e985b58c545b537ab5cb9901ea0e0442312165ee78bea4fe71ceea89de"
+    },
+    {
+      "path": "system/scripts/tests/test_build_skills_catalog.py",
+      "sha256": "bb249932444dee2b8d104a71b0041ef6b2bc21bb257640e710957fdc761cc850"
+    },
+    {
       "path": "system/update.mjs",
-      "sha256": "133343cbaba4920e4b2339a5470d385c7cf157f1d88b28205d99389a1b2d63e4"
+      "sha256": "14884e4e6b7d2b05b4bbf745b8fc5afe902a6a08be0dc6f4b9e94d14bffaeb10"
     },
     {
       "path": "system/migrate-0.9.mjs",
-      "sha256": "8aa488d1a40e3092def7b45bddcd452710d083257b8d91bdd6f7d857a31acfe5"
+      "sha256": "9449916417a5c81d90f3753347fe02f4a6596c949bee57776ce403b058518a13"
     },
     {
       "path": "system/migrate-0.9-base.json",
@@ -50,11 +62,7 @@
     },
     {
       "path": "system/skills/CONTEXT.md",
-      "sha256": "4d9bd9afe6a892254949c40c46148877bf79f33a1236e7b73dfecd56bc6b9801"
-    },
-    {
-      "path": "system/skills/skills.md",
-      "sha256": "a2b9b8e3341e194b854825add3659827ad947d69dd65e43417d8ed55b0d56b80"
+      "sha256": "91cc2f443ebfabed254d158bb6902f569700f88a50e1a8b2cf371def204bfcff"
     },
     {
       "path": "system/skills/setup/SKILL.md",
@@ -62,7 +70,7 @@
     },
     {
       "path": "system/skills/setup/CONTEXT.md",
-      "sha256": "2c2d3703936513ba5027504bc098e5651bd50f4dbf641522d5002fd574cd4c52"
+      "sha256": "b6eb40f3bb9c431d1c1349367eb7f1727ddfef754dbfc99a6ce20a44dc41f0f2"
     },
     {
       "path": "system/skills/setup/01_identity/CONTEXT.md",
@@ -86,11 +94,31 @@
     },
     {
       "path": "system/skills/setup/templates/business-map.md",
-      "sha256": "fd8a16890054e8a8aaab681062024f4b4dd10c554a2b2be288242ad9f7a116a5"
+      "sha256": "7b60d7d6722082ec52f2f84ab2d234447e6929caa1bd06a3925fdb9217a1474a"
     },
     {
       "path": "system/skills/setup/templates/offers-map.md",
       "sha256": "e8e79e32afac07727d2874017553f617b22b9624941fa13e88a542295b5ddb40"
+    },
+    {
+      "path": "system/skills/setup/templates/products-map.md",
+      "sha256": "77564c18e7fc72ee1c276fa4a24d9d6d92385a3e6a62b490249fa418fbfea9d4"
+    },
+    {
+      "path": "system/skills/setup/templates/markets-map.md",
+      "sha256": "437a3bd55533fbbe820e5d30eadd37f4c21e305f98ce95c27e0a6bf947b51ee6"
+    },
+    {
+      "path": "system/skills/setup/templates/channels-map.md",
+      "sha256": "4ae13382553313f5e81c1ef86278949b9faecd6f5f912f5129aba21337f1e263"
+    },
+    {
+      "path": "system/skills/setup/templates/data-map.md",
+      "sha256": "6fcc1ae0fce71390e0502a422e7999ef596915db58a4d7cfff820830d3ee1b65"
+    },
+    {
+      "path": "system/skills/setup/templates/brand-map.md",
+      "sha256": "34b2ac8725dac7c06df476aa5a99161024400f5b409f53b1ea53a1200c46101c"
     },
     {
       "path": "system/agents/curator/AGENT.md",

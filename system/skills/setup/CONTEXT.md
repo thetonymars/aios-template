@@ -38,4 +38,4 @@
 - **Setup is not state-tracked.** If interrupted, re-running re-detects mode. The business folder is created only at the write step — an interrupted run leaves no half-folder. A stray `business/<slug>/` with a bracket-full or missing `core/business.md` (and no `business.md` in its root) = an incomplete prior run; offer to complete it in place.
 - **Edit semantics:** replace `[UPPERCASE_TOKEN]` placeholders in place; keep structure and headings; only the values change. `SOUL.md` › `## Who you are` is never changed by setup.
 - The text of every file setup creates is in `system/skills/setup/templates/` or in the stage file that names it. Copy it exactly; never write a file from memory.
-- After a successful first-run or add-business, ensure `system/skills/skills.md` lists `setup` (it ships listed; if missing, add it).
+- After a successful first-run or add-business, ensure `system/skills/skills.md` lists `setup` (it ships listed; if missing, run `system/scripts/build-skills-catalog.py`, never edit the catalog by hand).
