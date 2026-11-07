@@ -130,6 +130,12 @@ console.log("== updater: code review findings");
   ok(r.code === 1 && /NOT finished/.test(r.out) && /NOT finished/.test(c.out), "U8: stopped move: exit 1, --check not finished");
 }
 
+{ // U9: --restore after the real two runs puts back the 0.8.3 skills catalog (a system file in 0.8.3)
+  const d = await migrated("c1", "u9-restore-skills");
+  const r = await run(d, ["--restore", "--apply"]);
+  ok(readFileSync(join(d, "system/skills/skills.md")).equals(readFileSync(join(FX, "c1", "system/skills/skills.md"))), "U9: skills.md is the 0.8.3 one again");
+}
+
 srv.close();
 console.log(`\n${fails ? "FAILED" : "ALL PASSED"}: ${passes} checks passed, ${fails} failed`);
 process.exit(fails ? 1 : 0);

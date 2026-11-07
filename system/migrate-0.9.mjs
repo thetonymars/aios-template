@@ -901,7 +901,8 @@ function preview(C, businesses) {
 // The person's own files: a manifest never makes them "kernel", and --restore never touches them as kernel.
 const PERSON_FILES = ["SOUL.md", "system/external.md", "system/skills/skills.md", "system/skills/skill-settings.md", "projects/_index.md", ".gitignore", STATE_REL];
 const KERNEL_DENY = ["user/", "business/", "areas/", "_inbox/"];
-const kernelPathOk = (C, rel) => !badPath(C, rel) && !KERNEL_DENY.some((d) => rel.toLowerCase().startsWith(d)) && !PERSON_FILES.includes(rel);
+// skills.md was a system file in 0.8.3 (run 1 replaced it, its copy is in the run-1 backup): restore may put it back.
+const kernelPathOk = (C, rel) => !badPath(C, rel) && !KERNEL_DENY.some((d) => rel.toLowerCase().startsWith(d)) && (!PERSON_FILES.includes(rel) || rel === "system/skills/skills.md");
 const backupPathOk = (C, rel) => typeof rel === "string" && /^\.aios-backup\/[^/]+\/./.test(rel) && !badPath(C, rel);
 const migrateBackupExists = (C) => isDir(C.abs(".aios-backup")) && readdirSync(C.abs(".aios-backup")).some((n) => /-migrate-0\.9$/.test(n));
 // The 0.8.3 text of a file the customer changed after the update goes next to it: SOUL.md → SOUL.0.8.3.md
