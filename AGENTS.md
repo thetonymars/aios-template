@@ -49,7 +49,7 @@ The next line imports `SOUL.md` in apps that support it. Other apps ignore it an
 - It fails twice → go to "Connecting the skills server" below.
 - The app uses MCP servers, but no tool ends in `list_skills` → go to "Connecting the skills server" below.
 - A fix takes long → answer first, then fix after the answer, in the same turn.
-- Fix the fault silently, as `system/connect.md` allows. Speak only when the person must act: a permission, an app restart, a change outside this folder, a licence.
+- Fix the fault silently, as "Connecting the skills server" allows. Speak only when the person must act: a permission, an app restart, a change outside this folder, a licence.
 - Then say one sentence in their language. Start it with what they do.
 - `claude mcp get aios` prints `✘ Rejected` → the person declined this server. Say nothing, and do not ask again.
 - No shell, no network, or the app cannot use MCP servers → skip the check silently.
