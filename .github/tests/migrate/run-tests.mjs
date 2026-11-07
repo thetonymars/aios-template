@@ -580,6 +580,41 @@ console.log("\n== second review");
   ok(/rebuilt after it was lost/.test(r.out) && diffMaps(before, walk(dir)).length === 0, "RR4: refused, nothing changed");
 }
 
+// ===== the second review, round 2 (handoff/rereview2-codex.md) =====
+console.log("\n== second review, round 2");
+{ // RR8: --restore after late additions → 0.8.3 again (SOUL.md gone, user.md back), no false "you changed it"
+  const { dir } = setup("c1", "rr8-late-restore");
+  cli(dir, ["--apply"], { AIOS_MIGRATE_STOP_AFTER: "S4" });
+  writeFileSync(join(dir, "CLAUDE.md"), rd(dir, "CLAUDE.md") + "Пізнє правило.\n");
+  writeFileSync(join(dir, "user/CONTEXT.md"), rd(dir, "user/CONTEXT.md").replace("| `sport/` |", "| `garden/` | город | `garden/plan.md` |\n| `sport/` |"));
+  cli(dir, ["--apply"]);
+  const r = cli(dir, ["--restore", "--apply"]);
+  ok(!existsSync(join(dir, "SOUL.md")) && rd(dir, "user/user.md").includes("How to respond to me") && !existsSync(join(dir, "user/user.0.8.3.md")) && !/you changed it/.test(r.out), "RR8: full 0.8.3 after late additions");
+}
+{ // RR10: a run cut off right after a late addition does not add it twice
+  const { dir } = setup("c1", "rr10-late-cut");
+  cli(dir, ["--apply"], { AIOS_MIGRATE_STOP_AFTER: "S4" });
+  writeFileSync(join(dir, "CLAUDE.md"), rd(dir, "CLAUDE.md") + "PARTIAL_MARKER\n");
+  ok(cli(dir, ["--apply"], { AIOS_MIGRATE_STOP_AFTER: "late" }).code === 75, "RR10 setup: stopped after the late addition");
+  cli(dir, ["--apply"]);
+  ok(state(dir).status === "done" && rd(dir, "SOUL.md").split("PARTIAL_MARKER").length === 2, "RR10: the late line once");
+}
+{ // RR11: a new How to respond line after SOUL.md was written goes there once
+  const { dir } = setup("a", "rr11-respond-once");
+  cli(dir, ["--apply"], { AIOS_MIGRATE_STOP_AFTER: "S3" });
+  writeFileSync(join(dir, "user/user.md"), rd(dir, "user/user.md").replace("## How to respond to me\n", "## How to respond to me\n\nLATE_RESPOND_ONCE\n"));
+  cli(dir, ["--apply"]);
+  ok(rd(dir, "SOUL.md").split("LATE_RESPOND_ONCE").length === 2, "RR11: once");
+}
+{ // RR12: a group that grew by one rule delivers only that rule
+  const { dir } = setup("c1", "rr12-group");
+  cli(dir, ["--apply"], { AIOS_MIGRATE_STOP_AFTER: "S3" });
+  writeFileSync(join(dir, "CLAUDE.md"), rd(dir, "CLAUDE.md") + "Ще одне правило в кінці.\n");
+  cli(dir, ["--apply"]);
+  const s = rd(dir, "SOUL.md");
+  ok(s.split("Не використовуй емодзі.").length === 2 && s.includes("Ще одне правило в кінці."), "RR12: the old rule once, the new one added");
+}
+
 // fixtures untouched
 for (const fx of FIXTURES) { const S = sums(fx), now = walk(join(FX, fx)); for (const [p, h] of S) ok(now.get(p) === h, `fixture ${fx} changed: ${p}`); }
 

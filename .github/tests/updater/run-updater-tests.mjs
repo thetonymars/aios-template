@@ -157,6 +157,14 @@ console.log("== updater: code review findings");
   ok(r2.code === 0 && /0\.8\.3 is back/.test(r2.out) && readFileSync(join(d, "system/update.mjs")).equals(readFileSync(join(FX, "a", "system/update.mjs"))), "RR7: the second restore finished: the 0.8.3 updater is back");
 }
 
+{ // RR9: a restore cut off after the version marker went back can run again, without the server
+  const d = await migrated("a", "rr9-restore-cut-marker");
+  const r1 = await run(d, ["--restore", "--apply"], { AIOS_MIGRATE_STOP_AFTER: "restore-marker" });
+  ok(r1.code === 75, "RR9 setup: stopped after the version marker");
+  const r2 = await run(d, ["--restore", "--apply"], { AIOS_MANIFEST_URL: "http://127.0.0.1:1/none" });
+  ok(r2.code === 0 && readFileSync(join(d, "system/update.mjs")).equals(readFileSync(join(FX, "a", "system/update.mjs"))), `RR9: the second restore finished (${r2.out.slice(0, 160)})`);
+}
+
 srv.close();
 console.log(`\n${fails ? "FAILED" : "ALL PASSED"}: ${passes} checks passed, ${fails} failed`);
 process.exit(fails ? 1 : 0);

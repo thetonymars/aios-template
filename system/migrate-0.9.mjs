@@ -625,7 +625,10 @@ const writerKey = (target) => target === "SOUL.md" ? "S3-soul:SOUL.md" : target 
 // that target in a block of their own (a copy of the target first, so --restore can undo it).
 function lateAppend(C, target, entries, why) {
   if (!entries.length || C.halt) return;
-  const k = C.st.ops.filter((o) => /^late-/.test(o.step)).length + 1, step = `late-${k}`;
+  // a stable key: the same late text is delivered once, even when a run is cut off right after it
+  const k = sha(target + "\u0000" + entries.join("\n")).slice(0, 12), step = `late-${k}`;
+  const prior = C.st.ops.find((o) => o.key === `${step}:${target}`);
+  if (prior && prior.done) return;
   const p = C.abs(target), cur = readBuf(p);
   if (!cur) {
     if (target === "user/user.md") doOp(C, step, target, "create", Buffer.from(appendBlock("---\ntype: identity\n---\n\n# About me\n", [`## ${HEADING} (added during the update)`, `<!-- ${why} -->`, ...entries])), "lines added between two runs", why);
@@ -634,11 +637,12 @@ function lateAppend(C, target, entries, why) {
   }
   const copy = `${C.st.backup}/late-${k}/${target}`;
   if (badPath(C, copy)) { halt(C, target, `the backup copy of ${target} ${badPath(C, copy)}`); return; }
-  mkdirSync(dirname(C.abs(copy)), { recursive: true }); copyFileSync(p, C.abs(copy));
+  if (!prior) { mkdirSync(dirname(C.abs(copy)), { recursive: true }); copyFileSync(p, C.abs(copy)); }   // a cut-off run: the copy from before stays
   if (!validUtf8(cur)) { halt(C, target, `${target} is not saved as UTF-8 text, so it was not changed. Open it, save it as UTF-8, then say "update aios" again`); return; }
   const meta = decode(cur);
   const B = [`## ${HEADING} (added during the update)`, `<!-- ${why}; old files: ${C.st.backup}/ -->`, ...entries];
   doOp(C, step, target, target === "SOUL.md" ? "append" : target === "user/user.md" ? "edit" : "append", encode(meta, appendBlock(meta.text, B)), "lines added between two runs", why, { backup: copy });
+  if (process.env.AIOS_MIGRATE_STOP_AFTER === "late") { process.stderr.write("[test] stopped after a late addition\n"); process.exit(75); }
 }
 function S2(C) {
   const r = collect(C, C.st.businesses);
@@ -646,7 +650,12 @@ function S2(C) {
   const before = C.st.additions_delivered;
   if (before) {
     const seen = new Set(before.map((a) => `${a.source}\u0000${a.text}`));
-    const fresh = r.additions.filter((a) => !seen.has(`${a.source}\u0000${a.text}`));
+    // line by line: a group that grew by one rule delivers that rule, not the whole group again
+    const oldLines = new Map();
+    for (const a of before) for (const l of a.text.split("\n")) if (normLine(l)) oldLines.set(`${a.source}\u0000${normLine(l)}`, true);
+    const fresh = r.additions.filter((a) => a.kind !== "respond" && !seen.has(`${a.source}\u0000${a.text}`))
+      .map((a) => ({ ...a, text: a.text.split("\n").filter((l) => !normLine(l) || !oldLines.has(`${a.source}\u0000${normLine(l)}`)).join("\n").replace(/^\n+|\n+$/g, "") }))
+      .filter((a) => normLine(a.text.replace(/\n/g, " ")));
     const byTarget = new Map();
     const stepOf = (target) => target === "SOUL.md" ? "S3-soul" : target === "user/user.md" ? "S4-user" : "S6-business";
     const written = (target) => opState(C, writerKey(target)) === "done" || C.st.steps.find((s) => s.id === stepOf(target))?.status === "done";
@@ -966,7 +975,10 @@ function restore(C, apply) {
   const refuse = (msg) => ({ needed: false, status: "refused", lines: [msg + " Nothing was changed."], pendingDeletions: [] });
   if (st?.recovered) return refuse("Cannot restore 0.8.3: the record of the move was rebuilt after it was lost, and it does not list what the move changed. Tell support.");
   if (!st && migrateBackupExists(C) && !restoredRecord(C)) return refuse("Cannot restore 0.8.3: the move to 0.9 ran, but its record (system/.aios-migration.json) is missing, so your own files cannot be put back safely. Tell support.");
-  const prev = st?.prev_backup ? [...(st.prev_backup_extra || []), st.prev_backup] : findPrev(C);
+  // a restore cut off after its record was written: the record names the backups (findPrev cannot, the marker is 0.8.3 again)
+  const rec = !st && restoredRecord(C) ? (() => { const n = readdirSync(C.abs("system")).filter((x) => /^\.aios-migration\.restored-.*\.json$/.test(x)).sort().pop(); try { return JSON.parse(readFileSync(C.abs(`system/${n}`), "utf8")); } catch { return null; } })() : null;
+  const src = st || rec;
+  const prev = src?.prev_backup ? [...(src.prev_backup_extra || []), src.prev_backup] : findPrev(C);
   if (!prev) return refuse("Cannot restore 0.8.3: no backup of the old system files was found in .aios-backup/.");
   if (!prev.every((d) => /^\.aios-backup\/[^/]+$/.test(d) && !badPath(C, d + "/x"))) return refuse("Cannot restore 0.8.3: the record names a backup outside .aios-backup/.");
   const mf09 = readMf(C.abs("system/managed-files.json")) || { managed: [] };
@@ -979,13 +991,14 @@ function restore(C, apply) {
     if (!allowed(op.path, op.action) || badPath(C, op.path) || (op.backup && !backupPathOk(C, op.backup)))
       return refuse(`Cannot restore 0.8.3: the record of the move names a path that is not allowed (${String(op.path).slice(0, 80)}).`);
   }
+  const sim = new Map();   // path → the text the plan has put there so far (a path can have several ops: a late addition)
   for (const op of [...(st?.ops || [])].reverse()) {
     if (op.action === "backup") continue;
-    const p = C.abs(op.path), cur = readBuf(p), curSha = cur ? sha(cur) : null;
+    const p = C.abs(op.path), cur = sim.has(op.path) ? sim.get(op.path) : readBuf(p), curSha = cur ? sha(cur) : null;
     const did = op.done || (op.sha_after !== null && curSha === op.sha_after) || (op.action === "delete" && !cur);
     if (!did) continue;
     if (op.action === "create") {
-      if (curSha === op.sha_after) plan.push({ kind: "delete", rel: op.path, dirs: op.created_dirs || [], why: "made by the 0.9 move" });
+      if (curSha === op.sha_after) { plan.push({ kind: "delete", rel: op.path, dirs: op.created_dirs || [], why: "made by the 0.9 move" }); sim.set(op.path, null); }
       else if (cur) keep.push(`${op.path} — created by the update, then changed by you: left as it is`);
       continue;
     }
@@ -1002,6 +1015,7 @@ function restore(C, apply) {
       continue;
     }
     plan.push({ kind: "put", rel: op.path, from: op.backup });
+    sim.set(op.path, b);
   }
   // 2. the 0.8.3 kernel
   const p08 = new Set((mf08.managed || []).map((e) => e.path).filter((r) => kernelPathOk(C, r)));
@@ -1065,6 +1079,7 @@ function restore(C, apply) {
     if (x.kind === "put") {
       if (x.save && isFile(p)) { const d = C.abs(`${saveDir}/${x.rel}`); mkdirSync(dirname(d), { recursive: true }); copyFileSync(p, d); }
       writeAtomic(p, readFileSync(C.abs(x.from)));
+      if (x.rel === "system/managed-files.json" && process.env.AIOS_MIGRATE_STOP_AFTER === "restore-marker") { process.stderr.write("[test] stopped after the version marker\n"); process.exit(75); }
     } else {
       rmSync(p, { force: true });
       for (const d of x.dirs || []) { const a = C.abs(d); if (isDir(a) && !readdirSync(a).some((n) => n !== ".DS_Store")) { for (const n of readdirSync(a)) rmSync(join(a, n), { force: true }); rmdirSync(a); } }

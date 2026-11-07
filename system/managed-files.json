@@ -42,7 +42,7 @@
     },
     {
       "path": "system/migrate-0.9.mjs",
-      "sha256": "94763bc0f49c12323fa3d6e3625ce49a12e66832ceeafc2310844ed33f2dff8e"
+      "sha256": "ff4f13ac1e4b9aaab9c2033848e68bf46a35ecac637edfd87a55331b57ff7f1b"
     },
     {
       "path": "system/migrate-0.9-base.json",
