@@ -5,7 +5,7 @@
 import { createServer } from "node:http";
 import { spawn } from "node:child_process";
 import { readFileSync, writeFileSync, mkdirSync, rmSync, cpSync, readdirSync, statSync, existsSync, symlinkSync, renameSync, copyFileSync, lstatSync } from "node:fs";
-import { join, relative, dirname } from "node:path";
+import { join, relative, dirname, sep } from "node:path";
 import { homedir } from "node:os";
 import { createHash } from "node:crypto";
 
@@ -19,7 +19,7 @@ const ok = (c, m) => { if (c) passes++; else { fails++; console.log(`  FAIL: ${m
 const SKIP = new Set(["LICENSE", "README.md", ".gitattributes"]);
 function walk(dir, files = []) {
   for (const n of readdirSync(dir)) {
-    const p = join(dir, n), rel = relative(T, p);
+    const p = join(dir, n), rel = relative(T, p).split(sep).join("/");   // the server sends "/" paths
     if (rel === ".git" || rel === ".github" || n === ".DS_Store") continue;
     if (statSync(p).isDirectory()) walk(p, files); else if (!SKIP.has(rel)) files.push({ path: rel, content: readFileSync(p, "utf8") });
   }

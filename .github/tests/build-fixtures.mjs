@@ -11,7 +11,7 @@
 import { execSync } from "node:child_process";
 import { readFileSync, writeFileSync, mkdirSync, rmSync, readdirSync, statSync, existsSync } from "node:fs";
 import { createHash } from "node:crypto";
-import { join, dirname, relative } from "node:path";
+import { join, dirname, relative, sep } from "node:path";
 import { homedir } from "node:os";
 
 const W = process.env.AIOS_WORK || join(homedir(), "aios-p0140-work");
@@ -169,7 +169,7 @@ for (const [id, fill] of Object.entries(CASES)) {
   // tar runs inside the folder: GNU tar on Windows reads "D:\\…" in -C as a remote host.
   execSync(`git -C "${TPL}" archive ${TAG} | tar -x`, { ...SH, cwd: root });
   fill(root);
-  const sums = walk(root).filter((p) => !p.endsWith("SHA256SUMS")).map((p) => `${createHash("sha256").update(readFileSync(p)).digest("hex")}  ${relative(root, p)}`);
+  const sums = walk(root).filter((p) => !p.endsWith("SHA256SUMS")).map((p) => `${createHash("sha256").update(readFileSync(p)).digest("hex")}  ${relative(root, p).split(sep).join("/")}`);
   writeFileSync(join(OUT, `${id}.SHA256SUMS`), sums.join("\n") + "\n");
   const left = execSync(`grep -rlE '\\[(DATE|DISPLAY_NAME|LANGUAGE|ROLE_SENTENCE|TONE|LENGTH|BUGS_LIST|EXTRA_USER)\\]' "${root}/user" || true`, { encoding: "utf8", ...SH }).trim();
   if (left) throw new Error(`${id}: placeholders left in ${left}`);
