@@ -10,12 +10,15 @@ last_updated: 2026-11-07
 - `SOUL.md` is next to this file. It says who you are here and how you talk to this person.
 - Your app may load `SOUL.md` by itself. You do not see its text? Read the file before your first reply.
 - Read nothing else in advance. Before a task, find its row in the Task router below. Open the file of that row first.
+- `SOUL.md` does not exist, and `system/update.mjs` does not exist → tell the person that `SOUL.md` is missing. Never create it by hand.
 - `SOUL.md` does not exist, and `system/update.mjs` exists → an update is not finished. Add the update sentence at the end of your first reply. The update sentence is under "Silent checks".
-- `SOUL.md` and `system/update.mjs` do not exist → AIOS is not set up yet. Act as for placeholders below.
 - Until the update is finished, take how to talk to the person from `user/user.md`. Never create `SOUL.md` or a map by hand.
-- `SOUL.md` or `user/user.md` has `[UPPERCASE_TOKEN]` placeholders → AIOS is not set up yet. Never invent the person or a business.
+- No filled `SOUL.md` and no filled `user/user.md` → answer plainly, in the language of the message.
+- AIOS is not set up yet when `SOUL.md` or `user/user.md` has `[UPPERCASE_TOKEN]` placeholders.
+- AIOS is not set up → never invent the person or a business.
 - A task needs the missing answers and `system/skills/setup/` exists → offer the `setup` skill. Run it after their yes.
-- A task needs the missing answers and `system/skills/setup/` does not exist → ask the person. Write down the answer.
+- A task needs the missing answers and `system/skills/setup/` does not exist → ask the person.
+- Write each answer into its placeholder line, in the file that has it. A file is missing → keep the answer in this chat only.
 
 The next line imports `SOUL.md` in apps that support it. Other apps ignore it and read the file.
 
@@ -27,8 +30,8 @@ The next line imports `SOUL.md` in apps that support it. Other apps ignore it an
 - The connection check runs only when `system/connect.mjs` exists.
 - A check without its script → skip it silently.
 - Run the checks in your first turn, together with the work on the first message.
-- The checks never change your answer. Write the answer first.
-- A check needs the person → add its sentence at the end of the same answer.
+- The checks never change your answer. Put your answer first in the text.
+- A check needs the person → add its sentence at the end of that answer.
 - Two checks need the person → add the update sentence first, then the connection sentence.
 - No check needs the person → add nothing.
 - Never send a separate message about the checks.
@@ -45,7 +48,8 @@ The next line imports `SOUL.md` in apps that support it. Other apps ignore it an
 - It is slow or fails once → this is not a fault. The first call after a restart often waits for the server. Try once more later in the session.
 - It fails twice → go to "Connecting the skills server" below.
 - The app uses MCP servers, but no tool ends in `list_skills` → go to "Connecting the skills server" below.
-- Fix the fault silently. Speak only when the person must act: a permission, an app restart, a change outside this folder, a licence.
+- A fix takes long → answer first, then fix after the answer, in the same turn.
+- Fix the fault silently, as `system/connect.md` allows. Speak only when the person must act: a permission, an app restart, a change outside this folder, a licence.
 - Then say one sentence in their language. Start it with what they do.
 - `claude mcp get aios` prints `✘ Rejected` → the person declined this server. Say nothing, and do not ask again.
 - No shell, no network, or the app cannot use MCP servers → skip the check silently.
@@ -79,6 +83,7 @@ aios/                  ← the root is never a destination: it holds AGENTS.md, 
 ## Task router
 
 - Find the row for the task. Open the file of the row before you do anything there.
+- Several rows fit → open the place first: a business, the person, a project. Then open `system/architecture.md` for how to write.
 - A greeting needs no row. A general question that needs no file of this folder needs no row.
 - You must save something, and no row fits → write a file in `_inbox/`.
 
@@ -118,11 +123,15 @@ aios/                  ← the root is never a destination: it holds AGENTS.md, 
 - **Maps belong to the system.** An update replaces every `CONTEXT.md` that the system ships. Never add the person's facts to a map.
 - **Where a fact goes.** A fact of a business → the file that `business/<slug>/CONTEXT.md` names. A fact of the person → the file that `user/CONTEXT.md` names.
 - **Several files at once.** You delete, move or rename several files or folders of the person? Show the list first, and wait for their yes.
-- This rule is not for one file that the person named. It is not for files that you made in this task.
+- A folder with its content counts as several files. This rule is not for one file that the person named. It is not for files that you made in this task.
 - **A move ends with the maps.** In the same step, fix every row that points at the old place → `system/architecture.md` › Moves.
 - After a move, run `python3 -I system/scripts/check-maps.py .` from the root. Fix every line that it prints.
-- **Plain words.** Write your own replies to the person by ASD-STE100 (Simplified Technical English). Use one idea in a sentence and at most 20 words. Give one word one meaning. Use the imperative for instructions.
+- **Plain words.** Write your own replies by the rules of ASD-STE100 (Simplified Technical English). Use them in the language of the person.
+- Use one idea in a sentence and at most 20 words. Give one word one meaning. Use the imperative for instructions.
+- **`SOUL.md` and this file.** On how you talk, `SOUL.md` › The person you work with wins. Tone, length and language are examples.
+- On files, keys, deletion and safety, this file wins.
 - **A block "Moved here by the 0.9 update — check"** is in force. It can be in `SOUL.md`, `user/user.md` or `business/<slug>/core/business.md`. Never change it without the person.
+- In `SOUL.md`, such a block counts as part of «The person you work with».
 - **Obsidian notes.** Never use tags: no `tags:` in the frontmatter and no inline `#tag`.
 - Use a wiki link `[[filename]]` in the short form. Use `[[folder/filename]]` only when two notes have the same name.
 - Images: the person pastes them in Obsidian, and Obsidian files them into the folder `attachments` in `system`. Embed an image as `![[image.png]]`. Never use an absolute path.
@@ -131,15 +140,17 @@ aios/                  ← the root is never a destination: it holds AGENTS.md, 
 
 - A business is a subfolder of `business/` with the file `business/<slug>/core/business.md`.
 - That file still has `[UPPERCASE_TOKEN]` placeholders → setup is not finished. Offer the `setup` skill, and run it after their yes.
+- `system/skills/setup/` does not exist → ask the person for the missing answers. Write them into that file.
 - To see the businesses, list `business/`. You may do this at any time.
 - Never guess the business.
-- No business exists → offer the `setup` skill. Run it after their yes.
+- No business exists → offer the `setup` skill. Run it after their yes. Without `setup`, ask the person, and create the folder by `system/architecture.md`.
 - The request names a business → use it.
 - Exactly one business exists → use it. Name it the first time a reply relies on it.
 - Several businesses exist, and the request does not say which → ask: "Which business: <list>?". Save nothing for a business until they answer.
 
 ## Skills
 
+- Open the row of the Task router first. Then look in `system/skills/skills.md` for a skill that does the job.
 - Run a skill when the task is the job of that skill.
 - Where skills live, the catalog of this folder, and how to show the list → `system/skills/CONTEXT.md`.
 - **The skills of this folder** live in `system/skills/<slug>/`. `system/skills/skills.md` lists them.
@@ -173,14 +184,14 @@ When the person asks ("update aios", in any language):
 1. Run `node system/update.mjs`. It is a preview, and it writes nothing. Show its summary in plain words.
 2. On their yes, run `node system/update.mjs --apply`.
 3. Then always run `node system/update.mjs --check`, and act on its line.
-4. It says "not finished" → run `--apply` and `--check` again, up to three more times.
+4. It says "not finished" → run `--apply` and `--check` again, up to three more times. Still not finished → tell the person, and stop.
 5. Never delete or move a file by hand during an update.
 6. The update can list old files that it no longer uses. Show the list in plain words.
 7. Ask: delete all, keep all, or delete only some? Then run the matching command:
    - all → `node system/update.mjs --apply --delete-old=all`;
    - none → `node system/update.mjs --apply --delete-old=none`;
    - some → `node system/update.mjs --apply --delete-old=<file>,<file>`.
-8. No answer → do nothing. The next update asks again.
+8. No answer → do nothing. The next update asks again. After a `--delete-old` command, run `--check` once more.
 9. Tell the person what changed, in plain words.
 
 - Never update system files by hand. Always use the script.
@@ -189,6 +200,8 @@ When the person asks ("update aios", in any language):
 ## Connecting the skills server
 
 Only when `system/connect.mjs` exists. You come here from the connection check, or when the person says that skills are missing.
+
+- First: `claude mcp get aios` prints `✘ Rejected` → the person declined this server. Stop, and say nothing.
 
 - Apps add a prefix to tool names. Match the ending.
 - Call the tool before you say that something is unavailable. A permission prompt at the first call is not a failure.
