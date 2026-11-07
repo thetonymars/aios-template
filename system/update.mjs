@@ -314,7 +314,9 @@ function bizApply(p, tpl, backupDir) {
 // manifest that lists one as managed is refused below, so an update cannot overwrite a
 // customer's router by a release mistake. Paths are fixed here; user/CONTEXT.md is the
 // one file this script creates under user/.
-const SEED = ["CONTEXT.md", "user/CONTEXT.md", "projects/_index.md", "system/skills/_index.md"];
+// 0.9: the root CONTEXT.md is no longer part of AIOS (routing lives in AGENTS.md, D39) — never create it.
+// An older server (a rollback to 0.8.x) still ships one; without this, a 0.9 folder would hear "unfinished".
+const SEED = ["user/CONTEXT.md", "projects/_index.md", "system/skills/_index.md"];
 const ROUTER = "CONTEXT.md";
 function seedTodo(movesDone) {
   return SEED.filter((p) => {
@@ -356,6 +358,7 @@ function routerTable(text) {
   return { header: L.slice(start, start + 2), rows, end: i };
 }
 function routesTodo() {
+  if (cmpVer(localVer, "0.9.0") >= 0) return null;   // 0.9: the old router is retired; never add rows to it
   const abs = join(ROOT, ROUTER), tplText = fileMap.get(ROUTER);
   if (typeof tplText !== "string" || !plainFile(abs)) return null;
   const shared = routerTable(tplText);
@@ -393,8 +396,9 @@ if (CHECK) {
 
 // 3. version / downgrade guard
 if (cmpVer(newVer, localVer) < 0 && !FORCE_DOWNGRADE) {
-  console.error(`Server version (${newVer}) is older than yours (${localVer}). Refusing downgrade.`);
-  process.exit(1);
+  // A rollback of the server (0.9 → 0.8.x) is not the customer's problem: say "up to date", calmly.
+  console.log(`AIOS is up to date (v${localVer}). The server offers an older version (v${newVer}); nothing to do.`);
+  process.exit(0);
 }
 if (cmpVer(newVer, localVer) === 0 && !migrations.length && !unfinished.length) {
   console.log(`AIOS is already up to date (v${localVer}).`);

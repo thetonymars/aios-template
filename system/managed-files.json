@@ -10,7 +10,7 @@
   "managed": [
     {
       "path": "AGENTS.md",
-      "sha256": "018066fc76b8e4edc10cb63931abe7181536b7b32bc547a53d122c80b1a681ad"
+      "sha256": "10b3e2542a267db730da0fa7918fb5f8bc2465a68cf3e8b7c083a8bebedc869d"
     },
     {
       "path": "system/CONTEXT.md",
@@ -26,11 +26,11 @@
     },
     {
       "path": "system/update.mjs",
-      "sha256": "9c84b1d30759d752093eb2f9b8f46abcdddd58e050672167912f359e070143eb"
+      "sha256": "133343cbaba4920e4b2339a5470d385c7cf157f1d88b28205d99389a1b2d63e4"
     },
     {
       "path": "system/migrate-0.9.mjs",
-      "sha256": "a5ca95f37e48aceafa5b564d067aa4916beecc22e8b434518e3e65dc40897d69"
+      "sha256": "8aa488d1a40e3092def7b45bddcd452710d083257b8d91bdd6f7d857a31acfe5"
     },
     {
       "path": "system/migrate-0.9-base.json",

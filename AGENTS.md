@@ -7,8 +7,9 @@ last_updated: 2026-11-07
 
 ## Start
 
-- `SOUL.md`, next to this file, says who you are here and how you talk to this person. Your app may load it by itself. If `SOUL.md` is not in your context yet, read it before your first reply.
+- `SOUL.md`, next to this file, says who you are here and how you talk to this person. Your app may load it by itself. If you do not see its text in your context, read the file before your first reply — always, even for a short greeting.
 - Read nothing else in advance. Before any task, find its row in the Task router below. Open the file the row names before you do anything there.
+- Your app shows no text of `SOUL.md` above, and reading it fails because the file does not exist → an update is not finished. End your first reply with this sentence, in the person's language: "The AIOS update is not finished yet — say “update aios”." Never skip it, even for a short greeting. Until then, take how to talk to them from `user/user.md`. Never create `SOUL.md` or a map by hand.
 - `SOUL.md` or `user/user.md` still has `[UPPERCASE_TOKEN]` placeholders → AIOS is not set up yet. Never invent the person or a business. When a task needs them, run the `setup` skill.
 
 @SOUL.md
@@ -19,7 +20,7 @@ Answer the first message first. Then, in the same turn, do the two checks below.
 
 **Update check.** Run `node system/update.mjs --check`. It prints one line.
 - An update is available → tell the person once, in plain words, to say "update aios".
-- It says the update is **not finished** → tell the person once: "The update is not finished yet — say “update aios”." Until it is finished: never create `SOUL.md` or a map by hand; if `SOUL.md` does not exist yet, take how to talk to the person from `user/user.md`.
+- It says the update is **not finished** → end your reply with one sentence in the person's language: "The AIOS update is not finished yet — say “update aios”." Until it is finished: never create `SOUL.md` or a map by hand; if `SOUL.md` does not exist yet, take how to talk to the person from `user/user.md`.
 - Up to date → say nothing.
 - It could not reach the server, or it printed nothing → that is NOT "up to date". Run it once more with network access if your app lets you. Otherwise say nothing.
 - No shell → skip. Never apply an update on your own.
@@ -66,7 +67,7 @@ Find the row for the task. Open the file it names before you do anything there. 
 | Which offer is live; where to send a person; record or change an offer | `business/<slug>/offers/CONTEXT.md` |
 | What you know about the person — who they are, what they do | `user/user.md` |
 | The person — save or look up a personal fact (health, money, family, home, travel, learning) | `user/CONTEXT.md` |
-| How you talk to the person — language, name, tone, length ("write shorter") | `SOUL.md` › The person you work with — change it only through the `setup` skill: show the new line, save after their yes |
+| The person asks you to answer differently — shorter, longer, another tone, another language, another name ("write shorter", "be less formal") | `SOUL.md` › The person you work with — change it only through the `setup` skill: show the new line, save after their yes |
 | A text for an audience — a post, an article, an email, a sales page, a script; rewrite a text in a voice | `system/voices/CONTEXT.md` — whose voice; a link or a call to action in the text → the offers row above |
 | A person — add or look up a contact, a client, a partner | `people/CONTEXT.md` |
 | A dated note — today, this week, a month, a year | `calendar/CONTEXT.md` |
@@ -87,7 +88,7 @@ Find the row for the task. Open the file it names before you do anything there. 
 - **Open the map first.** Before you work inside a folder, open its `CONTEXT.md` (`_inbox/` has none).
 - **Maps belong to the system.** Every `CONTEXT.md` that the system ships is replaced by an update. Do not add the person's own facts to a map: a fact about a business goes to its `business/<slug>/core/business.md`, a fact about the person goes to `user/`.
 - **Several files at once.** Before you delete, move or rename several of the person's files or folders, show the list and wait for their yes. This rule is not about one file the person named, or about files you made in this task.
-- **A move is not finished until the maps are updated.** Fix every row that points at the old place in the same step → `system/architecture.md` › Moves.
+- **A move is not finished until the maps are updated.** Fix every row that points at the old place in the same step → `system/architecture.md` › Moves. Then run `python3 -I system/scripts/check-maps.py .` from the root and fix every line it prints.
 - **Plain words.** Write to the person in plain words: one idea in a sentence, at most 20 words, one word keeps one meaning.
 - **A block "Moved here by the 0.9 update — check"** in `SOUL.md`, `user/user.md` or `business/<slug>/core/business.md` is in force. Do not change it without the person.
 
