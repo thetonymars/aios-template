@@ -119,6 +119,7 @@ Never block on this. The whole point is to give the user a chance to add what we
 1. `SOUL.md` is missing → copy `system/skills/setup/templates/soul.md` to `SOUL.md` byte for byte first.
 2. Replace each `[UPPERCASE_TOKEN]` in `SOUL.md` and in `user/user.md` with the captured value. `[DATE]` = today (YYYY-MM-DD).
 3. Write only into a token. A line without a token already holds a value: never change it in first-run.
+   One exception: a line whose value is exactly `unknown` (an update wrote it) is asked like a token.
 
 ## Change-person mode (repeat interview)
 

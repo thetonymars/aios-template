@@ -35,6 +35,8 @@ jobs:
         env:
           AIOS_MIGRATE_CLI: ${{ github.workspace }}/.github/tests/migrate/cli.mjs
         run: node .github/tests/migrate/run-tests.mjs
+      - name: the real updater — hostile paths, links, an old business shape, a cut-off run 1
+        run: node .github/tests/updater/run-updater-tests.mjs
       - name: check-maps.py on an install copy, in a path with spaces and Cyrillic
         run: |
           D="$AIOS_WORK/Мій AIOS тест"

@@ -126,8 +126,9 @@ Only here does `business/<slug>/` come into existence. Create `business/<slug>/`
 touched — an abandoned interview leaves no folder.
 
 **On a confirmed overwrite of an existing business** rewrite only `core/business.md`, and keep
-its `## Own to this business`, its `## Sources` rows and any `## Moved here by the 0.9 update — check`
-block exactly as they were. Write `core/numbers.md`, `core/goals.md` and the two maps only if they
+its `## Own to this business`, its `## Sources` rows, its `## Rules for agents` and any `## Moved here by the 0.9 update — check`
+block exactly as they were. Never write the template's `None written yet.` or `[SOURCES]` over them: first copy those
+sections out of the old file, then write the new answers, then put the copied sections back in their places. Write `core/numbers.md`, `core/goals.md` and the two maps only if they
 do not exist — never replace them.
 
 Fill every `[UPPERCASE_TOKEN]`. Section headings stay in English; values are in the user's

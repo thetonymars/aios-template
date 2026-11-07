@@ -42,7 +42,7 @@ function kernel09() {
   files.set("system/update.mjs", Buffer.concat([real("system/update.mjs"), Buffer.from("\n// 0.9 test marker\n")]));
   files.set("system/migrate-0.9.mjs", real("system/migrate-0.9.mjs"));
   files.set("system/migrate-0.9-base.json", real("system/migrate-0.9-base.json"));
-  for (const n of ["soul.md", "user-map.md", "business-map.md", "offers-map.md"]) files.set(`system/skills/setup/templates/${n}`, real(`system/skills/setup/templates/${n}`));
+  for (const n of ["soul.md", "user-map.md", "business-map.md", "offers-map.md", "products-map.md", "markets-map.md", "channels-map.md", "data-map.md", "brand-map.md"]) files.set(`system/skills/setup/templates/${n}`, real(`system/skills/setup/templates/${n}`));
   files.set("system/architecture.md", Buffer.from("# Architecture (test stub)\n"));
   return files;
 }
@@ -253,13 +253,13 @@ delCase("some", "CLAUDE.md,GEMINI.md", (dir, st) => {
   ok(existsSync(join(dir, "CLAUDE.md")) && st.deletions.find((e) => e.path === "CLAUDE.md").answer === "changed-after-ask", "changed: kept, changed-after-ask");
   ok(!existsSync(join(dir, "GEMINI.md")), "changed: the others deleted");
   ok(/changed after the list was shown/.test(r.out), "changed: said so");
-  // next "update aios" shows it again, with the new text, then yes deletes it
+  // R12 (Codex 8): next "update aios" never offers it again — its new lines were not moved
   const again = cli(dir, ["--apply"]);
   st = state(dir);
   const e = st.deletions.find((x) => x.path === "CLAUDE.md");
-  ok(e.answer === "asked" && /CLAUDE\.md/.test(again.out) && e.sha_at_ask === sha(readFileSync(join(dir, "CLAUDE.md"))), "changed: asked again with the new text");
+  ok(e.answer === "kept-changed" && /stays/.test(again.out) && !/\d+\. CLAUDE\.md/.test(again.out), "R12 changed after ask: kept for good, not listed again");
   cli(dir, ["--apply", "--delete-old=all"]);
-  ok(!existsSync(join(dir, "CLAUDE.md")) && readFileSync(join(dir, state(dir).deletions.find((x) => x.path === "CLAUDE.md").backup), "utf8").includes("Ще одне правило."), "changed: deleted after the second yes; backup has the new text");
+  ok(existsSync(join(dir, "CLAUDE.md")) && readFileSync(join(dir, "CLAUDE.md"), "utf8").includes("Ще одне правило."), "R12 changed after ask: a second yes does not delete it");
 }
 {
   const { dir } = setup("c1", "c1-del-deferred");
@@ -340,6 +340,192 @@ console.log("\n== restore edge cases, templates missing, not-needed");
   ok(state(dir).ops.find((o) => o.path === "business/yoga-studio-prana/core/business.md" && o.action !== "backup").action === "edit", "new format: op is edit");
   cli(dir, ["--restore", "--apply"]);
   ok(readFileSync(p, "utf8").includes("None written yet.\n\n## Rules"), "new format: restore puts the text back");
+}
+
+// ===== findings of the code review (output/kod-reviu-zvedennia.md) =====
+console.log("\n== code review findings");
+const rd = (dir, p) => readFileSync(join(dir, p), "utf8");
+const OUT = join(RUNS, "outside");
+rmSync(OUT, { recursive: true, force: true }); mkdirSync(OUT, { recursive: true });
+const { symlinkSync, renameSync } = await import("node:fs");
+
+{ // R1: a write that is refused stops the dependent steps; status stays running; a rerun finishes
+  const { dir } = setup("c1", "r1-soul-link");
+  writeFileSync(join(OUT, "soul-target.md"), "# outside\n");
+  symlinkSync(join(OUT, "soul-target.md"), join(dir, "SOUL.md"));
+  const userBefore = rd(dir, "user/user.md");
+  const r = cli(dir, ["--apply"]);
+  ok(/status=blocked/.test(r.out) && /NOT finished/.test(r.out), "R1 soul link: blocked, said so");
+  ok(rd(dir, "user/user.md") === userBefore, "R1 soul link: user.md untouched (S4 did not run)");
+  ok(state(dir).status === "running" && state(dir).halted && /not finished/i.test(cli(dir, ["--check"]).out), "R1 soul link: running, --check not finished");
+  ok(rd(dir, "user/CONTEXT.md").includes("sport/") && readFileSync(join(OUT, "soul-target.md"), "utf8") === "# outside\n", "R1 soul link: user map and the outside file untouched");
+  rmSync(join(dir, "SOUL.md"));
+  const r2 = cli(dir, ["--apply"]);
+  ok(state(dir).status === "done" && rd(dir, "SOUL.md").includes("Не використовуй емодзі") && !rd(dir, "user/user.md").includes("How to respond"), "R1 soul link: after the fix the rerun finishes");
+}
+{ // R1b: the folder's own file is a link → its map is not replaced
+  const { dir } = setup("c2", "r1b-data-link");
+  writeFileSync(join(OUT, "products-target.md"), "# outside products\n");
+  symlinkSync(join(OUT, "products-target.md"), join(dir, "business/pekarnia-khlib/products/products.md"));
+  const mapBefore = rd(dir, "business/pekarnia-khlib/products/CONTEXT.md");
+  cli(dir, ["--apply"]);
+  ok(rd(dir, "business/pekarnia-khlib/products/CONTEXT.md") === mapBefore && state(dir).status === "running", "R1b data link: products map kept, not done");
+  ok(readFileSync(join(OUT, "products-target.md"), "utf8") === "# outside products\n", "R1b data link: the outside file untouched");
+}
+{ // R2 (Claude 1 Б): user.md changed between two runs → the new text is used, nothing lost
+  const { dir } = setup("c1", "r2-user-changed");
+  cli(dir, ["--apply"], { AIOS_MIGRATE_STOP_AFTER: "S2" });
+  writeFileSync(join(dir, "user/user.md"), rd(dir, "user/user.md").replace("## How to respond to me\n", "## How to respond to me\n\n- Нове правило між запусками.\n"));
+  cli(dir, ["--apply"]);
+  ok(state(dir).status === "done" && rd(dir, "SOUL.md").includes("Нове правило між запусками.") && !rd(dir, "user/user.md").includes("Нове правило"), "R2 user.md changed between runs: the new rule moved to SOUL.md");
+}
+{ // R3 (DeepSeek 1, Claude 1 В): core/business.md changed between runs → kept, and the map's own lines moved too
+  const { dir } = setup("c1", "r3-core-changed");
+  cli(dir, ["--apply"], { AIOS_MIGRATE_STOP_AFTER: "S5" });
+  const p = "business/pekarnia-khlib/core/business.md";
+  writeFileSync(join(dir, p), rd(dir, p) + "\n- **Нова примітка:** між запусками\n");
+  cli(dir, ["--apply"]);
+  const core = rd(dir, p);
+  ok(state(dir).status === "done" && core.includes("Нова примітка") && core.includes("Постачальники пекарні") && core.includes("iCloud Drive › Пекарня"), "R3 core changed between runs: client line kept, map lines moved");
+  ok(readdirSync(join(dir, state(dir).backup)).some((n) => n.startsWith("earlier-")), "R3 core changed between runs: the older copy kept in earlier-*");
+}
+{ // R4 (Codex 2): SOUL.md created between two runs → not overwritten, the block is added at its end
+  const { dir } = setup("a", "r4-soul-appeared");
+  cli(dir, ["--apply"], { AIOS_MIGRATE_STOP_AFTER: "S2" });
+  writeFileSync(join(dir, "SOUL.md"), "# Мій SOUL\n\nKEEP_THIS\n");
+  cli(dir, ["--apply"]);
+  const s = rd(dir, "SOUL.md");
+  ok(state(dir).status === "done" && s.startsWith("# Мій SOUL\n\nKEEP_THIS") && s.includes("Moved here by the 0.9 update"), "R4 SOUL appeared between runs: kept, block added");
+}
+{ // R5 (Claude 2, Codex 3, DeepSeek 2): no user.md → it is made with the own lines of the old user map
+  const { dir } = setup("c1", "r5-no-user-md");
+  rmSync(join(dir, "user/user.md"));
+  cli(dir, ["--apply"]);
+  ok(state(dir).status === "done" && existsSync(join(dir, "user/user.md")) && rd(dir, "user/user.md").includes("`sport/`"), "R5 no user.md: created with the sport/ row");
+}
+{ // R6 (Claude 3): --restore keeps what the customer wrote after the update; the 0.8.3 text goes beside
+  const { dir } = setup("a", "r6-restore-keeps");
+  cli(dir, ["--apply"]);
+  const p = "business/kavarnia-zerno/core/business.md";
+  writeFileSync(join(dir, p), rd(dir, p) + "\n- **Факт після оновлення:** так\n");
+  const r = cli(dir, ["--restore", "--apply"]);
+  ok(rd(dir, p).includes("Факт після оновлення") && /you changed it after the update/.test(r.out), "R6 restore: the newer client text kept, said so");
+  ok(sha(readFileSync(join(dir, "business/kavarnia-zerno/core/business.0.8.3.md"))) === sums("a").get(p), "R6 restore: the 0.8.3 text is beside it");
+}
+{ // R7 (Claude 4, Codex 10): a file that is not UTF-8 is never rewritten
+  const { dir } = setup("c1", "r7-cp1251");
+  const p = "business/pekarnia-khlib/core/business.md";
+  const cp = Buffer.from([0x23, 0x20, 0xcf, 0xe5, 0xea, 0xe0, 0xf0, 0xed, 0xff, 0x0a]);   // "# Пекарня" in cp1251
+  writeFileSync(join(dir, p), cp);
+  const mapBefore = rd(dir, "business/pekarnia-khlib/CONTEXT.md");
+  const r = cli(dir, ["--apply"]);
+  ok(/UTF-8/.test(r.out) && readFileSync(join(dir, p)).equals(cp) && rd(dir, "business/pekarnia-khlib/CONTEXT.md") === mapBefore, "R7 cp1251 core: not rewritten, map kept, said so");
+  const { dir: d2 } = setup("a", "r7-utf16");
+  writeFileSync(join(d2, "user/user.md"), Buffer.concat([Buffer.from([0xff, 0xfe]), Buffer.from("# X\n", "utf16le")]));
+  const u = readFileSync(join(d2, "user/user.md"));
+  const r2 = cli(d2, ["--apply"]);
+  ok(/UTF-8/.test(r2.out) && readFileSync(join(d2, "user/user.md")).equals(u) && !existsSync(join(d2, "SOUL.md")), "R7 utf-16 user.md: nothing written");
+}
+{ // R8 (Claude 5, Codex 12): [CTA] in the customer's text stays as it is
+  const { dir } = setup("a", "r8-brackets");
+  writeFileSync(join(dir, "user/user.md"), rd(dir, "user/user.md").replace("**Tone:** дружній, без офіціозу", "**Tone:** дружній; блоки [CTA] і [TODO] лиши як є"));
+  cli(dir, ["--apply"]);
+  ok(rd(dir, "SOUL.md").includes("блоки [CTA] і [TODO] лиши як є"), "R8 brackets: kept in SOUL.md");
+}
+{ // R9 (Claude 10, Codex 4, DeepSeek 8): a folder that is a link to another place is never written through
+  const { dir } = setup("c1", "r9-user-link");
+  const ext = join(OUT, "user-outside");
+  renameSync(join(dir, "user"), ext); symlinkSync(ext, join(dir, "user"));
+  const before = readFileSync(join(ext, "user.md"));
+  const r = cli(dir, ["--apply"]);
+  ok(/link to another place|outside the AIOS folder/.test(r.out) && readFileSync(join(ext, "user.md")).equals(before) && state(dir).status === "running", "R9 user/ is a link: nothing outside changed, stopped");
+  const { dir: d2 } = setup("c1", "r9-agents-link");
+  cli(d2, ["--apply"]);
+  const ext2 = join(OUT, "agents-outside");
+  renameSync(join(d2, "system/agents"), ext2); symlinkSync(ext2, join(d2, "system/agents"));
+  cli(d2, ["--apply", "--delete-old=all"]);
+  ok(existsSync(join(ext2, "marketer/AGENT.md")), "R9 system/agents is a link: --delete-old does not delete outside");
+}
+{ // R10 (Codex 7, DeepSeek 7): a damaged record of the move cannot make --restore write outside
+  const { dir } = setup("a", "r10-restore-path");
+  cli(dir, ["--apply"]);
+  const st = state(dir);
+  st.ops.push({ id: "Ox", key: "x", step: "S6-business", path: "../outside-restore.md", action: "replace", sha_before: "0", sha_after: "1", backup: st.ops.find((o) => o.backup && o.action !== "backup").backup, done: true });
+  writeFileSync(join(dir, "system/.aios-migration.json"), JSON.stringify(st));
+  const r = cli(dir, ["--restore", "--apply"]);
+  ok(/not allowed/.test(r.out) && !existsSync(join(RUNS, "outside-restore.md")) && existsSync(join(dir, "SOUL.md")), "R10 restore: damaged record refused, nothing changed");
+}
+{ // R11 (DeepSeek 4): no record after the move → --restore refuses instead of a half restore
+  const { dir } = setup("a", "r11-restore-no-state");
+  cli(dir, ["--apply"]);
+  rmSync(join(dir, "system/.aios-migration.json"));
+  const before = walk(dir);
+  const r = cli(dir, ["--restore", "--apply"]);
+  ok(/record .* is missing/.test(r.out) && diffMaps(before, walk(dir)).length === 0, "R11 restore without the record: refused, nothing changed");
+}
+{ // R13 (DeepSeek 9): the own lines of How to respond to me are not added twice to an existing SOUL.md
+  const { dir } = setup("c2", "r13-dup");
+  writeFileSync(join(dir, "user/user.md"), rd(dir, "user/user.md").replace("## How to respond to me\n", "## How to respond to me\n\nОдне власне правило без поля.\n"));
+  cli(dir, ["--apply"]);
+  ok(rd(dir, "SOUL.md").split("Одне власне правило без поля.").length === 2, "R13 existing SOUL: own respond line once");
+}
+{ // R14 (DeepSeek 10): the record is lost after a finished move → recovered, nothing duplicated
+  const { dir } = setup("a", "r14-lost-state");
+  cli(dir, ["--apply"]);
+  rmSync(join(dir, "system/.aios-migration.json"));
+  const before = walk(dir);
+  const r = cli(dir, ["--apply"]);
+  ok(state(dir).status === "done" && state(dir).recovered && diffMaps(before, walk(dir)).filter((p) => !isState(p)).length === 0, "R14 lost record, finished move: recovered, no file changed");
+  const { dir: d2 } = setup("c1", "r14-lost-state-unsure");
+  cli(d2, ["--apply"], { AIOS_MIGRATE_STOP_AFTER: "S3" });
+  rmSync(join(d2, "system/.aios-migration.json"));
+  const b2 = walk(d2);
+  const r2 = cli(d2, ["--apply"]);
+  ok(/record of the 0.9 move .* is missing/.test(r2.out) && diffMaps(b2, walk(d2)).length === 0, "R14 lost record, unfinished move: stopped, nothing changed");
+  const { dir: d3 } = setup("c1", "r14-lost-state-s5");
+  cli(d3, ["--apply"], { AIOS_MIGRATE_STOP_AFTER: "S5" });
+  rmSync(join(d3, "system/.aios-migration.json"));
+  ok(/record of the 0.9 move .* is missing/.test(cli(d3, ["--apply"]).out), "R14 lost record after S5 (user map new, business maps old): not taken for finished");
+}
+{ // R15 (Claude 8): the run-1 backup is in iCloud, not on this computer → the move waits
+  const { dir } = setup("c1", "r15-icloud-prev");
+  const a = join(dir, ".aios-backup", RUN1, "AGENTS.md");
+  renameSync(a, join(dirname(a), ".AGENTS.md.icloud"));
+  const before = walk(dir);
+  const r = cli(dir, ["--apply"]);
+  ok(/in iCloud and not on this computer/.test(r.out) && diffMaps(before, walk(dir)).length === 0, "R15 icloud run-1 backup: waits, nothing changed");
+}
+{ // R16 (Claude 17): How to respond to me ends at any heading of level 1 or 2
+  const { dir } = setup("a", "r16-h1");
+  writeFileSync(join(dir, "user/user.md"), rd(dir, "user/user.md").replace("## More about me", "# Нотатки\n\nМої нотатки лишаються тут.\n\n## More about me"));
+  cli(dir, ["--apply"]);
+  ok(rd(dir, "user/user.md").includes("Мої нотатки лишаються тут.") && !rd(dir, "SOUL.md").includes("Мої нотатки"), "R16 H1 after the section: notes stay in user.md");
+}
+{ // R17 (DeepSeek 14): a short one-word business name does not pull a personal rule into that business
+  const { dir } = setup("c1", "r17-short-name");
+  const core = "business/pekarnia-khlib/core/business.md";
+  writeFileSync(join(dir, core), rd(dir, core).replace("# Пекарня «Хліб»", "# Хліб"));
+  const ag = join(dir, ".aios-backup", RUN1, "AGENTS.md");
+  writeFileSync(ag, readFileSync(ag, "utf8") + "\n- Слово хліб пиши з малої.\n");
+  cli(dir, ["--apply"]);
+  ok(rd(dir, "SOUL.md").includes("Слово хліб пиши з малої.") && !rd(dir, core).includes("Слово хліб"), "R17 short name: the rule stays the person's");
+}
+{ // R18 (Claude 16): own skills → the report asks the agent to rebuild the catalog
+  const { dir } = setup("c1", "r18-skills");
+  mkdirSync(join(dir, "system/skills/my-skill"), { recursive: true });
+  writeFileSync(join(dir, "system/skills/my-skill/SKILL.md"), "---\nname: my-skill\ndescription: test\n---\n");
+  ok(/build-skills-catalog/.test(cli(dir, ["--apply"]).out), "R18 own skills: rebuild the catalog");
+}
+{ // R19 (Codex 9): --restore removes its own code last, so a cut-off restore can run again
+  const { dir } = setup("a", "r19-restore-order");
+  cli(dir, ["--apply"]);
+  const plan = cli(dir, ["--restore"]).out.split("\n").filter((l) => /^\s+[←\-+] /.test(l));
+  const last = plan.slice(-4).join("\n");
+  ok(/update\.mjs/.test(last) && /managed-files\.json/.test(last) && /migrate-0\.9\.mjs/.test(plan[plan.length - 1] + plan[plan.length - 2]), "R19 restore: updater, marker, then the move's code last");
+}
+{ // R20 (Claude 9, DeepSeek 12): setup asks a line whose value is unknown, and an overwrite keeps the business's own sections
+  const id = readFileSync(join(T, "system/skills/setup/01_identity/CONTEXT.md"), "utf8"), bz = readFileSync(join(T, "system/skills/setup/02_business/CONTEXT.md"), "utf8");
+  ok(/value is exactly `unknown`/.test(id) && /put the copied sections back/.test(bz), "R20 setup texts: unknown is asked; overwrite keeps Sources, Own, Rules");
 }
 
 // fixtures untouched

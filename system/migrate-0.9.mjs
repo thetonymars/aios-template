@@ -4,8 +4,11 @@
 //   SOUL.md (created, or a block added at its end) · user/user.md (three point edits) ·
 //   user/CONTEXT.md and business/<slug>/CONTEXT.md (the new maps) · business/<slug>/offers/CONTEXT.md ·
 //   business/<slug>/core/business.md (a block added at its end) · .gitignore (one line).
-// Every other path is never opened for writing. The list is fixed in this code (ALLOWED below);
-// a manifest cannot widen it.
+// Every other path is never opened for writing. The list is fixed in this code (allowed() below).
+// A manifest of the same release cannot widen it; a new release ships new code (the same trust as update.mjs).
+// Every path is checked before a write: a plain relative path, no folder on the way is a link, and its real
+// place is inside the AIOS folder. A write that fails or is refused stops the move: no later step runs, the
+// state stays "running", and the next "update aios" continues from there.
 //
 // Order: copy every file it will change to .aios-backup/<time>-migrate-0.9/, then move the
 // customer's own lines, then replace. Each action is written to system/.aios-migration.json
@@ -18,9 +21,9 @@
 //     → { needed, status, lines, pendingDeletions }
 //   export function needsMigration(root) → boolean
 // Test-only: AIOS_MIGRATE_STOP_AFTER=S3 stops the process right after step S3 (never set in normal use).
-import { readFileSync, writeFileSync, lstatSync, readdirSync, mkdirSync, renameSync, rmSync, rmdirSync, copyFileSync } from "node:fs";
+import { readFileSync, writeFileSync, lstatSync, readdirSync, mkdirSync, renameSync, rmSync, rmdirSync, copyFileSync, realpathSync } from "node:fs";
 import { createHash } from "node:crypto";
-import { join, dirname, basename, resolve } from "node:path";
+import { join, dirname, basename, resolve, sep } from "node:path";
 
 export const MODULE_VERSION = "0.9.0";
 export const STATE_REL = "system/.aios-migration.json";
@@ -69,7 +72,40 @@ const encode = (meta, text) => Buffer.from((meta.bom ? "﻿" : "") + (meta.eol =
 function writeAtomic(p, buf) {
   mkdirSync(dirname(p), { recursive: true });
   writeFileSync(p + TMP, buf);
-  renameSync(p + TMP, p);
+  // Windows: an antivirus or a cloud client may hold the file for a moment
+  for (let i = 0; ; i++) {
+    try { renameSync(p + TMP, p); return; }
+    catch (e) { if (i >= 4 || !["EPERM", "EBUSY", "EACCES"].includes(e.code)) throw e; const until = Date.now() + 200 * (i + 1); while (Date.now() < until) { /* wait */ } }
+  }
+}
+// Text the move may rewrite must be UTF-8. Anything else (a Windows "ANSI" file, UTF-16) is never rewritten.
+function validUtf8(buf) {
+  if (buf.length >= 2 && ((buf[0] === 0xff && buf[1] === 0xfe) || (buf[0] === 0xfe && buf[1] === 0xff))) return false;
+  try { new TextDecoder("utf-8", { fatal: true }).decode(buf); return true; } catch { return false; }
+}
+// null = safe; else why not. rel must be a plain relative path; no folder on the way may be a link; its real place is inside root.
+function badPath(C, rel) {
+  if (typeof rel !== "string" || !rel || rel.includes("\\") || rel.startsWith("/") || /^[A-Za-z]:/.test(rel) || rel.includes("\0")) return "is not a plain path inside the AIOS folder";
+  const parts = rel.split("/");
+  if (parts.some((x) => x === "" || x === "." || x === "..")) return "is not a plain path inside the AIOS folder";
+  let cur = C.root;
+  for (const part of parts.slice(0, -1)) {
+    cur = join(cur, part);
+    const s = lst(cur);
+    if (!s) break;   // the folders below do not exist yet: they will be made inside the AIOS folder
+    if (s.isSymbolicLink() || !s.isDirectory()) return "is inside a link to another place, not inside the AIOS folder";
+  }
+  try {
+    const rr = realpathSync(C.root);
+    let d = dirname(C.abs(rel)); while (!there(d)) d = dirname(d);
+    const rd = realpathSync(d);
+    if (rd !== rr && !rd.startsWith(rr + sep)) return "leads outside the AIOS folder";
+  } catch { return "could not be checked"; }
+  return null;
+}
+// A write that fails stops the move here (one rule for every step).
+function halt(C, rel, why) {
+  if (!C.halt) { C.halt = { path: rel, why, at: nowIso() }; if (C.st?.log) log(C, `stopped at ${rel}: ${why}`); }
 }
 function appendBlock(text, block) {
   const head = text.replace(/\n*$/, "");
@@ -219,6 +255,24 @@ function signs(C) {
   return s;
 }
 
+// Older layouts that update.mjs moves itself (areas/, network/, a business with business.md and no core/).
+// While one is there, the 0.9 move waits: update.mjs first moves them, then runs the move.
+export function olderLayout(root) {
+  const C = ctx(root);
+  if (isDir(C.abs("areas")) || isDir(C.abs("network"))) return true;
+  const bdir = C.abs("business");
+  if (isDir(bdir)) for (const slug of readdirSync(bdir)) {
+    if (slug.startsWith(".")) continue;
+    if (isFile(join(bdir, slug, "business.md")) && !isFile(join(bdir, slug, "core", "business.md"))) return true;
+  }
+  return false;
+}
+// Everything the move needs is on this disk (a run 1 that was cut off may have delivered it already).
+export function kernelReady(root) {
+  const C = ctx(root);
+  return isFile(C.abs(BASE_REL)) && ["soul.md", "user-map.md", "business-map.md", "offers-map.md"].every((n) => isFile(C.abs(`${TEMPLATES_DIR}/${n}`)));
+}
+
 export function needsMigration(root) {
   const C = ctx(root);
   let st; try { st = loadState(C); } catch { return true; }
@@ -298,14 +352,14 @@ function route(text, businesses) {
   const hits = new Set(), low = text.toLowerCase();
   for (const b of businesses) {
     if (new RegExp(`business/${b.slug.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(?![A-Za-z0-9_-])`).test(text)) hits.add(b.slug);
-    if (b.name && b.name.length >= 4 && low.includes(b.name.toLowerCase())) hits.add(b.slug);
+    if (b.name && (b.name.length >= 8 || /\s/.test(b.name.trim())) && low.includes(b.name.toLowerCase())) hits.add(b.slug);   // a short one-word name (\"Shop\") is too common to route by
   }
   return hits.size === 1 ? [...hits][0] : null;
 }
 function parseUser(buf) {
   const { text } = decode(buf);
   const L = text.replace(/\n$/, "").split("\n");
-  const sec = (re) => { const h = L.findIndex((l) => re.test(l)); if (h < 0) return null; let e = L.findIndex((l, i) => i > h && /^## /.test(l)); if (e < 0) e = L.length; return { h, e }; };
+  const sec = (re) => { const h = L.findIndex((l) => re.test(l)); if (h < 0) return null; let e = L.findIndex((l, i) => i > h && /^#{1,2} /.test(l)); if (e < 0) e = L.length; return { h, e }; };
   const out = { fields: {}, respond: null, respondLines: [], identity: [], identityLines: [], extra: [] };
   const field = (l) => l.match(/^\s*[-*]\s*\*\*(.+?):\*\*\s*(.*?)\s*$/);
   const r = sec(/^## How to respond to me\s*$/);
@@ -336,6 +390,10 @@ function parseUser(buf) {
 // ---------- S2: collect (pure; reads the backup copies) ----------
 function collect(C, businesses) {
   const { base } = C;
+  const utf = (rel, buf) => { if (buf && !validUtf8(buf)) halt(C, rel, `${rel} is not saved as UTF-8 text, so its lines cannot be moved. Open it, save it as UTF-8, then say "update aios" again`); return buf; };
+  for (const rel of ["user/user.md", "user/CONTEXT.md", "CONTEXT.md", "CLAUDE.md", "GEMINI.md", "system/offers.md", ...PERSONAS.map((x) => `system/agents/${x}/AGENT.md`),
+    ...businesses.flatMap((b) => [`business/${b.slug}/CONTEXT.md`, `business/${b.slug}/offers/CONTEXT.md`, `business/${b.slug}/core/business.md`])]) utf(rel, C.readOrig(rel));
+  if (C.prev) { const f = prevLookup(C, C.prev, "AGENTS.md"); if (f) utf("AGENTS.md (the old one, in .aios-backup/)", f.buf); }
   const additions = [];
   const add = (a) => additions.push({ id: `A${additions.length + 1}`, ...a });
   const target = (slug) => (slug ? `business/${slug}/core/business.md` : "SOUL.md");
@@ -397,9 +455,9 @@ const comment = (a) => `<!-- from ${a.source}${a.lines ? `, ${rangeText(a.lines)
 // and push the rest out of the block. Moved text keeps its words; its headings drop to level 4.
 const demote = (s) => s.replace(/^#{1,3}(?=\s)/gm, "####");
 function entry(a, withComment = true) { return [...(withComment ? [comment(a)] : []), ...(a.header || []), demote(a.text)]; }
-function soulEntries(C) {
+function soulEntries(C, keep = () => true) {
   const out = [];
-  for (const a of C.st.additions.filter((x) => x.target === "SOUL.md")) out.push("", ...entry(a));
+  for (const a of C.st.additions.filter((x) => x.target === "SOUL.md" && keep(x))) out.push("", ...entry(a));
   return out;
 }
 function bizBlock(C, slug) {
@@ -459,7 +517,7 @@ function allowed(rel, action) {
   const biz = (re) => { const m = rel.match(re); return m && !m[1].startsWith("."); };
   return (rel === "SOUL.md" && ["create", "append"].includes(action)) ||
     (rel === "user/CONTEXT.md" && ["replace", "create"].includes(action)) ||
-    (rel === "user/user.md" && action === "edit") ||
+    (rel === "user/user.md" && ["edit", "create"].includes(action)) ||
     (rel === ".gitignore" && ["create", "edit"].includes(action)) ||
     (rel === "system/skills/skill-settings.md" && action === "create") ||
     (rel === "system/external.md" && action === "create") ||
@@ -471,20 +529,27 @@ function allowed(rel, action) {
     (DELETE_CANDIDATES.includes(rel) && action === "delete");
 }
 
-// One write, recorded. Returns "done" | "skip" (nothing to do) | "blocked".
+// One write, recorded. Returns "done" | "skip" (nothing to do) | "blocked". "blocked" also stops the move (halt).
 function doOp(C, step, rel, action, desired, source, reason, extra = {}) {
   const st = C.st, key = `${step}:${rel}`;
+  if (C.halt) return "blocked";
   if (!allowed(rel, action)) throw new Error(`migrate-0.9: refused to write ${rel} (${action}) — not in the allowed list.`);
+  const bad = badPath(C, rel);
+  if (bad) { halt(C, rel, `${rel} ${bad}`); return "blocked"; }
   const p = C.abs(rel), s = lst(p);
-  if (s && !s.isFile()) { C.notes.push(`${rel} was not changed: it is a link or a folder, not a plain file.`); return "blocked"; }
+  if (s && !s.isFile()) { halt(C, rel, `${rel} is a link or a folder, not a plain file`); return "blocked"; }
   const cur = s ? readFileSync(p) : null, curSha = cur ? sha(cur) : null;
   const want = desired ? sha(desired) : null;
   let op = st.ops.find((o) => o.key === key);
   if (!op) {
     if (curSha === want) return "skip";
+    if (cur && ["edit", "append"].includes(action) && !validUtf8(cur)) {
+      halt(C, rel, `${rel} is not saved as UTF-8 text, so it was not changed. Open it, save it as UTF-8, then say "update aios" again`); return "blocked";
+    }
+    if (action === "create" && cur) { halt(C, rel, `${rel} appeared while the update ran`); return "blocked"; }
     const backup = action === "create" ? null : `${st.backup}/${rel}`;
     if (backup && (!isFile(C.abs(backup)) || sha(readFileSync(C.abs(backup))) !== curSha)) {
-      C.notes.push(`${rel} was not changed: it changed after the backup copy was made.`); log(C, `${key} blocked: no matching backup`); return "blocked";
+      halt(C, rel, `${rel} changed while the update ran`); return "blocked";
     }
     op = { id: `O${st.ops.length + 1}`, key, step, path: rel, action, sha_before: curSha, sha_after: want, backup, source, reason, done: false, ...extra };
     st.ops.push(op); saveState(C);
@@ -492,8 +557,8 @@ function doOp(C, step, rel, action, desired, source, reason, extra = {}) {
   if (op.done) return "done";
   if (curSha === op.sha_after) { op.done = true; saveState(C); return "done"; }
   if (curSha !== op.sha_before || want !== op.sha_after) {
-    op.blocked = "the file changed while the update ran"; C.notes.push(`${rel} was not changed: it changed while the update ran. Your text is safe; tell support.`);
-    log(C, `${key} blocked: fingerprint is neither before nor after`); saveState(C); return "blocked";
+    op.blocked = "the file changed while the update ran"; saveState(C);
+    halt(C, rel, `${rel} changed while the update ran`); return "blocked";
   }
   if (desired) writeAtomic(p, desired); else rmSync(p, { force: true });
   op.done = true; op.at = nowIso(); C.ran.push(op); saveState(C);
@@ -517,6 +582,8 @@ function S1(C) {
     const s = lst(C.abs(rel));
     if (!s) continue;
     if (!s.isFile()) { C.notes.push(`${rel} is a link: it is left as it is.`); continue; }
+    const bad = badPath(C, rel) || badPath(C, `${C.st.backup}/${rel}`);
+    if (bad) { halt(C, rel, `${rel} (or its backup copy) ${bad}`); return; }
     const src = readFileSync(C.abs(rel)), dst = C.abs(`${C.st.backup}/${rel}`);
     mkdirSync(dirname(dst), { recursive: true });
     copyFileSync(C.abs(rel), dst);
@@ -529,8 +596,31 @@ function S1(C) {
   }
   log(C, `S1-backup: ${n} files`);
 }
+// Between two runs the customer may change a file the move has not written yet, or create one (SOUL.md).
+// Its backup copy is refreshed (the older copy kept under earlier-<time>/), and S2 collects again, so the
+// move works on the newest text. A file the move already wrote is never refreshed here.
+function resync(C) {
+  const written = new Set(C.st.ops.filter((o) => o.action !== "backup").map((o) => o.path));
+  let n = 0;
+  for (const rel of backupList(C)) {
+    if (written.has(rel)) continue;
+    const p = C.abs(rel);
+    if (!isFile(p) || badPath(C, rel) || badPath(C, `${C.st.backup}/${rel}`)) continue;
+    const bk = C.abs(`${C.st.backup}/${rel}`), cur = readFileSync(p);
+    if (isFile(bk) && sha(readFileSync(bk)) === sha(cur)) continue;
+    if (isFile(bk)) { const e = C.abs(`${C.st.backup}/earlier-${nowIso().replace(/[:]/g, "-")}/${rel}`); mkdirSync(dirname(e), { recursive: true }); copyFileSync(bk, e); }
+    mkdirSync(dirname(bk), { recursive: true }); copyFileSync(p, bk);
+    const key = `S1-backup:${rel}`, op = { key, step: "S1-backup", path: rel, action: "backup", sha_before: sha(cur), sha_after: sha(cur), backup: `${C.st.backup}/${rel}`, source: rel, reason: "a fresh copy: the file changed between two runs", done: true };
+    const i = C.st.ops.findIndex((o) => o.key === key);
+    if (i >= 0) C.st.ops[i] = { ...op, id: C.st.ops[i].id }; else C.st.ops.push({ ...op, id: `O${C.st.ops.length + 1}` });
+    log(C, `resync: ${rel} changed between two runs; the backup copy is refreshed`); n++;
+  }
+  if (n) for (const s of C.st.steps) if (s.id === "S2-collect") s.status = "todo";
+  return n;
+}
 function S2(C) {
   const r = collect(C, C.st.businesses);
+  if (C.halt) return;
   C.st.additions = r.additions; C.st.person = r.person;
   log(C, `S2-collect: ${r.additions.length} own text pieces`);
 }
@@ -541,11 +631,9 @@ function soulDesired(C) {
     // create from the template
     const meta = decode(C.tpl.soul);
     let t = meta.text;
-    for (const tok of ["TONE", "LENGTH", "BUGS_LIST", "DISPLAY_NAME", "LANGUAGE"]) {
-      const v = (P.fields[tok] || "").trim() || "unknown";
-      t = t.split(`[${tok}]`).join(v);
-    }
-    t = t.replace(/\[[A-Z][A-Z_]+\]/g, "unknown");
+    // one pass over the template's own tokens: the customer's values are inserted as they are and never
+    // scanned again (a value with "[CTA]" in it stays "[CTA]")
+    t = t.replace(/\[([A-Z][A-Z_]+)\]/g, (m, tok) => (P.fields[tok] || "").trim() || "unknown");
     const ent = soulEntries(C);
     if (ent.length) {
       const L = t.replace(/\n$/, "").split("\n");
@@ -562,7 +650,8 @@ function soulDesired(C) {
   const B = [`## ${HEADING}`, "If anything below contradicts the text above, the text above wins.", `<!-- old files: ${C.st.backup}/ -->`];
   const lines = [...P.identityLines, ...P.respondLines];
   if (lines.length) B.push("", "<!-- from user/user.md, Identity and How to respond to me -->", ...lines);
-  const ent = soulEntries(C);
+  // the whole "How to respond to me" section is in `lines` already: its own lines are not added a second time
+  const ent = soulEntries(C, (a) => a.kind !== "respond");
   B.push(...ent);
   if (!lines.length && !ent.length) return null;
   const meta = decode(orig);
@@ -570,16 +659,31 @@ function soulDesired(C) {
 }
 function S3(C) {
   const d = soulDesired(C);
+  // what SOUL.md was made from: S4 checks that user/user.md still says the same before it removes it there
+  C.st.soul_person = { respondLines: C.st.person.respondLines, identityLines: C.st.person.identityLines };
   if (d) doOp(C, "S3-soul", "SOUL.md", d.action, d.buf, d.action === "create" ? `${TEMPLATES_DIR}/soul.md + user/user.md` : "user/user.md + your own lines",
     d.action === "create" ? "SOUL.md is new in 0.9: how to talk to you, and your own rules" : "your SOUL.md stays as it was; the moved text is added at its end");
 }
 function S4(C) {
+  if (C.halt) return;
+  const live = C.abs("user/user.md"), ls = lst(live);
+  const um = C.st.additions.filter((a) => a.target === "user/user.md");
+  const block = () => { const B = [`## ${HEADING}`, `<!-- from user/CONTEXT.md; old file: ${C.st.backup}/user/CONTEXT.md -->`]; for (const a of um) B.push("", ...entry(a, false)); return B; };
+  if (!ls) {
+    // no user.md: the own lines of the old user map still need a home before that map is replaced
+    if (um.length) doOp(C, "S4-user", "user/user.md", "create", Buffer.from(appendBlock("---\ntype: identity\n---\n\n# About me\n", block())), "user/CONTEXT.md",
+      "user/user.md was missing; the own lines of the old user map need a home before that map is replaced");
+    return;
+  }
+  if (!ls.isFile()) { halt(C, "user/user.md", "user/user.md is a link or a folder, not a plain file"); return; }
   const orig = C.readOrig("user/user.md");
-  if (!orig || !isFile(C.abs("user/user.md"))) return;
-  if (opState(C, "S3-soul:SOUL.md") === "open") { C.notes.push("user/user.md was not changed: SOUL.md could not be written first."); return; }
   const meta = decode(orig), hadNL = meta.text.endsWith("\n");
   const L = meta.text.replace(/\n$/, "").split("\n");
   const p = parseUser(orig);
+  const sp = C.st.soul_person;
+  if (sp && (JSON.stringify(p.respondLines) !== JSON.stringify(sp.respondLines) || JSON.stringify(p.identityLines) !== JSON.stringify(sp.identityLines))) {
+    halt(C, "user/user.md", "user/user.md › How to respond to me (or your name or language) changed after SOUL.md was written. Copy the change into SOUL.md › The person you work with, then delete it in user/user.md by hand, and say \"update aios\" again"); return;
+  }
   const rm = new Set(p.identity);
   if (p.respond) for (let i = p.respond[0]; i < p.respond[1]; i++) rm.add(i);
   const out = [];
@@ -590,18 +694,13 @@ function S4(C) {
   }
   while (out.length && !normLine(out[out.length - 1]) && rm.has(L.length - 1)) out.pop();
   let t = out.join("\n") + (hadNL ? "\n" : "");
-  const um = C.st.additions.filter((a) => a.target === "user/user.md");
-  if (um.length) {
-    const B = [`## ${HEADING}`, `<!-- from user/CONTEXT.md; old file: ${C.st.backup}/user/CONTEXT.md -->`];
-    for (const a of um) B.push("", ...entry(a, false));
-    t = appendBlock(t, B);
-  }
+  if (um.length) t = appendBlock(t, block());
   if (t === meta.text) return;
   doOp(C, "S4-user", "user/user.md", "edit", encode(meta, t), "user/user.md + user/CONTEXT.md",
     "How to respond to me and the name and language lines moved to SOUL.md; own lines of the old user map added at the end");
 }
 function S5(C) {
-  if (opState(C, "S4-user:user/user.md") === "open") { C.notes.push("user/CONTEXT.md was not replaced: user/user.md could not be written first."); return; }
+  if (C.halt) return;
   const s = lst(C.abs("user/CONTEXT.md"));
   if (s && !s.isFile()) return;
   if (!isDir(C.abs("user"))) return;
@@ -609,6 +708,7 @@ function S5(C) {
 }
 function S6(C) {
   for (const b of C.st.businesses) {
+    if (C.halt) return;
     const core = `business/${b.slug}/core/business.md`;
     const orig = C.readOrig(core);
     if (!orig) { C.notes.push(`${core} is missing: business/${b.slug}/ was left as it is.`); continue; }
@@ -617,8 +717,9 @@ function S6(C) {
       const appended = t.startsWith(meta.text.replace(/\n+$/, ""));
       doOp(C, "S6-business", core, appended ? "append" : "edit", encode(meta, t), `business/${b.slug}/CONTEXT.md and others`,
         "Sources and Own to this business (the new map points there), and what else only this business has, moved out of the old maps");
-      if (opState(C, `S6-business:${core}`) === "open") { C.notes.push(`business/${b.slug}/: the maps were not replaced, because core/business.md could not be written first.`); continue; }
+      if (C.halt) return;   // core/business.md was not written: its map is not replaced
     }
+    if (C.halt) return;
     if (b.map !== "skip") doOp(C, "S6-business", `business/${b.slug}/CONTEXT.md`, b.map, C.tpl.bizMap, `${TEMPLATES_DIR}/business-map.md`, "the same business map for every business in 0.9 (D36)");
     if (b.offers !== "skip") doOp(C, "S6-business", `business/${b.slug}/offers/CONTEXT.md`, b.offers === "replace" ? "replace" : "create", C.tpl.offersMap,
       `${TEMPLATES_DIR}/offers-map.md`, "the offers map of every business in 0.9 (contract 3.6)", b.offers === "create-dir" && !there(C.abs(`business/${b.slug}/offers`)) ? { created_dirs: [`business/${b.slug}/offers`] } : {});
@@ -641,11 +742,12 @@ function S6(C) {
             const meta = curData ? decode(curData) : null;
             const desired = meta ? encode(meta, appendBlock(meta.text, block)) : Buffer.from(`# ${f[0].toUpperCase() + f.slice(1)}\n\n` + block);
             doOp(C, "S6-business", dataRel, meta ? "append" : "create", desired, mapRel, `what only this business had in its ${f}/ map: the system map routes by kind and lists no content (D48)`);
-            if (opState(C, `S6-business:${dataRel}`) === "open") { C.notes.push(`${mapRel} was not replaced, because ${dataRel} could not be written first.`); continue; }
+            if (C.halt) return;   // the folder's own file was not written: its map is not replaced
           }
         }
       }
       doOp(C, "S6-business", mapRel, how, tplBuf, `${TEMPLATES_DIR}/${f}-map.md`, `the system map of ${f}/ in 0.9, the same in every business (D48)`);
+      if (C.halt) return;
     }
   }
 }
@@ -655,10 +757,12 @@ const SKILL_SETTINGS = "# Skill settings\n\nOne file for all skills: one section
 // The list of places outside AIOS (0.9, D48): the person's data. Same text as the template's system/external.md.
 const EXTERNAL = "# External — places outside AIOS\n\nThe files and folders of the person that live outside this folder: a drive, a cloud folder, an app, a program on this computer. `AGENTS.md` sends here.\n\n- One row per place. The map of the place says what is inside it.\n- The person names a new place → add a row.\n- A new drive or a folder outside AIOS gets one `CONTEXT.md` in its own root, and a row here.\n- Go to a place only when the task needs it.\n\n| Place | What is there (one line) | Path | Map of the place |\n| --- | --- | --- | --- |\n| _(none yet)_ | | | |\n";
 function S7(C) {
+  if (C.halt) return;
   if (!there(C.abs("system/external.md")) && isDir(C.abs("system")))
     doOp(C, "S7-gitignore", "system/external.md", "create", Buffer.from(EXTERNAL), "0.9 template", "the list of places outside AIOS; AGENTS.md routes there (D48)");
   if (!there(C.abs("system/skills/skill-settings.md")) && isDir(C.abs("system/skills")))
     doOp(C, "S7-gitignore", "system/skills/skill-settings.md", "create", Buffer.from(SKILL_SETTINGS), "0.9 template", "the settings file of skills, next to the skills catalog (0.9)");
+  if (C.halt) return;
   const p = C.abs(".gitignore"), s = lst(p);
   if (s && !s.isFile()) return;
   if (!s) return void doOp(C, "S7-gitignore", ".gitignore", "create", Buffer.from(SECRETS_LINE + "\n"), "D34", "keeps API keys (system/.secrets/) out of git");
@@ -675,6 +779,7 @@ const WHAT = (rel) => rel === "CLAUDE.md" ? "an old pointer for Claude Code"
   : rel === "CONTEXT.md" ? "the old map of tasks; the routes are now in AGENTS.md"
   : `an old agent role (${rel.split("/")[2]})`;
 function S8(C) {
+  if (C.halt) return;
   const st = C.st;
   for (const rel of deleteList(C)) {
     let e = st.deletions.find((x) => x.path === rel);
@@ -740,12 +845,13 @@ function processDeletions(C, spec) {
     const p = C.abs(e.path), s2 = lst(p);
     if (!s2) { e.answer = "gone"; continue; }
     const cur = readFileSync(p);
-    if (sha(cur) !== e.sha_at_ask) { e.answer = "changed-after-ask"; C.lines.push(`${e.path} was changed after the list was shown, so it was NOT deleted. It will be asked about again at the next "update aios".`); continue; }
+    if (sha(cur) !== e.sha_at_ask) { e.answer = "changed-after-ask"; C.lines.push(`${e.path} was changed after the list was shown, so it was NOT deleted, and it will not be offered again: its new lines were not moved. Ask the agent to move them to the new layout.`); continue; }
     if (!e.backup || !isFile(C.abs(e.backup)) || sha(readFileSync(C.abs(e.backup))) !== e.sha_at_ask) { e.answer = "no"; C.lines.push(`${e.path} was NOT deleted: its backup copy is missing.`); continue; }
     const op = { id: `O${st.ops.length + 1}`, key: `delete-old:${e.path}:${st.ops.length}`, step: "delete-old", path: e.path, action: "delete", sha_before: e.sha_at_ask, sha_after: null,
       backup: e.backup, source: e.path, reason: "the user said yes to deleting an old file", done: false };
     if (!allowed(e.path, "delete")) throw new Error(`migrate-0.9: refused to delete ${e.path}`);
     st.ops.push(op); saveState(C);
+    if (badPath(C, e.path)) { st.ops.pop(); e.answer = "no"; C.lines.push(`${e.path} was NOT deleted: it is not a plain file inside the AIOS folder.`); continue; }
     rmSync(p, { force: true });
     if (e.path.startsWith("system/agents/")) pruneEmpty(C, e.path);
     op.done = true; op.at = nowIso(); e.answer = "yes"; e.done_at = nowIso(); saveState(C); del++;
@@ -792,17 +898,34 @@ function preview(C, businesses) {
 }
 
 // ---------- restore (4.9) ----------
+// The person's own files: a manifest never makes them "kernel", and --restore never touches them as kernel.
+const PERSON_FILES = ["SOUL.md", "system/external.md", "system/skills/skills.md", "system/skills/skill-settings.md", "projects/_index.md", ".gitignore", STATE_REL];
+const KERNEL_DENY = ["user/", "business/", "areas/", "_inbox/"];
+const kernelPathOk = (C, rel) => !badPath(C, rel) && !KERNEL_DENY.some((d) => rel.toLowerCase().startsWith(d)) && !PERSON_FILES.includes(rel);
+const backupPathOk = (C, rel) => typeof rel === "string" && /^\.aios-backup\/[^/]+\/./.test(rel) && !badPath(C, rel);
+const migrateBackupExists = (C) => isDir(C.abs(".aios-backup")) && readdirSync(C.abs(".aios-backup")).some((n) => /-migrate-0\.9$/.test(n));
+// The 0.8.3 text of a file the customer changed after the update goes next to it: SOUL.md → SOUL.0.8.3.md
+const besideName = (rel) => rel.replace(/(\.[^./]+)?$/, (ext) => `.0.8.3${ext || ""}`);
+
 function restore(C, apply) {
   const st = loadState(C);
   if (st?.lock && st.lock.pid !== process.pid && alive(st.lock.pid) && Date.now() - Date.parse(st.lock.at) < LOCK_MS)
     return { needed: true, status: "busy", lines: ["An AIOS update is already running. Wait for it to end, then try again."], pendingDeletions: [] };
+  const refuse = (msg) => ({ needed: false, status: "refused", lines: [msg + " Nothing was changed."], pendingDeletions: [] });
+  if (!st && migrateBackupExists(C)) return refuse("Cannot restore 0.8.3: the move to 0.9 ran, but its record (system/.aios-migration.json) is missing, so your own files cannot be put back safely. Tell support.");
   const prev = st?.prev_backup ? [...(st.prev_backup_extra || []), st.prev_backup] : findPrev(C);
-  if (!prev) return { needed: false, status: "refused", lines: ["Cannot restore 0.8.3: no backup of the old system files was found in .aios-backup/. Nothing was changed."], pendingDeletions: [] };
+  if (!prev) return refuse("Cannot restore 0.8.3: no backup of the old system files was found in .aios-backup/.");
+  if (!prev.every((d) => /^\.aios-backup\/[^/]+$/.test(d) && !badPath(C, d + "/x"))) return refuse("Cannot restore 0.8.3: the record names a backup outside .aios-backup/.");
   const mf09 = readMf(C.abs("system/managed-files.json")) || { managed: [] };
   const mf08 = prevMf(C, prev);
-  if (!mf08) return { needed: false, status: "refused", lines: ["Cannot restore 0.8.3: the old system/managed-files.json is not in the backup. Nothing was changed."], pendingDeletions: [] };
+  if (!mf08) return refuse("Cannot restore 0.8.3: the old system/managed-files.json is not in the backup.");
   const plan = [], keep = [];
-  // 1. the move, backwards
+  // 1. the move, backwards. Every path of the record is checked first: a damaged record stops the restore.
+  for (const op of st?.ops || []) {
+    if (op.action === "backup") continue;
+    if (!allowed(op.path, op.action) || badPath(C, op.path) || (op.backup && !backupPathOk(C, op.backup)))
+      return refuse(`Cannot restore 0.8.3: the record of the move names a path that is not allowed (${String(op.path).slice(0, 80)}).`);
+  }
   for (const op of [...(st?.ops || [])].reverse()) {
     if (op.action === "backup") continue;
     const p = C.abs(op.path), cur = readBuf(p), curSha = cur ? sha(cur) : null;
@@ -815,34 +938,57 @@ function restore(C, apply) {
     }
     const b = readBuf(C.abs(op.backup));
     if (!b) { keep.push(`${op.path} — its backup copy is missing: left as it is`); continue; }
-    if (curSha !== sha(b)) plan.push({ kind: "put", rel: op.path, from: op.backup, save: curSha !== op.sha_after && cur !== null });
+    if (curSha === sha(b)) continue;
+    if (cur !== null && op.sha_after !== null && curSha !== op.sha_after) {
+      // the customer changed it after the update: their text stays; the 0.8.3 text goes next to it
+      plan.push({ kind: "beside", rel: op.path, to: besideName(op.path), from: op.backup });
+      keep.push(`${op.path} — you changed it after the update: kept as it is; its 0.8.3 text is next to it in ${besideName(op.path)}`);
+      continue;
+    }
+    plan.push({ kind: "put", rel: op.path, from: op.backup });
   }
   // 2. the 0.8.3 kernel
-  const DENY = ["user/", "business/", "areas/", "_inbox/"];
-  const p08 = new Set((mf08.managed || []).map((e) => e.path));
-  const sha09 = new Map((mf09.managed || []).map((e) => [e.path, e.sha256]));
+  const p08 = new Set((mf08.managed || []).map((e) => e.path).filter((r) => kernelPathOk(C, r)));
+  const sha09 = new Map((mf09.managed || []).map((e) => [e.path, e.sha256]).filter(([r]) => kernelPathOk(C, r)));
   const LAST = ["system/update.mjs", "system/managed-files.json"];
-  const kernel = [...new Set([...p08, ...sha09.keys()])].filter((r) => !DENY.some((d) => r.startsWith(d)) && !LAST.includes(r)).sort();
+  const MODULE = ["system/migrate-0.9.mjs", "system/migrate-0.9-base.json"];   // removed at the very end: a cut-off restore can run again
+  const kernel = [...new Set([...p08, ...sha09.keys()])].filter((r) => !LAST.includes(r) && !MODULE.includes(r)).sort();
+  const tail = [];
   for (const rel of kernel) {
     const f = prevLookup(C, prev, rel), cur = readBuf(C.abs(rel));
-    if (f) { if (!cur || sha(cur) !== sha(f.buf)) plan.push({ kind: "put", rel, from: f.rel, save: !!cur && sha(cur) !== sha09.get(rel) }); continue; }
+    if (f) {
+      if (!cur || sha(cur) !== sha(f.buf)) {
+        const changed = !!cur && sha(cur) !== sha09.get(rel);
+        plan.push({ kind: "put", rel, from: f.rel, save: changed });
+        if (changed) keep.push(`${rel} — a system file you changed: put back to 0.8.3; your text is kept in .aios-backup/<time>-restore/${rel}`);
+      }
+      continue;
+    }
     if (p08.has(rel) || !cur) continue;
     if (sha(cur) === sha09.get(rel)) plan.push({ kind: "delete", rel, prune: true, why: "a 0.9 system file" });
     else keep.push(`${rel} — a 0.9 file you changed: left as it is`);
   }
-  // 3. last: the updater and the version marker
-  for (const rel of LAST) { const f = prevLookup(C, prev, rel); if (f && sha(readBuf(C.abs(rel)) || "") !== sha(f.buf)) plan.push({ kind: "put", rel, from: f.rel }); }
+  // 3. last: the updater and the version marker, then the move's own code
+  for (const rel of LAST) { const f = prevLookup(C, prev, rel); if (f && sha(readBuf(C.abs(rel)) || "") !== sha(f.buf)) tail.push({ kind: "put", rel, from: f.rel }); }
+  for (const rel of MODULE) if (!p08.has(rel) && isFile(C.abs(rel))) tail.push({ kind: "delete", rel, why: "the code of the 0.9 move" });
+  plan.push(...tail);
 
   const L = [apply ? "Restoring AIOS 0.8.3:" : "Restore AIOS 0.8.3 — plan (nothing was written):"];
-  for (const x of plan) L.push(x.kind === "put" ? `  ← ${x.rel}  (from ${x.from})` : `  - ${x.rel}  (${x.why}, removed)`);
+  for (const x of plan) L.push(x.kind === "put" ? `  ← ${x.rel}  (from ${x.from})` : x.kind === "beside" ? `  + ${x.to}  (the 0.8.3 text of ${x.rel}; yours stays)` : `  - ${x.rel}  (${x.why}, removed)`);
   for (const k of keep) L.push(`  = ${k}`);
   if (!apply) { L.push("Run with --restore --apply to do it. Backups stay in .aios-backup/."); return { needed: false, status: st?.status || "none", lines: L, pendingDeletions: [] }; }
 
+  for (const x of plan) {
+    const target = x.kind === "beside" ? x.to : x.rel;
+    const bad = badPath(C, target) || (x.from && !backupPathOk(C, x.from) && !prev.some((d) => x.from.startsWith(d + "/")) ? "has a source outside the backups" : null);
+    if (bad) return refuse(`Cannot restore 0.8.3: ${target} ${bad}.`);
+  }
   if (st) { C.st = st; C.st.lock = { pid: process.pid, at: nowIso() }; saveState(C); }
   const stamp = new Date().toISOString().replace(/[:.]/g, "-");
   const saveDir = `.aios-backup/${stamp}-restore`;
   for (const x of plan) {
     const p = C.abs(x.rel);
+    if (x.kind === "beside") { writeAtomic(C.abs(x.to), readFileSync(C.abs(x.from))); continue; }
     if (x.kind === "put") {
       if (x.save && isFile(p)) { const d = C.abs(`${saveDir}/${x.rel}`); mkdirSync(dirname(d), { recursive: true }); copyFileSync(p, d); }
       writeAtomic(p, readFileSync(C.abs(x.from)));
@@ -871,6 +1017,20 @@ export async function run({ root = process.cwd(), apply = false, deleteOld = nul
 
   let st = loadState(C);
   if (st && (st.status === "not-needed" || st.status === "restored")) return result(st.status, false);
+  if (!st && migrateBackupExists(C)) {
+    // the move ran before; its record is gone. Running it again would read the new 0.9 files as the
+    // customer's own lines. Recover the record when the result is clearly complete; otherwise stop.
+    const T0 = readTemplates(C);
+    const userMap = readBuf(C.abs("user/CONTEXT.md"));
+    const bizDone = !isDir(C.abs("business")) || readdirSync(C.abs("business")).filter((s) => !s.startsWith(".") && isFile(C.abs(`business/${s}/core/business.md`)))
+      .every((s) => sha(readBuf(C.abs(`business/${s}/CONTEXT.md`)) || "") === sha(T0.tpl.bizMap) && isFile(C.abs(`business/${s}/offers/CONTEXT.md`)));
+    if (!T0.error && isFile(C.abs("SOUL.md")) && userMap && sha(userMap) === sha(T0.tpl.userMap) && bizDone) {
+      if (apply) { C.st = { schema: 1, migration: "0.8-to-0.9", module_version: MODULE_VERSION, status: "done", recovered: true, finished_at: nowIso(), ops: [], additions: [], deletions: [], log: [`${nowIso()} the record was missing; the move had finished — recovered`] }; saveState(C); }
+      return result("done", false);
+    }
+    C.lines.push("AIOS: the record of the 0.9 move (system/.aios-migration.json) is missing, but the move ran before. Nothing was changed. Tell support.");
+    return result("blocked", true);
+  }
   if (!st) {
     const s = signs(C);
     if (!s.length) {
@@ -878,15 +1038,20 @@ export async function run({ root = process.cwd(), apply = false, deleteOld = nul
       return result("not-needed", false);
     }
   }
-  if (check) { if (!st || st.status === "running") C.lines.push(NOT_FINISHED); return result(st ? st.status : "pending", !st || st.status === "running"); }
+  if (check) { if (!st || st.status === "running") C.lines.push(st?.halted ? `${NOT_FINISHED} It stopped at: ${st.halted.why}.` : NOT_FINISHED); return result(st ? st.status : "pending", !st || st.status === "running"); }
 
   // finished: only the old files are left to ask about
   if (st && st.status === "done") {
     C.st = st; C.base = loadBase(C);
-    const shown = () => st.deletions.filter((e) => ["asked", "no", "deferred", "changed-after-ask"].includes(e.answer) && isFile(C.abs(e.path)));
+    const shown = () => st.deletions.filter((e) => ["asked", "no", "deferred"].includes(e.answer) && isFile(C.abs(e.path)));
     if (!apply) { C.lines.push(...deletionText(C, shown(), false)); return result("done", false); }
     if (!takeLock(C)) return result("busy", false);
-    for (const e of st.deletions) if (["asked", "no", "deferred", "changed-after-ask"].includes(e.answer) && !there(C.abs(e.path))) e.answer = "gone";
+    for (const e of st.deletions) if (["asked", "no", "deferred", "changed-after-ask", "kept-changed"].includes(e.answer) && !there(C.abs(e.path))) e.answer = "gone";
+    // a file changed after it was listed: its new lines were never moved, so it is never offered for deletion again
+    for (const e of st.deletions) if (e.answer === "changed-after-ask") {
+      e.answer = "kept-changed"; log(C, `${e.path}: changed after it was listed → kept for good`);
+      C.lines.push(`${e.path} was changed after it was listed, so it stays. Its new lines were not moved to the new layout: ask the agent to move them, then delete ${e.path} if you want.`);
+    }
     if (deleteOld !== null && deleteOld !== undefined && deleteOld !== false) processDeletions(C, deleteOld);
     else {
       for (const e of st.deletions) if (e.answer === "asked") { e.answer = "deferred"; log(C, `${e.path}: no answer → deferred`); }
@@ -912,14 +1077,20 @@ export async function run({ root = process.cwd(), apply = false, deleteOld = nul
   const need = ["user/user.md", "user/CONTEXT.md", "SOUL.md", ".gitignore", ...deleteList(C),
     ...businesses.filter((b) => !b.evicted).flatMap((b) => [`business/${b.slug}/CONTEXT.md`, `business/${b.slug}/offers/CONTEXT.md`,
       ...Object.keys(b.subs || {}).flatMap((f) => [`business/${b.slug}/${f}/CONTEXT.md`, `business/${b.slug}/${f}/${f}.md`])])];
-  const ev = [...businesses.filter((b) => b.evicted).map((b) => `business/${b.slug}/core/business.md`), ...need.filter((r) => C.evicted(r))];
+  const ev = [...businesses.filter((b) => b.evicted).map((b) => `business/${b.slug}/core/business.md`), ...need.filter((r) => C.evicted(r)),
+    // the backup of run 1 holds the old AGENTS.md with the customer's own lines
+    ...(C.prev || []).flatMap((d) => ["AGENTS.md", "system/managed-files.json"].map((f) => `${d}/${f}`)).filter((r) => C.evicted(r))];
   if (ev.length) {
     C.lines.push(`The move to the new layout is waiting: ${ev.length} file(s) are in iCloud and not on this computer (${ev.join(", ")}). Open the AIOS folder so the files download, then say "update aios". Nothing was changed.`);
     return result(st ? st.status : "pending", true);
   }
   C.origRel = (rel) => (C.st?.backup && isFile(C.abs(`${C.st.backup}/${rel}`)) ? `${C.st.backup}/${rel}` : rel);
   C.readOrig = (rel) => readBuf(C.abs(C.origRel(rel)));
-  if (!apply) { C.lines.push(...preview(C, businesses)); return { ...result(st ? st.status : "pending", true), pendingDeletions: [] }; }
+  if (!apply) {
+    C.lines.push(...preview(C, businesses));
+    if (C.halt) C.lines.push(`The move cannot run yet: ${C.halt.why}.`);
+    return { ...result(st ? st.status : "pending", true), pendingDeletions: [] };
+  }
 
   // apply
   if (!st) {
@@ -935,9 +1106,19 @@ export async function run({ root = process.cwd(), apply = false, deleteOld = nul
   cleanTmp(C);
   saveState(C);
   const fns = { "S1-backup": S1, "S2-collect": S2, "S3-soul": S3, "S4-user": S4, "S5-user-map": S5, "S6-business": S6, "S7-gitignore": S7, "S8-deletions": S8 };
+  if (st.steps.find((s) => s.id === "S1-backup")?.status === "done") resync(C);
+  delete st.halted;
   for (const step of st.steps) {
     if (step.status === "done") continue;
     fns[step.id](C);
+    if (C.halt) {
+      // a write failed or was refused: no later step runs; the next "update aios" continues from this step
+      st.halted = C.halt; st.lock = null; saveState(C);
+      C.lines.push(`The move to the new layout is NOT finished: ${C.halt.why}.`,
+        "Nothing after that was changed, and your text is safe (copies are in " + st.backup + "/).",
+        "Fix this, then say \"update aios\" again — the update continues from here. If it repeats, tell support.");
+      return result("blocked", true);
+    }
     step.status = "done"; step.at = nowIso();
     if (step.id === "S8-deletions") { st.status = "done"; st.finished_at = nowIso(); }
     saveState(C);
@@ -948,6 +1129,8 @@ export async function run({ root = process.cwd(), apply = false, deleteOld = nul
   C.lines.push("AIOS moved your settings to the new layout (0.9).");
   for (const op of C.ran) C.lines.push(`  ${op.action === "create" ? "+" : "~"} ${op.path} — ${op.reason}`);
   if (moved) C.lines.push(`  ${moved} piece(s) of your own text were moved; each sits under "${HEADING}" with a note where it came from.`);
+  const own = isDir(C.abs("system/skills")) ? readdirSync(C.abs("system/skills")).filter((n) => n !== "setup" && !n.startsWith(".") && isFile(C.abs(`system/skills/${n}/SKILL.md`))) : [];
+  if (own.length) C.lines.push(`  Your own skills (${own.length}) are not in the new catalog yet. Agent: run "python3 -I system/scripts/build-skills-catalog.py ." now; no Python → list system/skills/ instead.`);
   if (deleteOld !== null && deleteOld !== undefined && deleteOld !== false) C.lines.push("The answer about old files was not used: the list is shown just now. Ask the user first.");
   C.lines.push("", ...deletionText(C, st.deletions.filter((e) => e.answer === "asked"), true));
   st.lock = null; saveState(C);

@@ -21,7 +21,7 @@
 // disk even when the server is down or was rolled back. Its own header lists what it may write.
 //
 // Run it from the root of your aios/ folder.
-import { readFileSync, writeFileSync, mkdirSync, existsSync, lstatSync, cpSync, renameSync, readdirSync, rmdirSync, rmSync } from "node:fs";
+import { readFileSync, writeFileSync, mkdirSync, existsSync, lstatSync, cpSync, renameSync, readdirSync, rmdirSync, rmSync, realpathSync } from "node:fs";
 import { createHash } from "node:crypto";
 import { join, resolve, dirname, sep } from "node:path";
 import { pathToFileURL } from "node:url";
@@ -46,10 +46,33 @@ const DENY_PREFIXES = ["user/", "business/", "areas/", "_inbox/"];
 // "areas/" is the pre-0.7 name, kept so a half-migrated folder is still protected.
 
 const sha = (buf) => createHash("sha256").update(buf).digest("hex");
+// A managed path must be a plain relative path written with "/": no ".", "..", "\\", drive letter or empty part.
+// "./user/x", "USER/x" and "user\\x" would otherwise slip past DENY_PREFIXES (case-insensitive disks, Windows).
 function safeRel(p) {
-  if (!p || p.startsWith("/") || p.split(/[\\/]/).includes("..")) return false;
+  if (typeof p !== "string" || !p || p.startsWith("/") || p.includes("\\") || p.includes("\0") || /^[A-Za-z]:/.test(p)) return false;
+  if (p.split("/").some((x) => x === "" || x === "." || x === "..")) return false;
   const abs = resolve(ROOT, p);
   return abs === ROOT || abs.startsWith(ROOT + sep);
+}
+const denied = (p) => DENY_PREFIXES.some((d) => p.toLowerCase().startsWith(d));
+// The person's own files: no manifest makes them "managed", whatever it lists.
+const PERSON_FILES = ["soul.md", "system/external.md", "system/skills/skills.md", "system/skills/skill-settings.md", "projects/_index.md", ".gitignore", "system/.aios-migration.json"];
+const personal = (p) => PERSON_FILES.includes(p.toLowerCase());
+// The real place of a path must be inside the AIOS folder, and no folder on the way may be a link.
+// Checked right before every write, backup and folder move.
+function outside(rel) {
+  let cur = ROOT;
+  for (const part of rel.split("/").slice(0, -1)) {
+    cur = join(cur, part);
+    let s; try { s = lstatSync(cur); } catch { break; }
+    if (s.isSymbolicLink() || !s.isDirectory()) return true;
+  }
+  try {
+    const rr = realpathSync(ROOT);
+    let d = dirname(join(ROOT, rel)); while (!existsSync(d)) d = dirname(d);
+    const rd = realpathSync(d);
+    return !(rd === rr || rd.startsWith(rr + sep));
+  } catch { return true; }
 }
 const cmpVer = (a, b) => String(a).localeCompare(String(b), undefined, { numeric: true });
 
@@ -75,15 +98,28 @@ if (existsSync(MIGRATE)) {
 }
 const printMig = (r) => { for (const l of r.lines) console.log(l); };
 const kernelIn = cmpVer(localVer, "0.9.0") >= 0;
+// Runs the move; an error becomes one plain sentence, never a stack trace.
+async function runMig(m, opts) {
+  try { return await m.run({ root: ROOT, ...opts }); }
+  catch (e) {
+    console.log(`The move to the new layout stopped: ${e.message}`);
+    console.log(m.NOT_FINISHED || "AIOS update is NOT finished.");
+    process.exit(1);
+  }
+}
+// An older layout (areas/, network/, business.md without core/) is moved further down; the move waits for it.
+const deferMove = !!(mig && !CHECK && !RESTORE && mig.olderLayout && mig.olderLayout(ROOT) && mig.needsMigration(ROOT));
+// A run 1 that was cut off may already have put everything the move needs on this disk.
+const moveReady = kernelIn || !!(mig && mig.kernelReady && mig.kernelReady(ROOT));
 if (RESTORE) {
   if (!mig) { console.error("--restore needs system/migrate-0.9.mjs, and it is not in this folder."); process.exit(1); }
-  const r = await mig.run({ root: ROOT, apply: APPLY, restore: true });
+  const r = await runMig(mig, { apply: APPLY, restore: true });
   printMig(r);
   process.exit(r.status === "refused" || r.status === "busy" ? 1 : 0);
 }
 if (CHECK && mig && mig.needsMigration(ROOT)) { console.log(mig.NOT_FINISHED); process.exit(0); }
-if (mig && !CHECK && kernelIn) {
-  const r = await mig.run({ root: ROOT, apply: APPLY, deleteOld: DELETE_OLD });
+if (mig && !CHECK && moveReady && !deferMove) {
+  const r = await runMig(mig, { apply: APPLY, deleteOld: DELETE_OLD });
   printMig(r);
   if (r.status === "blocked" || r.status === "busy") process.exit(1);
   if (DELETE_OLD !== null) process.exit(0);          // the answer about old files: nothing else to do
@@ -107,7 +143,7 @@ const migrations = [];
 for (const [from, to] of RENAMES) {
   const src = join(ROOT, from), dest = join(ROOT, to);
   if (!existsSync(src)) continue;
-  if (lstatSync(src).isSymbolicLink()) { blockedMoves.push(`${from} (symlink)`); continue; }
+  if (lstatSync(src).isSymbolicLink() || outside(from) || outside(to + "/x")) { blockedMoves.push(`${from} (symlink)`); continue; }
   migrations.push({ from, to, src, dest, files: [] });
 }
 
@@ -166,6 +202,7 @@ try {
   // best-effort: never block the session — but say so, because silence here was read as "up to date"
   if (CHECK) { console.log("AIOS update check could not reach the update server (no network access here). This is NOT the same as up to date."); process.exit(0); }
   if (movedNow) { console.log("The move to the new layout is done. The AIOS server could not be reached, so the check for a newer version was skipped."); process.exit(0); }
+  if (deferMove) console.log("The move to the new layout waits: older folders (areas/, network/ or a business.md without core/) move first, and that needs the AIOS server.");
   console.error("Could not reach the AIOS server. Check your connection and try again.");
   process.exit(1);
 }
@@ -438,11 +475,12 @@ for (const m of migrations) {
 
 const refresh = [], conflicts = [], blocked = [], removed = [];
 for (const p of managedPaths) {
-  if (DENY_PREFIXES.some((d) => p.startsWith(d))) { blocked.push(`${p} (user-data area)`); continue; }
-  if (SEED.includes(p)) { blocked.push(`${p} (yours — created once, never refreshed)`); continue; }
   if (!safeRel(p)) { blocked.push(`${p} (unsafe path)`); continue; }
+  if (denied(p)) { blocked.push(`${p} (user-data area)`); continue; }
+  if (SEED.includes(p) || personal(p)) { blocked.push(`${p} (yours — never refreshed by an update)`); continue; }
   const abs = join(ROOT, p);
   if (existsSync(abs) && lstatSync(abs).isSymbolicLink()) { blocked.push(`${p} (symlink)`); continue; }
+  if (outside(p)) { blocked.push(`${p} (inside a link to another place)`); continue; }
   const next = fileMap.get(p);
   if (next === undefined) {
     // No content shipped for this managed path. If WE had it locally, it was
@@ -527,13 +565,16 @@ if (bizTpl) for (const p of scanBusinesses().filter((p) => p.d && bizTodo(p))) {
 
 // The customer's own files — after the folder moves too (user/ may have just arrived).
 for (const p of seedTodo(true)) {
+  if (outside(p)) continue;
   try { writeFileSync(join(ROOT, p), seedText(p), { flag: "wx" }); console.log(`created ${p}`); } catch {}   // wx = create only
 }
 const routesNow = routesTodo();
 if (routesNow) { routesApply(routesNow, backupDir); console.log(`added ${routesNow.add.length} shared route(s) to ${ROUTER}`); }
 
 const toWrite = [...refresh, ...conflicts];
+if (outside(`.aios-backup/${stamp}/x`)) { console.error(".aios-backup/ is a link to another place. Nothing was written. Tell support."); process.exit(1); }
 for (const w of toWrite) {
+  if (outside(w.p)) { console.log(`skipped ${w.p}: it is inside a link to another place`); continue; }
   if (existsSync(w.abs)) { const bdest = join(backupDir, w.p); mkdirSync(dirname(bdest), { recursive: true }); cpSync(w.abs, bdest); }
   mkdirSync(dirname(w.abs), { recursive: true });
   writeFileSync(w.abs, w.next);
@@ -546,18 +587,21 @@ console.log(`\nDone — updated ${toWrite.length} file(s) to v${newVer}. Backups
 
 // The 0.9 move, when this run itself delivered the 0.9 kernel (run 1 was cut off and this new code
 // finished it). The module was just written: load the new text, not a copy from before.
-if (!kernelIn && cmpVer(newVer, "0.9.0") >= 0 && existsSync(MIGRATE)) {
+let movedAtEnd = false;
+if ((!kernelIn || deferMove) && cmpVer(newVer, "0.9.0") >= 0 && existsSync(MIGRATE)) {
   try {
     const m2 = await import(pathToFileURL(MIGRATE).href + `?v=${Date.now()}`);
     console.log("");
-    printMig(await m2.run({ root: ROOT, apply: true }));
+    const r2 = await runMig(m2, { apply: true });
+    printMig(r2);
+    movedAtEnd = r2.status === "done";
   } catch (e) { console.log(`\nThe move to the new layout did not run (${e.message}). Run "node system/update.mjs --apply" again.`); }
 }
 
 // If this run replaced the updater itself, the NEW version's work (e.g. a folder
 // move) could not run here — the old code was already in memory. Say so loudly:
 // "Done" on its own has been read as "finished" when it was not.
-if (toWrite.some((w) => w.p === "system/update.mjs")) {
+if (toWrite.some((w) => w.p === "system/update.mjs") && !movedAtEnd) {
   console.log(`\nNOT FINISHED YET — this update replaced update.mjs itself, so anything the`);
   console.log(`new version adds has not run. Run "node system/update.mjs --check" now and`);
   console.log(`follow what it says before calling this done.`);

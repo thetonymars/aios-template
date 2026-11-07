@@ -38,11 +38,11 @@
     },
     {
       "path": "system/update.mjs",
-      "sha256": "a518b5e55141297147807ac017424ba51b34563b21a02747553d815efc8343f2"
+      "sha256": "75d6456bbbc56674c92db83f4851a7493e22c68197579a6b6df1c20399cf8f3f"
     },
     {
       "path": "system/migrate-0.9.mjs",
-      "sha256": "02abcf58c9f2460f33f30d7f6ee77689007f45f4879ee014ca5f33ebaf905d31"
+      "sha256": "4c500e363b2cc11caecf91c008cc53a95c91453ababdf080a2cfb267de93c80d"
     },
     {
       "path": "system/migrate-0.9-base.json",
@@ -74,11 +74,11 @@
     },
     {
       "path": "system/skills/setup/01_identity/CONTEXT.md",
-      "sha256": "45325e3ff8d2782a94f0eaf5ef6daffc61e8e2f022c54ba210a4c90d1abac450"
+      "sha256": "cd00d26d737deb2696aa0fc013c0d847004517721f72602688dc41a9c2fdc818"
     },
     {
       "path": "system/skills/setup/02_business/CONTEXT.md",
-      "sha256": "38db2ac3410c288fc8c1bc803ec1235d6d02a21bbda9fbc8315e4c6842379d36"
+      "sha256": "79237c7bf396b30ab9f9df1b1783c0346e8f9a7c90f942da47b4b3e8b9df288f"
     },
     {
       "path": "system/skills/setup/03_review/CONTEXT.md",
