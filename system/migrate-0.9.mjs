@@ -635,7 +635,8 @@ function deliveredLines(C, before) {
 function lateAppend(C, target, entries, why) {
   if (!entries.length || C.halt) return;
   // the key: the moved lines themselves (no comments with line numbers) — the same lines are delivered once
-  const lines = entries.filter((l) => normLine(l) && !/^<!--.*-->$/.test(l.trim())).map(normLine);
+  // one element per physical line (an entry may hold a whole multi-line group)
+  const lines = entries.flatMap((e) => String(e).split("\n")).filter((l) => normLine(l) && !/^<!--.*-->$/.test(l.trim())).map(normLine);
   if (!lines.length) return;
   const k = sha(target + "\u0000" + lines.join("\n")).slice(0, 12), step = `late-${k}`;
   const prior = C.st.ops.find((o) => o.key === `${step}:${target}`);

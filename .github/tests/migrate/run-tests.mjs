@@ -643,6 +643,17 @@ console.log("\n== second review, round 3");
   ok(s.split("FIRST_LATE").length === 2 && s.split("SECOND_LATE").length === 2, "RR14: grown source, each late rule once");
 }
 
+{ // RR15 (round 4): a multi-line late group, cut off, then grown by a third rule → each rule once
+  const { dir } = setup("c1", "rr15-multiline");
+  cli(dir, ["--apply"], { AIOS_MIGRATE_STOP_AFTER: "S4" });
+  writeFileSync(join(dir, "CLAUDE.md"), rd(dir, "CLAUDE.md") + "MULTI_FIRST_RULE\nMULTI_SECOND_RULE\n");
+  cli(dir, ["--apply"], { AIOS_MIGRATE_STOP_AFTER: "late" });
+  writeFileSync(join(dir, "CLAUDE.md"), rd(dir, "CLAUDE.md") + "MULTI_THIRD_RULE\n");
+  cli(dir, ["--apply"]); cli(dir, ["--apply", "--delete-old=all"]);
+  const s = rd(dir, "SOUL.md");
+  ok(["MULTI_FIRST_RULE", "MULTI_SECOND_RULE", "MULTI_THIRD_RULE"].every((m) => s.split(m).length === 2), "RR15: each of the three rules once");
+}
+
 // fixtures untouched
 for (const fx of FIXTURES) { const S = sums(fx), now = walk(join(FX, fx)); for (const [p, h] of S) ok(now.get(p) === h, `fixture ${fx} changed: ${p}`); }
 
