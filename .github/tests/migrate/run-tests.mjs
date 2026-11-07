@@ -615,6 +615,34 @@ console.log("\n== second review, round 2");
   ok(s.split("Не використовуй емодзі.").length === 2 && s.includes("Ще одне правило в кінці."), "RR12: the old rule once, the new one added");
 }
 
+// ===== the second review, round 3 (handoff/rereview3-codex.md) =====
+console.log("\n== second review, round 3");
+{ // RR13: the same fact added later for another business still reaches that business
+  const { dir } = setup("b", "rr13-same-fact");
+  writeFileSync(join(dir, "CLAUDE.md"), rd(dir, "CLAUDE.md") + "\n## business/foto-kurs\n- **Місячний бюджет:** 12 345 грн.\n\n@AGENTS.md\n");
+  cli(dir, ["--apply"], { AIOS_MIGRATE_STOP_AFTER: "S6" });
+  writeFileSync(join(dir, "CLAUDE.md"), rd(dir, "CLAUDE.md") + "\n## business/yoga-studio-prana\n- **Місячний бюджет:** 12 345 грн.\n");
+  cli(dir, ["--apply"]); cli(dir, ["--apply", "--delete-old=all"]);
+  ok(rd(dir, "business/foto-kurs/core/business.md").includes("Місячний бюджет") && rd(dir, "business/yoga-studio-prana/core/business.md").includes("Місячний бюджет") && !existsSync(join(dir, "CLAUDE.md")), "RR13: both businesses have the fact");
+}
+{ // RR14: a late addition cut off, then the source shifts (a blank line) or grows → each rule once
+  const { dir } = setup("c1", "rr14-shift");
+  cli(dir, ["--apply"], { AIOS_MIGRATE_STOP_AFTER: "S4" });
+  writeFileSync(join(dir, "CLAUDE.md"), rd(dir, "CLAUDE.md") + "LINE_SHIFT_MARKER\n");
+  cli(dir, ["--apply"], { AIOS_MIGRATE_STOP_AFTER: "late" });
+  writeFileSync(join(dir, "CLAUDE.md"), "\n" + rd(dir, "CLAUDE.md"));
+  cli(dir, ["--apply"]);
+  ok(state(dir).status === "done" && rd(dir, "SOUL.md").split("LINE_SHIFT_MARKER").length === 2, "RR14: shifted source, the late rule once");
+  const { dir: d2 } = setup("c1", "rr14-grow");
+  cli(d2, ["--apply"], { AIOS_MIGRATE_STOP_AFTER: "S4" });
+  writeFileSync(join(d2, "CLAUDE.md"), rd(d2, "CLAUDE.md") + "FIRST_LATE\n");
+  cli(d2, ["--apply"], { AIOS_MIGRATE_STOP_AFTER: "late" });
+  writeFileSync(join(d2, "CLAUDE.md"), rd(d2, "CLAUDE.md") + "SECOND_LATE\n");
+  cli(d2, ["--apply"]);
+  const s = rd(d2, "SOUL.md");
+  ok(s.split("FIRST_LATE").length === 2 && s.split("SECOND_LATE").length === 2, "RR14: grown source, each late rule once");
+}
+
 // fixtures untouched
 for (const fx of FIXTURES) { const S = sums(fx), now = walk(join(FX, fx)); for (const [p, h] of S) ok(now.get(p) === h, `fixture ${fx} changed: ${p}`); }
 

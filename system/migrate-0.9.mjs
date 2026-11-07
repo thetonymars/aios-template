@@ -623,15 +623,26 @@ function resync(C) {
 const writerKey = (target) => target === "SOUL.md" ? "S3-soul:SOUL.md" : target === "user/user.md" ? "S4-user:user/user.md" : `S6-business:${target}`;
 // Lines the customer added between two runs, after their target was already written: they go to the end of
 // that target in a block of their own (a copy of the target first, so --restore can undo it).
+// What each target already holds of the moved text: "target \0 line". The lines of a late addition are kept in
+// its op, so the record survives a cut-off run and does not depend on line numbers or on the next batch.
+function deliveredLines(C, before) {
+  const d = new Set();
+  const addText = (target, text) => { for (const l of String(text).split("\n")) if (normLine(l) && !/^<!--.*-->$/.test(l.trim())) d.add(`${target}\u0000${normLine(l)}`); };
+  for (const a of before || []) addText(a.target, a.text);
+  for (const o of C.st.ops) if (/^late-/.test(o.step) && o.done && o.lines) for (const l of o.lines) d.add(`${o.path}\u0000${l}`);
+  return d;
+}
 function lateAppend(C, target, entries, why) {
   if (!entries.length || C.halt) return;
-  // a stable key: the same late text is delivered once, even when a run is cut off right after it
-  const k = sha(target + "\u0000" + entries.join("\n")).slice(0, 12), step = `late-${k}`;
+  // the key: the moved lines themselves (no comments with line numbers) — the same lines are delivered once
+  const lines = entries.filter((l) => normLine(l) && !/^<!--.*-->$/.test(l.trim())).map(normLine);
+  if (!lines.length) return;
+  const k = sha(target + "\u0000" + lines.join("\n")).slice(0, 12), step = `late-${k}`;
   const prior = C.st.ops.find((o) => o.key === `${step}:${target}`);
   if (prior && prior.done) return;
   const p = C.abs(target), cur = readBuf(p);
   if (!cur) {
-    if (target === "user/user.md") doOp(C, step, target, "create", Buffer.from(appendBlock("---\ntype: identity\n---\n\n# About me\n", [`## ${HEADING} (added during the update)`, `<!-- ${why} -->`, ...entries])), "lines added between two runs", why);
+    if (target === "user/user.md") doOp(C, step, target, "create", Buffer.from(appendBlock("---\ntype: identity\n---\n\n# About me\n", [`## ${HEADING} (added during the update)`, `<!-- ${why} -->`, ...entries])), "lines added between two runs", why, { lines });
     else halt(C, target, `${target} is missing, so lines added during the update have no place`);
     return;
   }
@@ -641,7 +652,7 @@ function lateAppend(C, target, entries, why) {
   if (!validUtf8(cur)) { halt(C, target, `${target} is not saved as UTF-8 text, so it was not changed. Open it, save it as UTF-8, then say "update aios" again`); return; }
   const meta = decode(cur);
   const B = [`## ${HEADING} (added during the update)`, `<!-- ${why}; old files: ${C.st.backup}/ -->`, ...entries];
-  doOp(C, step, target, target === "SOUL.md" ? "append" : target === "user/user.md" ? "edit" : "append", encode(meta, appendBlock(meta.text, B)), "lines added between two runs", why, { backup: copy });
+  doOp(C, step, target, target === "SOUL.md" ? "append" : target === "user/user.md" ? "edit" : "append", encode(meta, appendBlock(meta.text, B)), "lines added between two runs", why, { backup: copy, lines });
   if (process.env.AIOS_MIGRATE_STOP_AFTER === "late") { process.stderr.write("[test] stopped after a late addition\n"); process.exit(75); }
 }
 function S2(C) {
@@ -649,12 +660,11 @@ function S2(C) {
   if (C.halt) return;
   const before = C.st.additions_delivered;
   if (before) {
-    const seen = new Set(before.map((a) => `${a.source}\u0000${a.text}`));
-    // line by line: a group that grew by one rule delivers that rule, not the whole group again
-    const oldLines = new Map();
-    for (const a of before) for (const l of a.text.split("\n")) if (normLine(l)) oldLines.set(`${a.source}\u0000${normLine(l)}`, true);
-    const fresh = r.additions.filter((a) => a.kind !== "respond" && !seen.has(`${a.source}\u0000${a.text}`))
-      .map((a) => ({ ...a, text: a.text.split("\n").filter((l) => !normLine(l) || !oldLines.has(`${a.source}\u0000${normLine(l)}`)).join("\n").replace(/^\n+|\n+$/g, "") }))
+    // line by line and per target: a group that grew by one rule delivers that rule; the same fact for
+    // another business still goes to that business; lines a cut-off late addition delivered are not repeated
+    const have = deliveredLines(C, before);
+    const fresh = r.additions.filter((a) => a.kind !== "respond")
+      .map((a) => ({ ...a, text: a.text.split("\n").filter((l) => !normLine(l) || !have.has(`${a.target}\u0000${normLine(l)}`)).join("\n").replace(/^\n+|\n+$/g, "") }))
       .filter((a) => normLine(a.text.replace(/\n/g, " ")));
     const byTarget = new Map();
     const stepOf = (target) => target === "SOUL.md" ? "S3-soul" : target === "user/user.md" ? "S4-user" : "S6-business";
@@ -728,7 +738,8 @@ function S4(C) {
   const sp = C.st.soul_person;
   if (sp && opState(C, "S3-soul:SOUL.md") === "done") {
     const had = new Set([...sp.respondLines, ...sp.identityLines].map(normLine));
-    const extra = [...p.identityLines, ...p.respondLines].filter((l) => normLine(l) && !had.has(normLine(l)));
+    const led = deliveredLines(C, []);
+    const extra = [...p.identityLines, ...p.respondLines].filter((l) => normLine(l) && !had.has(normLine(l)) && !led.has(`SOUL.md\u0000${normLine(l)}`));
     if (extra.length) {
       lateAppend(C, "SOUL.md", ["", "<!-- from user/user.md, changed between two runs of the update -->", ...extra], "user/user.md › How to respond to me changed between two runs");
       if (C.halt) return;
