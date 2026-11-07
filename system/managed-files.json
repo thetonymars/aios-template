@@ -34,7 +34,7 @@
     },
     {
       "path": "system/scripts/tests/test_build_skills_catalog.py",
-      "sha256": "ffee52cbe11f550cc26d98668bceb268f5c2ca81dab58294d9f8575e03d07903"
+      "sha256": "6ba62d9cd86f04e69f91aba3391a9601a5b08c3f2a828945236aaf274684865e"
     },
     {
       "path": "system/update.mjs",

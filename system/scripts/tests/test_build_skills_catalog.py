@@ -90,7 +90,7 @@ def main():
         S(".hidden", "---\nname: hidden\ndescription: \"hidden\"\n---\n")
         S("_private", "---\nname: p\ndescription: \"p\"\n---\n")
         os.makedirs(os.path.join(v, "system", "skills", "nofile"))
-        open(os.path.join(v, "system", "skills", "skill-settings.md"), "w").write("x")
+        open(os.path.join(v, "system", "skills", "skill-settings.md"), "w", encoding="utf-8").write("x")
 
         text, n_awake, n_asleep = cat.build(v)
         L = lambda s: line_of(text, s)
@@ -127,15 +127,15 @@ def main():
 
         # write, check, change, check
         target = os.path.join(v, "system", "skills", "skills.md")
-        run = lambda *a: subprocess.run([sys.executable, "-I", SCRIPT, v, *a], capture_output=True, text=True)
+        run = lambda *a: subprocess.run([sys.executable, "-I", SCRIPT, v, *a], capture_output=True, text=True, encoding="utf-8", errors="replace")
         r = run()
         check("write exits 0", r.returncode == 0, r.stderr)
         check("no temp file left", not [f for f in os.listdir(os.path.dirname(target)) if f.endswith(".tmp")])
         check("--check after write → up to date", run("--check").returncode == 0)
         skill(v, "crlf", "---\nname: crlf\ndescription: \"Changed.\"\n---\n")
         check("--check after a header change → out of date", run("--check").returncode == 1)
-        before = open(target).read()
-        check("--stdout writes nothing", run("--stdout").returncode == 0 and open(target).read() == before)
+        before = open(target, encoding="utf-8").read()
+        check("--stdout writes nothing", run("--stdout").returncode == 0 and open(target, encoding="utf-8").read() == before)
 
         # iCloud: a skill file not downloaded yet stops the run, nothing written
         ev = skill(v, "evicted", "", fname=".SKILL.md.icloud", raw=b"x")
@@ -149,9 +149,9 @@ def main():
         finally:
             cat.shutil.which = which
         check("iCloud placeholder stops the build", stopped)
-        r = subprocess.run([sys.executable, "-I", SCRIPT, v], capture_output=True, text=True,
+        r = subprocess.run([sys.executable, "-I", SCRIPT, v], capture_output=True, text=True, encoding="utf-8", errors="replace",
                            env={**os.environ, "PATH": "/nonexistent"})
-        check("iCloud placeholder → exit 2, catalog untouched", r.returncode == 2 and open(target).read() == before, r.stderr)
+        check("iCloud placeholder → exit 2, catalog untouched", r.returncode == 2 and open(target, encoding="utf-8").read() == before, r.stderr)
         shutil.rmtree(ev)
 
         # empty skills folder
@@ -159,7 +159,7 @@ def main():
         os.makedirs(os.path.join(e, "system", "skills"))
         t2, a2, s2 = cat.build(e)
         check("empty skills folder → header only", a2 == 0 and s2 == 0 and t2 == cat.HEADER)
-        check("wrong vault path → clear error", subprocess.run([sys.executable, "-I", SCRIPT, os.path.join(tmp, "nope")], capture_output=True, text=True).returncode != 0)
+        check("wrong vault path → clear error", subprocess.run([sys.executable, "-I", SCRIPT, os.path.join(tmp, "nope")], capture_output=True, text=True, encoding="utf-8", errors="replace").returncode != 0)
 
         # the real folder, read only
         t0 = time.time()
