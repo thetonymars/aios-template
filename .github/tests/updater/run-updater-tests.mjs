@@ -174,7 +174,7 @@ const putMine = (d) => { for (const [p, c] of Object.entries(mine)) writeFileSyn
 const mineKept = (d) => Object.entries(mine).every(([p, c]) => existsSync(join(d, p)) && readFileSync(join(d, p), "utf8") === c);
 { // CN1: a real 0.9.0 install (the release tarball) updated to 0.9.1 — run 1 is the old 0.9.0 updater
   const d = join(RUNS, "cn1-090"); rmSync(d, { recursive: true, force: true }); mkdirSync(d, { recursive: true });
-  execSync(`git -C "${T}" archive v0.9.0 | tar -x -C "${d}"`, SH);
+  execSync(`git -C "${T}" archive v0.9.0 | tar -x`, { ...SH, cwd: d });   // not -C: GNU tar on Windows reads "D:\…" as a remote host
   ok(OLD.every((p) => existsSync(join(d, p))), "CN1 setup: 0.9.0 has the old connect files");
   putMine(d);
   served = manifest("0.9.1");
