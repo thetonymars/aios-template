@@ -47,7 +47,6 @@ The next line imports `SOUL.md` in apps that support it. Other apps ignore it an
 - It is slow or fails once → this is not a fault. The first call after a restart often waits for the server. Try once more later in the session.
 - It fails twice, or no tool ends in `list_skills` → add the connection sentence: "Add the AIOS connector in your app's settings — `https://skills.yellows.one/mcp` — and sign in with your email." Say it in the person's language.
 - The person says that skills are missing → run this check now.
-- Never write the skills server into this folder or into the settings of an app. Only the person adds the connector.
 - No network, or the app cannot use MCP servers → skip the check silently.
 
 ## What this is
