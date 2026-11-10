@@ -1,5 +1,5 @@
 {
-  "aios_version": "0.9.0",
+  "aios_version": "0.9.1",
   "comment": "Lives in system/ (plumbing). Kernel files that `system/update.mjs` may refresh: this list, plus any path an incoming release lists. Everything else is user data; beyond the listed files update.mjs does only the fixed steps described in its own header (folder moves of the 0.7 layout, the 0.8 business layout, create-once files) and the 0.9 transition in system/migrate-0.9.mjs (its own narrow allowlist, a state file, deletions only after the customer's yes). It refuses any path under user/, business/, areas/, _inbox/ whatever a manifest asks, backs up every file it changes to .aios-backup/, refuses absolute/.. /symlink paths, and will not downgrade. sha256 = as-shipped baseline so an update can detect a kernel file the user edited (conflict -> backup, then overwrite on --apply, never silent). Paths relative to the AIOS root. Regenerate with scripts/gen-managed.mjs after editing any kernel file.",
   "deny_prefixes": [
     "user/",
@@ -10,7 +10,7 @@
   "managed": [
     {
       "path": "AGENTS.md",
-      "sha256": "70295d3cfd8a4f75d65a519c62984b62ca1e65d884a37f7d9c24d3baf56c5076"
+      "sha256": "f938da2e13133c10293ffef80930b7c95d33cacddd078cdb99288a1c6cddcdee"
     },
     {
       "path": "system/CONTEXT.md",
@@ -38,7 +38,7 @@
     },
     {
       "path": "system/update.mjs",
-      "sha256": "a3bf8dc372103e70d4f595c7a861ffc57f9c8b2322b0cc0ecc7fe55a1dd581a8"
+      "sha256": "673ef0ed943dc2945611352c5ec0a2c08e17e442082d6f41ed3a4fd637f5b18b"
     },
     {
       "path": "system/migrate-0.9.mjs",
@@ -49,20 +49,12 @@
       "sha256": "bc1bb7b04d397dfa1fa0f0775c3d53f92a8faf1d87aea2b1b0b852bfc864ffdf"
     },
     {
-      "path": "system/connect.mjs",
-      "sha256": "b93f9874412428af00f74a0b4566aea206aa73257ad8d2d71b3b538ddea6aeec"
-    },
-    {
-      "path": "system/connect.md",
-      "sha256": "7922e0d347427086a052188d3fd8ca90f848ad00ae671f85b61a12ca73bffe03"
-    },
-    {
       "path": "system/voices/CONTEXT.md",
       "sha256": "498504ebc8700ec375f52d228dc0f10e950fb8ad7fac8051b474910205cb5969"
     },
     {
       "path": "system/skills/CONTEXT.md",
-      "sha256": "91cc2f443ebfabed254d158bb6902f569700f88a50e1a8b2cf371def204bfcff"
+      "sha256": "df1fb084fe7cfecd3b549772c26f78956172c1d075f773bf7c503c8778ba67ec"
     },
     {
       "path": "system/skills/setup/SKILL.md",

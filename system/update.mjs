@@ -46,6 +46,28 @@ const DELETE_OLD = (() => {
 // refuse it, no matter what managed-files.json claims. (Lives in code, not in
 // the fetched file, so a compromised manifest can't widen its own authority.)
 const DENY_PREFIXES = ["user/", "business/", "areas/", "_inbox/"];
+// Our own files that a release took out of AIOS (0.9.1: the old way to connect the skills
+// server — the skills now come only through the connector the person adds in their app).
+// Deleted on --apply, with a copy in the backup — but only a file that is byte for byte one
+// we shipped (its sha256 is below: every version ever released). A changed one is left alone.
+// Matched by content, not by managed-files.json: an install that jumps from 0.8.x loses the
+// old baseline in run 1, before this code runs.
+const RETIRED = {
+  "system/connect.mjs": [
+    "430c33cd073606e45f203ad0affd7943d23825db484cd082d70512d82bf0fea1",
+    "48d26ee406fd9d19ff21d49a6873d25927191026a55f99253a088bf157270646",
+    "b0b241ee99fd0c4935e353c4d058d9260d5601bf12920e1708fcfd1a3055ec45",
+    "b31f5b95592006cf2e799fc134f42b4c47e1240ce68cb854c0e947b1b1613eeb",
+    "b93f9874412428af00f74a0b4566aea206aa73257ad8d2d71b3b538ddea6aeec",
+    "c09461d6245b86e7294524c8f1ffeade99a96be7f2c43890774157059155d123",
+    "c5d9044959674f8afd682d004c2359c1f5680a41d54020a3c8496be5ff7a85e4",
+    "fd08223093f52c898a8b6f494091e53e37817eb5dbbe329da2f9405e39edcf10",
+    "ffeaf23129dd8d92bc7ecabfc03a46c3a8e07fa27da4429e2a1b05cffc78abd2"
+  ],
+  "system/connect.md": [
+    "7922e0d347427086a052188d3fd8ca90f848ad00ae671f85b61a12ca73bffe03"
+  ]
+};
 // Only folders that hold NOTHING but user data belong here. people/ · projects/ ·
 // calendar/ · knowledge/ each ship a managed CONTEXT.md, so listing them would make
 // the updater refuse to deliver their own router (caught by harness S17).
@@ -428,12 +450,23 @@ function routesApply(r, backupDir) {
   else out = r.text.replace(/\s*$/, "") + eol + eol + ["## Task Router", "", ...r.shared.header, ...r.add.map((a) => a.line)].join(eol) + eol;
   writeFileSync(r.abs, out);
 }
+function retiredTodo() {
+  const out = [];
+  for (const [p, shas] of Object.entries(RETIRED)) {
+    const abs = join(ROOT, p);
+    if (!existsSync(abs) || lstatSync(abs).isSymbolicLink() || outside(p)) continue;
+    if (shas.includes(sha(readFileSync(abs)))) out.push({ p, abs });
+  }
+  return out;
+}
+const retired = retiredTodo();
 const seedPending = seedTodo(false);
 const routePending = routesTodo();
 const unfinished = [
   ...(bizPending.length ? [`the business folder layout (${bizPending.map((p) => p.label).join(", ")})`] : []),
   ...(seedPending.length ? [`new files (${seedPending.join(", ")})`] : []),
   ...(routePending ? [`${routePending.add.length} shared route(s) missing from ${ROUTER}`] : []),
+  ...(retired.length ? [`old AIOS file(s) to delete (${retired.map((r) => r.p).join(", ")})`] : []),
 ];
 
 // --check: just compare versions and report one line (the session-start nudge). Never writes.
@@ -504,6 +537,7 @@ for (const p of managedPaths) {
     const beingRenamed = migrations.some((m) => p === m.from || p.startsWith(m.from + "/"));
     // The old files of the 0.9 move are asked about by system/migrate-0.9.mjs, never "remove manually".
     const askedByMove = mig && mig.DELETE_CANDIDATES.includes(p);
+    if (p in RETIRED) continue;   // handled by retiredTodo()
     if (localBaseline.has(p) && !beingRenamed && !askedByMove) removed.push(p);
     continue;
   }
@@ -520,6 +554,7 @@ console.log(`\nAIOS update: v${localVer} → v${newVer}\n`);
 if (refresh.length) { console.log(`${refresh.length} system file(s) will be refreshed:`); refresh.forEach((r) => console.log(`  ~ ${r.p}`)); }
 else console.log("No system files need refreshing.");
 if (conflicts.length) { console.log(`\n${conflicts.length} file(s) YOU changed — will be backed up, then overwritten on --apply:`); conflicts.forEach((c) => console.log(`  ! ${c.p}`)); }
+if (retired.length) { console.log(`\n${retired.length} old AIOS file(s) will be deleted (a copy goes to the backup):`); retired.forEach((r) => console.log(`  - ${r.p}`)); }
 if (removed.length) { console.log(`\n${removed.length} file(s) are no longer part of AIOS (NOT deleted — remove manually if you want):`); removed.forEach((p) => console.log(`  - ${p}`)); }
 if (blocked.length) { console.log(`\nBlocked for safety (never written):`); blocked.forEach((b) => console.log(`  x ${b}`)); }
 if (migrations.length) {
@@ -590,6 +625,12 @@ for (const w of toWrite) {
   if (existsSync(w.abs)) { const bdest = join(backupDir, w.p); mkdirSync(dirname(bdest), { recursive: true }); cpSync(w.abs, bdest); }
   mkdirSync(dirname(w.abs), { recursive: true });
   writeFileSync(w.abs, w.next);
+}
+for (const r of retired) {
+  if (outside(r.p)) continue;
+  const bdest = join(backupDir, r.p); mkdirSync(dirname(bdest), { recursive: true }); cpSync(r.abs, bdest);
+  rmSync(r.abs, { force: true });
+  console.log(`deleted ${r.p} (no longer part of AIOS)`);
 }
 // managed-files.json (carries the new version + baseline hashes) written LAST,
 // so an interrupted run keeps the old version marker and is safely re-runnable.

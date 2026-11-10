@@ -1,6 +1,6 @@
 ---
-aios_version: 0.9.0
-last_updated: 2026-11-07
+aios_version: 0.9.1
+last_updated: 2026-11-10
 ---
 
 # AIOS — your master file
@@ -27,9 +27,7 @@ The next line imports `SOUL.md` in apps that support it. Other apps ignore it an
 
 ### Silent checks
 
-- The update check runs only when `system/update.mjs` exists.
-- The connection check runs only when `system/connect.mjs` exists.
-- A check without its script → skip it silently.
+- Both checks run only when `system/update.mjs` exists. Without it → skip them silently.
 - Run the checks in your first turn, together with the work on the first message.
 - The checks never change your answer. Put your answer first in the text.
 - A check needs the person → add its sentence at the end of that answer.
@@ -47,13 +45,10 @@ The next line imports `SOUL.md` in apps that support it. Other apps ignore it an
 **Connection check.** Call any tool whose name ends in `list_skills`. Apps add a prefix to the name. Match the ending, and really call the tool.
 - It returns skills → say nothing.
 - It is slow or fails once → this is not a fault. The first call after a restart often waits for the server. Try once more later in the session.
-- It fails twice → go to "Connecting the skills server" below.
-- The app uses MCP servers, but no tool ends in `list_skills` → go to "Connecting the skills server" below.
-- A fix takes long → answer first, then fix after the answer, in the same turn.
-- Fix the fault silently, as "Connecting the skills server" allows. Speak only when the person must act: a permission, an app restart, a change outside this folder, a licence.
-- Then say one sentence in their language. Start it with what they do.
-- `claude mcp get aios` prints `✘ Rejected` → the person declined this server. Say nothing, and do not ask again.
-- No shell, no network, or the app cannot use MCP servers → skip the check silently.
+- It fails twice, or no tool ends in `list_skills` → add the connection sentence: "Add the AIOS connector in your app's settings — `https://skills.yellows.one/mcp` — and sign in with your email." Say it in the person's language.
+- The person says that skills are missing → run this check now.
+- Never write the skills server into this folder or into the settings of an app. Only the person adds the connector.
+- No network, or the app cannot use MCP servers → skip the check silently.
 
 ## What this is
 
@@ -156,14 +151,9 @@ aios/                  ← the root is never a destination: it holds AGENTS.md, 
 - Where skills live, the catalog of this folder, and how to show the list → `system/skills/CONTEXT.md`.
 - **The skills of this folder** live in `system/skills/<slug>/`. `system/skills/skills.md` lists them.
 - `setup` is one of them when `system/skills/setup/` exists. It works before the skills server is connected.
-- **The AIOS catalog** exists only when `system/connect.mjs` exists. It is remote, over MCP: `list_skills`, `start_skill(slug)`, `read_skill_file(skill, path)`.
+- **The AIOS catalog** exists only when `system/update.mjs` exists. It is remote, over MCP: `list_skills`, `start_skill(slug)`, `read_skill_file(skill, path)`.
 - The content of a catalog skill lives only on the server. Never fake a catalog skill from memory.
 - A locked skill → tell the person about the offer to unlock it.
-- **Two AIOS servers at once.** Two tools end in `list_skills`, for example `mcp__aios__list_skills` and `mcp__claude_ai_AIOS__list_skills`.
-- It is one catalog. You may call both tools to compare them. Show the person one list.
-- Use the server that opens more skills. Stay with it for the session. Say nothing about it, and remove nothing.
-- The person asks to keep one connection → remove the one of this folder, after their yes.
-- That is the `aios` entry in `.mcp.json` and the file `.aios-license`. Other entries of `.mcp.json` stay.
 - "What skills do I have?" → show the list as `system/skills/CONTEXT.md` says.
 
 ## API keys
@@ -175,7 +165,7 @@ aios/                  ← the root is never a destination: it holds AGENTS.md, 
 - Ask them to paste the key after `=`, save the file, and close the window. Then check that the key is there, without showing it.
 - The person pasted a key into the chat → save it to that file. Tell them that the key is now in the chat history.
 - Show key names, never values.
-- An app keeps a key in its own connection settings, such as `.mcp.json` → the key stays there.
+- An app keeps a key in its own connection settings → the key stays there.
 
 ## Updating AIOS
 
@@ -197,19 +187,3 @@ When the person asks ("update aios", in any language):
 
 - Never update system files by hand. Always use the script.
 - Something broke after an update → `node system/update.mjs --restore` shows how to go back. `--restore --apply` goes back.
-
-## Connecting the skills server
-
-Only when `system/connect.mjs` exists. You come here from the connection check, or when the person says that skills are missing.
-
-- First: `claude mcp get aios` prints `✘ Rejected` → the person declined this server. Stop, and say nothing.
-
-- Apps add a prefix to tool names. Match the ending.
-- Call the tool before you say that something is unavailable. A permission prompt at the first call is not a failure.
-- Fix the fault yourself. Look only in this folder and in the connection settings of your app. Never read other folders of this computer.
-- Only when the person must act, tell them what to do. Use one sentence, in their language, in ordinary words.
-- Ask before you change anything outside this folder.
-- `.mcp.json` and `.aios-license` are both missing from the root? Then the skills come only through the AIOS connector of the app.
-- In that case, follow case 1 in `system/connect.md`, and stop there. Never invent a token.
-- Otherwise follow `system/connect.md` case by case. Stop at the first case that matches.
-- Never loop. Never rewrite a config on a guess.

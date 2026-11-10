@@ -15,7 +15,7 @@ Run a skill when the task is the job of that skill.
 ## Where skills live
 
 1. **This folder's skills** — local, `system/skills/<slug>/`. They travel with the folder, so they work in every AI app. `setup` is one of them when `system/skills/setup/` exists: it works before the skills server is connected.
-2. **The AIOS catalog** — only when `system/connect.mjs` exists: remote, over MCP. Find skills with `list_skills`, enter one with `start_skill(slug)`, load its files with `read_skill_file(skill, path)`. Its content lives only on the server: never look for a local folder for it. Tools missing → `AGENTS.md` › Connecting the skills server.
+2. **The AIOS catalog** — only when `system/update.mjs` exists: remote, over MCP. Find skills with `list_skills`, enter one with `start_skill(slug)`, load its files with `read_skill_file(skill, path)`. Its content lives only on the server: never look for a local folder for it. Tools missing → `AGENTS.md` › Connection check.
 
 To answer "what skills do I have": **list the `system/skills/` folder first**, then take the descriptions from `skills.md`; add the AIOS catalog when it exists. Never report "none" from an empty or old catalog without checking the folders.
 

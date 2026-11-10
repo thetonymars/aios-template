@@ -3,7 +3,7 @@
 // A local manifest server gives the template branch as api/template.js does, with a chosen version and
 // extra (hostile) managed paths. Copies live in runs/v-updater/.
 import { createServer } from "node:http";
-import { spawn } from "node:child_process";
+import { spawn, execSync } from "node:child_process";
 import { readFileSync, writeFileSync, mkdirSync, rmSync, cpSync, readdirSync, statSync, existsSync, symlinkSync, renameSync, copyFileSync, lstatSync } from "node:fs";
 import { join, relative, dirname, sep } from "node:path";
 import { homedir } from "node:os";
@@ -11,6 +11,7 @@ import { createHash } from "node:crypto";
 
 const W = process.env.AIOS_WORK || join(homedir(), "aios-p0140-work");
 const T = join(W, "aios-template"), FX = join(W, "fixtures"), RUNS = join(W, "runs", "v-updater");
+const SH = process.platform === "win32" ? { shell: "bash" } : {};   // Git Bash on Windows CI
 const sha = (b) => createHash("sha256").update(b).digest("hex");
 let passes = 0, fails = 0;
 const ok = (c, m) => { if (c) passes++; else { fails++; console.log(`  FAIL: ${m}`); } };
@@ -163,6 +164,50 @@ console.log("== updater: code review findings");
   ok(r1.code === 75, "RR9 setup: stopped after the version marker");
   const r2 = await run(d, ["--restore", "--apply"], { AIOS_MANIFEST_URL: "http://127.0.0.1:1/none" });
   ok(r2.code === 0 && readFileSync(join(d, "system/update.mjs")).equals(readFileSync(join(FX, "a", "system/update.mjs"))), `RR9: the second restore finished (${r2.out.slice(0, 160)})`);
+}
+
+// 0.9.1: the old way to connect the skills server goes. Its files are deleted; the person's own
+// connection files (.mcp.json, .aios-license) and everything outside the folder stay as they are.
+const OLD = ["system/connect.mjs", "system/connect.md"];
+const mine = { ".mcp.json": '{"mcpServers":{"aios":{"type":"http","url":"https://skills.yellows.one/mcp"}}}\n', ".aios-license": "AIOS-TEST-KEY\n" };
+const putMine = (d) => { for (const [p, c] of Object.entries(mine)) writeFileSync(join(d, p), c); };
+const mineKept = (d) => Object.entries(mine).every(([p, c]) => existsSync(join(d, p)) && readFileSync(join(d, p), "utf8") === c);
+{ // CN1: a real 0.9.0 install (the release tarball) updated to 0.9.1 — run 1 is the old 0.9.0 updater
+  const d = join(RUNS, "cn1-090"); rmSync(d, { recursive: true, force: true }); mkdirSync(d, { recursive: true });
+  execSync(`git -C "${T}" archive v0.9.0 | tar -x -C "${d}"`, SH);
+  ok(OLD.every((p) => existsSync(join(d, p))), "CN1 setup: 0.9.0 has the old connect files");
+  putMine(d);
+  served = manifest("0.9.1");
+  const r1 = await run(d, ["--apply"]);
+  const c1 = await run(d, ["--check"]);
+  ok(/unfinished update: old AIOS file/.test(c1.out), `CN1: after run 1 the check says the update is not finished (${c1.out.trim().slice(0, 160)})`);
+  const r2 = await run(d, ["--apply"]);
+  ok(OLD.every((p) => !existsSync(join(d, p))), `CN1: run 2 deleted the old connect files (${r2.out.slice(0, 200)})`);
+  const bk = readdirSync(join(d, ".aios-backup")).some((s) => existsSync(join(d, ".aios-backup", s, "system/connect.mjs")));
+  ok(bk, "CN1: a copy of connect.mjs is in the backup");
+  ok(mineKept(d), "CN1: .mcp.json and .aios-license untouched");
+  const c2 = await run(d, ["--check"]);
+  ok(/up to date \(v0\.9\.1\)/.test(c2.out), `CN1: then up to date (${c2.out.trim()})`);
+  ok(!/connect\.m(js|d)|\.aios-license|\.mcp\.json/.test(readFileSync(join(d, "AGENTS.md"), "utf8")), "CN1: AGENTS.md no longer names the connect files");
+}
+{ // CN2: a 0.8.3 install that jumps straight to 0.9.1 (the 0.9 move and the deletion in one update)
+  const d = copy("b", "cn2-083");
+  ok(existsSync(join(d, "system/connect.mjs")), "CN2 setup: 0.8.3 has connect.mjs");
+  putMine(d);
+  served = manifest("0.9.1");
+  for (let i = 0; i < 4; i++) { const c = await run(d, ["--check"]); if (/up to date/.test(c.out)) break; await run(d, ["--apply"]); }
+  ok(state(d).status === "done", "CN2: the 0.9 move is done");
+  ok(OLD.every((p) => !existsSync(join(d, p))), "CN2: connect.mjs is gone");
+  ok(mineKept(d), "CN2: .mcp.json and .aios-license untouched");
+}
+{ // CN3: a connect.mjs the person changed is never deleted, and does not keep the update "unfinished"
+  const d = await migrated("a", "cn3-changed");
+  writeFileSync(join(d, "system/connect.mjs"), "// my own version\n");
+  served = manifest("0.9.1");
+  await run(d, ["--apply"]); await run(d, ["--apply"]);
+  ok(readFileSync(join(d, "system/connect.mjs"), "utf8") === "// my own version\n", "CN3: the changed file stays");
+  const c = await run(d, ["--check"]);
+  ok(/up to date/.test(c.out), `CN3: and the update is finished (${c.out.trim()})`);
 }
 
 srv.close();

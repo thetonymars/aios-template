@@ -5,8 +5,7 @@ machine. Almost all of it is plain text: a folder skeleton, markdown instruction
 AI assistant that runs inside it, and a conversational setup skill.
 
 There is no build step and no dependency — but do not read that as "nothing here runs".
-Two Node scripts ship with it and both do real work: `system/connect.mjs` registers the
-skills server in your AI apps' own settings, and `system/update.mjs` fetches a manifest
+Node scripts ship with it and do real work: `system/update.mjs` fetches a manifest
 from `aios-skills.vercel.app` and can overwrite the kernel files it lists — and, in the
 few declared cases under "Versioning" below, create or move files in your own folders.
 And the markdown is not inert either: `AGENTS.md` is instructions an AI assistant reads
@@ -28,7 +27,7 @@ server.
 ```
 AGENTS.md              the kernel: what the folder is, its layout, the task router and the rules — the AI reads it first
 SOUL.md                who the agent is and how it talks to this person. The person's file: setup writes it, no update touches it
-system/                connect.mjs (registers the skills server), update.mjs and migrate-0.9.mjs, the setup skill, architecture.md
+system/                update.mjs and migrate-0.9.mjs, the setup skill, architecture.md
 user/ business/        where the operator's own context lives: user/ ships a blank user.md and
                        its map, business/ is empty until setup. Each gets a map — a CONTEXT.md
                        that says which file holds which kind of fact
@@ -45,26 +44,12 @@ public half: the folder they live in.
 
 ## Installing
 
-Customers get a personal install link after purchase, which carries their licence key.
-There is no anonymous install — a key is issued to a confirmed email address.
+Customers install with one command from their personal page after purchase. It only
+puts this folder into the current folder: no password, no programs, nothing outside it.
 
-If you want to look at what an install does without buying anything, read
-[`system/connect.mjs`](system/connect.mjs) — one short file, importing nothing but node's own
-`fs`/`path`/`os`/`crypto`. It makes no network call, starts no child process and uses no
-`eval`. What it does do: it adds an `aios` MCP entry to the settings of **every** AI app
-it finds on the machine — Claude Code, Codex, OpenCode, Antigravity — not just the one
-that ran it, keeps a `.bak-aios` copy of each file the first time it touches it, and
-leaves every other MCP server in those files alone. For OpenCode it configures a bridge
-that runs `npx mcp-remote` at that app's startup, which does fetch a package. Three more
-things a careful reader will find: the entry carries your licence key joined with a device
-id (a hash of the home path, platform, CPU model and memory size); a JSON settings file
-is rewritten whole, so comments in it are lost (the `.bak-aios` copy made on the first run
-keeps the ones that were there then); and it
-removes one thing — an inert `aios` entry that its own older versions left in
-`~/.claude/settings.json`.
-
-Claude Code does not need it: the install writes a project-scoped `.mcp.json` inside the
-AIOS folder and Claude Code asks you to approve the server yourself.
+The skills come through the AIOS connector — `https://skills.yellows.one/mcp` — that the
+customer adds in their AI app and signs in to with their email. Nothing in this folder
+writes to the settings of an AI app.
 
 ## Versioning
 
