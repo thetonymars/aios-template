@@ -96,9 +96,9 @@ aios/                  ← the root is never a destination: it holds AGENTS.md, 
 
 ## Businesses
 
-- A business is a folder `business/<slug>/` with `core/business.md`. List `business/` to see them.
+- A business is a folder `business/<slug>/` with `business/<slug>/core/business.md`. List `business/` to see them.
 - The request names a business → use it. Exactly one exists → use it, and name it the first time a reply relies on it. Several exist and the request does not say which → ask "Which business: <list>?". Save nothing for a business until they answer.
-- No business exists, or its `core/business.md` still has `[UPPERCASE_TOKEN]` placeholders → offer the `setup` skill (when `system/skills/setup/` exists), or ask the person. Never invent a business.
+- No business exists, or its `business/<slug>/core/business.md` still has `[UPPERCASE_TOKEN]` placeholders → offer the `setup` skill (when `system/skills/setup/` exists), or ask the person. Never invent a business.
 
 ## Skills
 
