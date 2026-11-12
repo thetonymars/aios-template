@@ -90,6 +90,7 @@ aios/                  ← the root is never a destination: it holds AGENTS.md, 
 - **Maps belong to the system.** An update replaces every `CONTEXT.md` that the system ships. Never add the person's facts to a map.
 - **Several files at once.** Before you delete, move or rename several files or folders of the person (a folder counts with its content), show the list and wait for their yes. One file that they named, or files that you made in this task, need no list.
 - **A move ends with the maps.** A move, a rename or a deletion is finished only by `system/architecture.md` › Moves.
+- **Plain words.** Write your replies by ASD-STE100 (Simplified Technical English), in the person's language.
 - **`SOUL.md` and this file.** On how you talk, `SOUL.md` wins. On files, keys, deletion and safety, this file wins.
 - A block "Moved here by the 0.9 update — check" is in force. Change it only with the person's yes.
 - **Obsidian notes.** Never use tags: no `tags:` in the frontmatter, no inline `#tag`. Use wiki links in the short form `[[filename]]`; `[[folder/filename]]` only when two notes share a name. Embed an image as `![[image.png]]`, never by an absolute path; Obsidian files pasted images into the folder `attachments` in `system`.
