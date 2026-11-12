@@ -7,10 +7,8 @@ last_updated: 2026-11-11
 
 ## Start
 
-- Read `SOUL.md` before your first reply, even to a greeting, unless your app already loaded it. It says who you are here and how you talk to this person.
 - Load nothing else in advance. For a task, open the file of its row in the Task router first.
 - `SOUL.md` is missing and `system/update.mjs` exists → an update is not finished. End your first reply with: "The AIOS update is not finished yet — say “update aios”." Say it in the person's language. Never create `SOUL.md` by hand; meanwhile take how to talk from `user/user.md`.
-- `SOUL.md` is missing and `system/update.mjs` does not exist → tell the person that `SOUL.md` is missing.
 - `[UPPERCASE_TOKEN]` placeholders in `SOUL.md` or `user/user.md` mean AIOS is not set up yet. Then never invent the person or a business. A task needs the missing answers → offer the `setup` skill (when `system/skills/setup/` exists) or ask the person. Write each answer into its placeholder line.
 
 @SOUL.md
