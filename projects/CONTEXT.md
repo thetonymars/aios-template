@@ -51,6 +51,8 @@ how a project is found when there are hundreds. One table, one row per project:
 ## Rules
 
 - **Location IS status.** Don't track project state in frontmatter.
-- Each project gets its own folder with a main file inside: `PROJECT.md` at the project root,
-  `CONTEXT.md` in every subfolder, `SPRINT.md` in each sprint folder (what this is, what good
-  looks like, what to avoid).
+- Each project gets its own folder. Which files it holds is said by the skill that runs it:
+  `aios-project-management` lays out format 5 — `AGENTS.md`, `SPEC.md`, `PLAN.md` at its root.
+  A project run without that skill, or made in an older format: a main file `PROJECT.md` at its
+  root (what this is, what good looks like, what to avoid). A subfolder gets a `CONTEXT.md` once
+  it holds more than about eight items or has rules of its own.

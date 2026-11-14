@@ -1,6 +1,6 @@
 ---
-aios_version: 0.9.2
-last_updated: 2026-11-11
+aios_version: 0.9.3
+last_updated: 2026-11-14
 ---
 
 # AIOS — your master file
